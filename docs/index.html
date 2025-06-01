@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <title>Machine Learning Algorithms</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="机器学习算法学习笔记">
+  <!-- Docsify 主题 -->
+  <link rel="stylesheet" href="//cdn.jsdelivr.net/npm/docsify@4/lib/themes/vue.css">
+  <!-- 侧边栏折叠样式 -->
+  <link rel="stylesheet" href="//cdn.jsdelivr.net/npm/docsify-sidebar-collapse/dist/sidebar.min.css">
+  <style>
+    /* 调整侧边栏样式 */
+    .sidebar {
+      padding-left: 20px;
+    }
+    .sidebar ul {
+      padding-left: 15px;
+    }
+    .sidebar li {
+      margin: 8px 0;
+    }
+    .sidebar > ul > li > p {
+      font-weight: bold;
+      margin: 15px 0 10px 0;
+    }
+    /* 链接颜色统一 */
+    .sidebar a {
+      color: #42b983;
+    }
+    .sidebar a:hover {
+      color: #42b983;
+      text-decoration: underline;
+    }
+    .sidebar li.active > a {
+      color: #42b983;
+      font-weight: bold;
+    }
+  </style>
+</head>
+<body>
+  <div id="app">加载中...</div>
+  <script>
+    window.$docsify = {
+      name: 'ML Algorithms',
+      repo: 'NayukiChiba/Machine-Learning-Algorithms',
+      loadSidebar: true,
+      subMaxLevel: 3,
+      search: {
+        placeholder: '搜索',
+        noData: '没有结果',
+        paths: 'auto'
+      },
+      auto2top: true,
+      coverpage: false,
+      sidebarDisplayLevel: 1,
+      // 代码复制配置
+      copyCode: {
+        buttonText: '复制',
+        errorText: '错误',
+        successText: '已复制'
+      }
+    }
+  </script>
+  <!-- Docsify -->
+  <script src="//cdn.jsdelivr.net/npm/docsify@4"></script>
+  <!-- 搜索插件 -->
+  <script src="//cdn.jsdelivr.net/npm/docsify/lib/plugins/search.min.js"></script>
+  <!-- 代码复制插件 -->
+  <script src="//cdn.jsdelivr.net/npm/docsify-copy-code/dist/docsify-copy-code.min.js"></script>
+  <!-- 侧边栏折叠插件 -->
+  <script src="//cdn.jsdelivr.net/npm/docsify-sidebar-collapse/dist/docsify-sidebar-collapse.min.js"></script>
+  <!-- 代码高亮 -->
+  <script src="//cdn.jsdelivr.net/npm/prismjs@1/components/prism-python.min.js"></script>
+  <script src="//cdn.jsdelivr.net/npm/prismjs@1/components/prism-bash.min.js"></script>
+</body>
+</html>
