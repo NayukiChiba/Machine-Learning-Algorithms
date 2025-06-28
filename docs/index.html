@@ -7,34 +7,247 @@
   <meta name="description" content="机器学习算法学习笔记">
   <!-- Docsify 主题 -->
   <link rel="stylesheet" href="//cdn.jsdelivr.net/npm/docsify@4/lib/themes/vue.css">
-  <!-- 侧边栏折叠样式 -->
-  <link rel="stylesheet" href="//cdn.jsdelivr.net/npm/docsify-sidebar-collapse/dist/sidebar.min.css">
   <style>
-    /* 调整侧边栏样式 */
+    :root {
+      --sidebar-width: 240px;
+      --toc-width: 240px;
+      --theme-color: #42b983;
+      --text-color: #2c3e50;
+      --text-color-light: #7f8c8d;
+      --border-color: #eaecef;
+      --bg-color: #fff;
+    }
+    
+    /* ========== 左侧边栏样式 - 平铺现代化风格 ========== */
     .sidebar {
-      padding-left: 20px;
+      width: var(--sidebar-width) !important;
+      padding: 20px 15px !important;
+      background: var(--bg-color);
+      border-right: 1px solid var(--border-color);
     }
-    .sidebar ul {
-      padding-left: 15px;
+    
+    /* 搜索框样式 */
+    .sidebar .search {
+      margin-bottom: 20px;
     }
-    .sidebar li {
-      margin: 8px 0;
+    .sidebar .search input {
+      width: 100%;
+      padding: 10px 12px;
+      border: 1px solid var(--border-color);
+      border-radius: 6px;
+      font-size: 14px;
+      outline: none;
+      transition: border-color 0.2s, box-shadow 0.2s;
     }
-    .sidebar > ul > li > p {
+    .sidebar .search input:focus {
+      border-color: var(--theme-color);
+      box-shadow: 0 0 0 3px rgba(66, 185, 131, 0.1);
+    }
+    
+    /* 侧边栏导航 */
+    .sidebar-nav {
+      padding: 0;
+    }
+    .sidebar-nav ul {
+      padding: 0;
+      margin: 0;
+      list-style: none;
+    }
+    
+    /* 一级菜单项（分类） */
+    .sidebar-nav > ul > li {
+      margin-bottom: 4px;
+    }
+    
+    /* 分类标题样式 - 平铺风格 */
+    .sidebar-nav > ul > li > p,
+    .sidebar-nav > ul > li > strong {
+      display: flex;
+      align-items: center;
+      font-weight: 600;
+      font-size: 13px;
+      color: var(--text-color);
+      margin: 0;
+      padding: 10px 12px;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      background: transparent;
+      border: none;
+      border-bottom: 2px solid transparent;
+    }
+    .sidebar-nav > ul > li > p:hover,
+    .sidebar-nav > ul > li > strong:hover {
+      color: var(--theme-color);
+    }
+    .sidebar-nav > ul > li.open > p,
+    .sidebar-nav > ul > li.open > strong,
+    .sidebar-nav > ul > li.collapse > p,
+    .sidebar-nav > ul > li.collapse > strong {
+      color: var(--theme-color);
+      border-bottom-color: var(--theme-color);
+    }
+    
+    /* 折叠箭头 */
+    .sidebar-nav > ul > li > p::before,
+    .sidebar-nav > ul > li > strong::before {
+      content: '›';
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 16px;
+      margin-right: 6px;
+      font-size: 14px;
       font-weight: bold;
-      margin: 15px 0 10px 0;
+      transition: transform 0.2s ease;
+      color: #bbb;
     }
-    /* 链接颜色统一 */
-    .sidebar a {
-      color: #42b983;
+    .sidebar-nav > ul > li.open > p::before,
+    .sidebar-nav > ul > li.open > strong::before,
+    .sidebar-nav > ul > li.collapse > p::before,
+    .sidebar-nav > ul > li.collapse > strong::before {
+      transform: rotate(90deg);
+      color: var(--theme-color);
     }
-    .sidebar a:hover {
-      color: #42b983;
-      text-decoration: underline;
+    
+    /* 子菜单（文件列表）- 平铺风格 */
+    .sidebar-nav > ul > li > ul {
+      display: none;
+      margin: 0;
+      padding: 4px 0 8px 0;
+      background: transparent;
+      border: none;
     }
-    .sidebar li.active > a {
-      color: #42b983;
-      font-weight: bold;
+    .sidebar-nav > ul > li.open > ul,
+    .sidebar-nav > ul > li.collapse > ul {
+      display: block;
+    }
+    
+    /* 文件链接样式 - 与右侧统一 */
+    .sidebar-nav > ul > li > ul > li {
+      margin: 0;
+    }
+    .sidebar-nav > ul > li > ul > li > a,
+    .sidebar-nav ul ul li a {
+      display: block;
+      padding: 8px 12px 8px 28px;
+      color: var(--text-color-light);
+      font-size: 13px;
+      text-decoration: none;
+      transition: all 0.2s ease;
+      border-left: 2px solid transparent;
+      background: transparent;
+    }
+    .sidebar-nav > ul > li > ul > li > a:hover,
+    .sidebar-nav ul ul li a:hover {
+      color: var(--theme-color);
+      background: rgba(66, 185, 131, 0.08);
+      border-left-color: var(--theme-color);
+    }
+    .sidebar-nav > ul > li > ul > li.active > a,
+    .sidebar-nav li.active > a {
+      color: var(--theme-color) !important;
+      background: rgba(66, 185, 131, 0.1) !important;
+      font-weight: 600;
+      border-left-color: var(--theme-color) !important;
+    }
+    
+    /* 首页链接特殊样式 */
+    .sidebar-nav > ul > li:first-child > a {
+      display: block;
+      padding: 10px 12px;
+      color: var(--text-color-light);
+      font-size: 13px;
+      font-weight: 500;
+      text-decoration: none;
+      transition: all 0.2s ease;
+      background: transparent;
+      border-left: 2px solid transparent;
+    }
+    .sidebar-nav > ul > li:first-child > a:hover {
+      color: var(--theme-color);
+      border-left-color: var(--theme-color);
+    }
+    
+    /* ========== 主内容区域 ========== */
+    .content {
+      left: var(--sidebar-width) !important;
+      right: var(--toc-width) !important;
+      padding: 30px 50px !important;
+      max-width: none !important;
+      width: auto !important;
+    }
+    .markdown-section {
+      max-width: 850px;
+      margin: 0 auto;
+      padding: 0 20px;
+    }
+    
+    /* ========== 右侧 TOC 目录样式 ========== */
+    .page_toc {
+      position: fixed;
+      right: 0;
+      top: 0;
+      width: var(--toc-width);
+      height: 100vh;
+      overflow-y: auto;
+      padding: 70px 20px 30px 20px;
+      background: var(--bg-color);
+      border-left: 1px solid var(--border-color);
+      box-sizing: border-box;
+    }
+    .page_toc .title {
+      font-weight: 600;
+      font-size: 14px;
+      color: var(--text-color);
+      margin-bottom: 16px;
+      padding-bottom: 10px;
+      border-bottom: 2px solid var(--theme-color);
+    }
+    .page_toc ul {
+      list-style: none;
+      padding-left: 0;
+      margin: 0;
+    }
+    .page_toc ul li {
+      margin: 4px 0;
+    }
+    .page_toc ul li a {
+      color: var(--text-color-light);
+      text-decoration: none;
+      font-size: 13px;
+      transition: all 0.2s;
+      display: block;
+      padding: 6px 10px;
+      border-radius: 4px;
+      line-height: 1.5;
+      border-left: 2px solid transparent;
+    }
+    .page_toc ul li a:hover {
+      color: var(--theme-color);
+      background: #f0faf5;
+      border-left-color: var(--theme-color);
+    }
+    .page_toc ul li.active > a {
+      color: var(--theme-color);
+      font-weight: 600;
+      background: #e8f5e9;
+      border-left-color: var(--theme-color);
+    }
+    
+    /* ========== 响应式 ========== */
+    @media screen and (max-width: 1280px) {
+      .page_toc {
+        display: none;
+      }
+      .content {
+        right: 0 !important;
+      }
+    }
+    @media screen and (max-width: 768px) {
+      .content {
+        left: 0 !important;
+        right: 0 !important;
+      }
     }
   </style>
 </head>
@@ -45,7 +258,7 @@
       name: 'ML Algorithms',
       repo: 'NayukiChiba/Machine-Learning-Algorithms',
       loadSidebar: true,
-      subMaxLevel: 3,
+      subMaxLevel: 0,
       search: {
         placeholder: '搜索',
         noData: '没有结果',
@@ -53,13 +266,143 @@
       },
       auto2top: true,
       coverpage: false,
-      sidebarDisplayLevel: 1,
+      sidebarDisplayLevel: 0,
       // 代码复制配置
       copyCode: {
         buttonText: '复制',
         errorText: '错误',
         successText: '已复制'
-      }
+      },
+      // 右侧 TOC 配置
+      toc: {
+        tocMaxLevel: 4,
+        target: 'h1, h2, h3, h4'
+      },
+      // 自定义插件生成 TOC
+      plugins: [
+        function(hook, vm) {
+          // 保存侧边栏滚动位置
+          let sidebarScrollTop = 0;
+          
+          hook.beforeEach(function() {
+            const sidebar = document.querySelector('.sidebar');
+            if (sidebar) {
+              sidebarScrollTop = sidebar.scrollTop;
+            }
+          });
+          
+          // 左侧菜单折叠功能 - 手风琴效果
+          hook.doneEach(function() {
+            // 恢复侧边栏滚动位置
+            const sidebar = document.querySelector('.sidebar');
+            if (sidebar && sidebarScrollTop > 0) {
+              setTimeout(() => {
+                sidebar.scrollTop = sidebarScrollTop;
+              }, 0);
+            }
+            
+            const sidebarNav = document.querySelector('.sidebar-nav');
+            if (!sidebarNav) return;
+            
+            const categories = sidebarNav.querySelectorAll(':scope > ul > li');
+            categories.forEach(cat => {
+              const title = cat.querySelector(':scope > p');
+              const subList = cat.querySelector(':scope > ul');
+              
+              if (title && subList) {
+                // 检查当前分类是否包含活动链接
+                const hasActive = subList.querySelector('li.active');
+                if (hasActive) {
+                  // 先关闭其他所有
+                  categories.forEach(c => c.classList.remove('open'));
+                  cat.classList.add('open');
+                }
+                
+                // 点击标题切换折叠 - 手风琴效果
+                title.onclick = function(e) {
+                  e.stopPropagation();
+                  const isOpen = cat.classList.contains('open');
+                  // 关闭所有分类
+                  categories.forEach(c => c.classList.remove('open'));
+                  // 如果之前是关闭的，则打开当前
+                  if (!isOpen) {
+                    cat.classList.add('open');
+                  }
+                };
+              }
+            });
+          });
+          
+          // 右侧 TOC 功能
+          hook.doneEach(function() {
+            // 移除旧的 TOC
+            const oldToc = document.querySelector('.page_toc');
+            if (oldToc) oldToc.remove();
+            
+            // 获取所有标题
+            const content = document.querySelector('.markdown-section');
+            if (!content) return;
+            
+            const headings = content.querySelectorAll('h1, h2, h3, h4');
+            if (headings.length === 0) return;
+            
+            // 创建 TOC 容器
+            const tocDiv = document.createElement('div');
+            tocDiv.className = 'page_toc';
+            
+            const title = document.createElement('div');
+            title.className = 'title';
+            title.textContent = '目录';
+            tocDiv.appendChild(title);
+            
+            const ul = document.createElement('ul');
+            
+            headings.forEach((heading, index) => {
+              const li = document.createElement('li');
+              li.style.paddingLeft = (parseInt(heading.tagName.substring(1)) - 1) * 15 + 'px';
+              
+              const a = document.createElement('a');
+              a.textContent = heading.textContent;
+              a.href = '#' + heading.id;
+              a.onclick = function(e) {
+                e.preventDefault();
+                heading.scrollIntoView({ behavior: 'smooth', block: 'start' });
+              };
+              
+              li.appendChild(a);
+              ul.appendChild(li);
+            });
+            
+            tocDiv.appendChild(ul);
+            document.body.appendChild(tocDiv);
+            
+            // 滚动高亮
+            let ticking = false;
+            window.addEventListener('scroll', function() {
+              if (!ticking) {
+                window.requestAnimationFrame(function() {
+                  let current = null;
+                  headings.forEach(heading => {
+                    const rect = heading.getBoundingClientRect();
+                    if (rect.top <= 100) current = heading;
+                  });
+                  
+                  const links = tocDiv.querySelectorAll('a');
+                  links.forEach(link => {
+                    link.parentElement.classList.remove('active');
+                    if (current && link.getAttribute('href') === '#' + current.id) {
+                      link.parentElement.classList.add('active');
+                    }
+                  });
+                  
+                  ticking = false;
+                });
+                ticking = true;
+              }
+            });
+          });
+        }
+      ]
     }
   </script>
   <!-- Docsify -->
@@ -68,8 +411,6 @@
   <script src="//cdn.jsdelivr.net/npm/docsify/lib/plugins/search.min.js"></script>
   <!-- 代码复制插件 -->
   <script src="//cdn.jsdelivr.net/npm/docsify-copy-code/dist/docsify-copy-code.min.js"></script>
-  <!-- 侧边栏折叠插件 -->
-  <script src="//cdn.jsdelivr.net/npm/docsify-sidebar-collapse/dist/docsify-sidebar-collapse.min.js"></script>
   <!-- 代码高亮 -->
   <script src="//cdn.jsdelivr.net/npm/prismjs@1/components/prism-python.min.js"></script>
   <script src="//cdn.jsdelivr.net/npm/prismjs@1/components/prism-bash.min.js"></script>
