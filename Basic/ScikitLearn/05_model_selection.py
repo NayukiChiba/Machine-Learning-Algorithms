@@ -156,18 +156,25 @@ def demo_learning_curve():
     print("=" * 50)
     print("6. learning_curve 学习曲线")
     print("=" * 50)
-    
-    from sklearn.model_selection import learning_curve
-    
+
+    from sklearn.model_selection import learning_curve, StratifiedKFold
+
     iris = datasets.load_iris()
     X, y = iris.data, iris.target
     model = make_pipeline(StandardScaler(), SVC())
-    
+
+    # 使用 StratifiedKFold 确保每个 fold 中类别分布均衡
+    # 使用 3 折以确保每个训练集有足够样本
+    cv = StratifiedKFold(n_splits=3, shuffle=True, random_state=42)
+
+    # 训练集比例从 0.3 开始，确保每个 fold 有足够样本覆盖所有类别
     train_sizes, train_scores, test_scores = learning_curve(
         model, X, y,
-        cv=5,
-        train_sizes=np.linspace(0.1, 1.0, 5),
-        scoring='accuracy'
+        cv=cv,
+        train_sizes=np.linspace(0.3, 1.0, 5),
+        scoring='accuracy',
+        shuffle=True,
+        random_state=42
     )
     
     print(f"训练集大小: {train_sizes}")
