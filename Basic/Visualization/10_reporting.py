@@ -6,9 +6,15 @@
 import numpy as np
 import matplotlib.pyplot as plt
 import matplotlib as mpl
+import sys
+from pathlib import Path
+
+# 添加项目根目录到搜索路径
+sys.path.insert(0, str(Path(__file__).parent.parent.parent))
+from config import get_output_dir
 
 
-def demo_professional_style():
+def demo_professional_style(output_dir):
     """演示专业样式"""
     print("=" * 50)
     print("1. 专业样式设置")
@@ -29,12 +35,12 @@ def demo_professional_style():
     ax.legend(frameon=True, fancybox=True, shadow=True)
     
     plt.tight_layout()
-    plt.savefig('../outputs/viz_10_professional.png', dpi=150)
+    plt.savefig(output_dir / 'viz_10_professional.png', dpi=150)
     plt.close()
     print("图表已保存")
 
 
-def demo_multi_panel():
+def demo_multi_panel(output_dir):
     """演示多面板布局"""
     print("=" * 50)
     print("2. 多面板布局")
@@ -71,7 +77,7 @@ def demo_multi_panel():
     ax5.pie([30, 40, 30], labels=['X', 'Y', 'Z'], autopct='%1.0f%%')
     ax5.set_title('Pie')
     
-    plt.savefig('../outputs/viz_10_multipanel.png', dpi=150)
+    plt.savefig(output_dir / 'viz_10_multipanel.png', dpi=150)
     plt.close()
     print("图表已保存")
 
@@ -115,12 +121,11 @@ def demo_color_palettes():
 
 def demo_all():
     """运行所有演示"""
-    import os
-    os.makedirs('../outputs', exist_ok=True)
-    
-    demo_professional_style()
+    output_dir = get_output_dir("visualization")
+
+    demo_professional_style(output_dir)
     print()
-    demo_multi_panel()
+    demo_multi_panel(output_dir)
     print()
     demo_export()
     print()
