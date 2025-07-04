@@ -35,6 +35,7 @@ print(np.allclose(P @ A, L @ U))
 ```
 
 **输出**:
+
 ```
 原始矩阵 A:
 [[3. 2. 1.]
@@ -56,6 +57,12 @@ print(np.allclose(P @ A, L @ U))
 
 **应用**: 解线性方程组、矩阵求逆、行列式计算。
 
+### LU 分解可视化
+
+下图展示了 LU 分解的矩阵热力图：
+
+![07_lu](../../outputs/scipy/07_lu.png)
+
 ### 2. QR 分解
 
 QR分解将矩阵分解为正交矩阵Q和上三角矩阵R。
@@ -75,6 +82,7 @@ print("验证 A = QR:", np.allclose(A, Q @ R))
 ```
 
 **输出**:
+
 ```
 Q是正交矩阵: True
 验证 A = QR: True
@@ -102,6 +110,7 @@ print("\n重构误差:", np.max(np.abs(A - A_reconstructed)))
 ```
 
 **输出**:
+
 ```
 奇异值: [6.12  3.47  1.28]
 
@@ -112,6 +121,12 @@ print("\n重构误差:", np.max(np.abs(A - A_reconstructed)))
 ```
 
 **应用**: 主成分分析(PCA)、图像压缩、推荐系统、数据降维。
+
+### SVD 分解可视化
+
+下图展示了奇异值分解结果：
+
+![07_svd](../../outputs/scipy/07_svd.png)
 
 ### 4. Cholesky 分解
 
@@ -132,6 +147,7 @@ print("\n验证 A = LL^T:", np.allclose(A_pd, L @ L.T))
 ```
 
 **输出**:
+
 ```
 正定矩阵 A:
 [[4. 2.]
@@ -176,6 +192,7 @@ for i in range(len(eigenvalues)):
 ```
 
 **输出**:
+
 ```
 特征值: [2.+0.j 1.+0.j]
 
@@ -207,12 +224,19 @@ print("特征向量正交:", np.allclose(eigenvectors.T @ eigenvectors, np.eye(3
 ```
 
 **输出**:
+
 ```
 特征值(按升序): [1.59  3.00  6.41]
 特征向量正交: True
 ```
 
 **应用**: 主成分分析、稳定性分析、振动模式。
+
+### 特征值分解可视化
+
+下图展示了特征向量和矩阵变换效果：
+
+![07_eig](../../outputs/scipy/07_eig.png)
 
 ## 线性方程组 (Linear Systems)
 
@@ -236,6 +260,7 @@ print("验证 Ax = b:", np.allclose(A @ x, b))
 ```
 
 **输出**:
+
 ```
 解 x: [1. 2. 2.]
 验证 Ax = b: True
@@ -286,6 +311,7 @@ print(expA)
 ```
 
 **输出**:
+
 ```
 矩阵指数 e^A:
 [[2.718  2.718]
@@ -304,13 +330,13 @@ print("\nA^10 的第一行:", A10[0])
 
 ## scipy.linalg vs numpy.linalg
 
-| 功能     | scipy.linalg | numpy.linalg | 说明           |
-| -------- | ------------ | ------------ | -------------- |
-| 功能覆盖 | 更全面       | 基础功能     | SciPy更专业    |
-| 性能     | 优化更多     | 标准         | SciPy更快     |
-| LU分解   | ✓            | ✗            | SciPy独有     |
-| Cholesky | ✓            | ✓            | 两者都有       |
-| 矩阵指数 | ✓            | ✗            | SciPy独有     |
+| 功能     | scipy.linalg | numpy.linalg | 说明         |
+| -------- | ------------ | ------------ | ------------ |
+| 功能覆盖 | 更全面       | 基础功能     | SciPy更专业  |
+| 性能     | 优化更多     | 标准         | SciPy更快    |
+| LU分解   | ✓            | ✗            | SciPy独有    |
+| Cholesky | ✓            | ✓            | 两者都有     |
+| 矩阵指数 | ✓            | ✗            | SciPy独有    |
 | 依赖     | BLAS/LAPACK  | BLAS/LAPACK  | 同样的底层库 |
 
 **建议**: 科学计算优先使用 scipy.linalg。
