@@ -35,6 +35,7 @@ print(f"噪声去除效果: {np.corrcoef(signal_clean, filtered)[0,1]:.4f}")
 ```
 
 **输出**:
+
 ```
 原始信号长度: 1000
 滤波后信号长度: 1000
@@ -42,6 +43,7 @@ print(f"噪声去除效果: {np.corrcoef(signal_clean, filtered)[0,1]:.4f}")
 ```
 
 **参数说明**:
+
 - `order`: 阶数越高，过渡带越陡
 - `cutoff`: 截止频率
 - `btype`: `'low'`(低通), `'high'`(高通), `'band'`(带通), `'bandstop'`(带阻)
@@ -62,6 +64,12 @@ print("各种滤波器设计完成")
 ```
 
 **应用**: 音频处理、生物信号、传感器数据清洗。
+
+### 滤波器可视化
+
+下图展示了滤波前后的时域对比和频率响应：
+
+![08_filter](../../outputs/scipy/08_filter.png)
 
 ## 卷积 (Convolution)
 
@@ -91,6 +99,7 @@ print("长度:", len(y_valid), "= len(x) - len(h) + 1")
 ```
 
 **输出**:
+
 ```
 全卷积(full): [0.5 1.5 2.5 3.5 4.5 2.5]
 长度: 6 = len(x) + len(h) - 1
@@ -119,6 +128,12 @@ print("最大相关位置:", np.argmax(crosscorr))
 ```
 
 **应用**: 模式识别、时延估计、雷达信号处理。
+
+### 卷积可视化
+
+下图展示了卷积运算结果：
+
+![08_conv](../../outputs/scipy/08_conv.png)
 
 ## 傅里叶变换 (FFT)
 
@@ -149,12 +164,19 @@ print("真实频率: [50, 120] Hz")
 ```
 
 **输出**:
+
 ```
 检测到的主频率: [50.0, 120.0]
 真实频率: [50, 120] Hz
 ```
 
 **应用**: 频谱分析、噪声识别、音频处理。
+
+### FFT 可视化
+
+下图展示了时域信号和频谱分析：
+
+![08_fft](../../outputs/scipy/08_fft.png)
 
 ## 峰值检测 (Peak Detection)
 
@@ -174,6 +196,7 @@ print("峰值高度:", properties['peak_heights'])
 ```
 
 **输出**:
+
 ```
 627e到 3 个峰值
 峰值位置: [16 47 79]
@@ -181,12 +204,19 @@ print("峰值高度:", properties['peak_heights'])
 ```
 
 **参数**:
+
 - `height`: 最小高度
 - `distance`: 峰间最小距离
 - `prominence`: 突出度
 - `width`: 峰宽
 
 **应用**: ECG分析、语音识别、色谱分析。
+
+### 峰值检测可视化
+
+下图展示了峰值检测结果：
+
+![08_peaks](../../outputs/scipy/08_peaks.png)
 
 ## 窗函数 (Window Functions)
 
@@ -206,6 +236,7 @@ for name, window in windows.items():
 ```
 
 **输出**:
+
 ```
 Hann 窗: 中心值=1.000, 边缘值=0.000
 Hamming 窗: 中心值=1.000, 边缘值=0.080
@@ -231,6 +262,7 @@ print(f"重建误差: {np.max(np.abs(y - y_down)):.6f}")
 ```
 
 **输出**:
+
 ```
 原始采样点: 10
 上采样后: 50
