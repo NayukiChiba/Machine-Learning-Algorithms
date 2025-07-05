@@ -16,15 +16,15 @@ import numpy as np
 a = np.array([0, 0, 0])
 b = np.array([3, 4, 0])
 
-# 欧氏距离(L2范数)
+# 欧氏距离 (L₂ 范数)
 euclidean = distance.euclidean(a, b)
 print(f"欧氏距离: {euclidean:.2f}")
 
-# 曼哈顿距离(L1范数)
+# 曼哈顿距离 (L₁ 范数)
 manhattan = distance.cityblock(a, b)
 print(f"曼哈顿距离: {manhattan:.2f}")
 
-# 切比雪夫距离(L∞范数)
+# 切比雪夫距离 (L∞ 范数)
 chebyshev = distance.chebyshev(a, b)
 print(f"切比雪夫距离: {chebyshev:.2f}")
 
@@ -37,6 +37,7 @@ print(f"余弦相似度: {1-cosine:.4f}")
 ```
 
 **输出**:
+
 ```
 欧氏距离: 5.00
 曼哈顿距离: 7.00
@@ -47,8 +48,10 @@ print(f"余弦相似度: {1-cosine:.4f}")
 ```
 
 **说明**:
-- **欧氏距离**: $\sqrt{\sum(x_i-y_i)^2}$，直线距离
-- **曼哈顿距离**: $\sum|x_i-y_i|$，网格距离
+
+- **欧氏距离** ($L_2$ 范数): $\sqrt{\sum(x_i-y_i)^2}$，直线距离
+- **曼哈顿距离** ($L_1$ 范数): $\sum|x_i-y_i|$，网格距离
+- **切比雪夫距离** ($L_\infty$ 范数): $\max|x_i-y_i|$
 - **余弦距离**: 不受幅度影响，适合文本
 
 ### 2. 距离矩阵
@@ -74,6 +77,7 @@ print(f"对称矩阵: {np.allclose(dist_matrix, dist_matrix.T)}")
 ```
 
 **输出**:
+
 ```
 距离矩阵:
 [[0.    1.    1.    1.41]
@@ -84,6 +88,12 @@ print(f"对称矩阵: {np.allclose(dist_matrix, dist_matrix.T)}")
 对角线都为0: True
 对称矩阵: True
 ```
+
+### 距离矩阵可视化
+
+下图展示了距离矩阵热力图：
+
+![10_distance](../../outputs/scipy/10_distance.png)
 
 ### 3. 成对距离
 
@@ -100,6 +110,7 @@ print(f"\n形状: {pairwise_dist.shape} = ({len(set1)}, {len(set2)})")
 ```
 
 **输出**:
+
 ```
 成对距离:
 [[2.83 4.24]
@@ -130,6 +141,7 @@ print(f"KD树节点数: {tree.n}")
 ```
 
 **输出**:
+
 ```
 数据点数: 1000
 KD树深度: 12
@@ -151,6 +163,7 @@ print(f"距离: {dist:.2f}")
 ```
 
 **输出**:
+
 ```
 查询点: [50 50]
 最近邻: [49.87 50.34]
@@ -170,6 +183,7 @@ for i, (dist, idx) in enumerate(zip(dists, idxs)):
 ```
 
 **输出**:
+
 ```
 5个最近邻:
 1. 点:[49.87 50.34], 距离:0.37
@@ -193,6 +207,12 @@ print(f"\n半径{radius}内的点数: {len(indices)}")
 
 **应用**: 推荐系统、图像处理、聚类算法(KNN)。
 
+### KD-树可视化
+
+下图展示了 KD-树最近邻搜索：
+
+![10_kdtree](../../outputs/scipy/10_kdtree.png)
+
 ## 计算几何 (Computational Geometry)
 
 ### 1. 凸包 (Convex Hull)
@@ -215,6 +235,7 @@ print(f"\n凸包顶点索引: {hull.vertices}")
 ```
 
 **输出**:
+
 ```
 总点数: 30
 凸包顶点数: 9
@@ -225,6 +246,12 @@ print(f"\n凸包顶点索引: {hull.vertices}")
 ```
 
 **应用**: 边界检测、碰撞检测、图形处理。
+
+### 凸包可视化
+
+下图展示了凸包计算结果：
+
+![10_hull](../../outputs/scipy/10_hull.png)
 
 ### 2. Voronoi图
 
@@ -249,6 +276,7 @@ print(vor.vertices)
 ```
 
 **输出**:
+
 ```
 种子点数: 3
 Voronoi顶点数: 2
@@ -260,6 +288,12 @@ Voronoi顶点:
 ```
 
 **应用**: 资源分配、服务覆盖范围、生物学模式。
+
+### Voronoi 图可视化
+
+下图展示了 Voronoi 图：
+
+![10_voronoi](../../outputs/scipy/10_voronoi.png)
 
 ### 3. Delaunay三角剖分
 
@@ -276,6 +310,7 @@ print(tri.simplices[:5])
 ```
 
 **输出**:
+
 ```
 点数: 30
 三角形数: 47
@@ -305,6 +340,7 @@ for i, idx in enumerate(simplex_indices):
 ```
 
 **输出**:
+
 ```
 点是否在凸包内:
 点 [0.5 0.5]: 内部
@@ -312,6 +348,12 @@ for i, idx in enumerate(simplex_indices):
 ```
 
 **应用**: 网格生成、曲面重建、3D建模。
+
+### Delaunay 三角剖分可视化
+
+下图展示了 Delaunay 三角剖分和 Voronoi 图的对偶关系：
+
+![10_delaunay](../../outputs/scipy/10_delaunay.png)
 
 ## 实际应用示例
 
@@ -345,6 +387,7 @@ for i, (dist, idx) in enumerate(zip(dists, idxs)):
 ```
 
 **输出**:
+
 ```
 用户位置: [ 30.3 120.2]
 
