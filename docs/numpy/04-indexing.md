@@ -1,7 +1,5 @@
 # 索引和切片
 
-> 对应代码: [04_indexing.py](file:///d:/Nayey/Code/NayukiChiba/Machine-Learning-Algorithms/Basic/Numpy/04_indexing.py)
-
 ## 学习目标
 
 - 掌握 NumPy 数组的基本索引方法

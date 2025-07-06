@@ -1,7 +1,5 @@
 # 广播机制
 
-> 对应代码: [08_broadcasting.py](file:///d:/Nayey/Code/NayukiChiba/Machine-Learning-Algorithms/Basic/Numpy/08_broadcasting.py)
-
 ## 学习目标
 
 - 理解 NumPy 的广播机制
