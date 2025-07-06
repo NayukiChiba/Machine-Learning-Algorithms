@@ -1,7 +1,5 @@
 # 高级操作与性能优化
 
-> 对应代码: [09_advanced.py](file:///d:/Nayey/Code/NayukiChiba/Machine-Learning-Algorithms/Basic/Pandas/09_advanced.py)
-
 ## 学习目标
 
 - 掌握透视表和交叉表
