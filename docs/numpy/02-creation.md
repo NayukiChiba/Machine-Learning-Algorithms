@@ -1,7 +1,5 @@
 # 数组创建
 
-> 对应代码: [02_creation.py](file:///d:/Nayey/Code/NayukiChiba/Machine-Learning-Algorithms/Basic/Numpy/02_creation.py)
-
 ## 学习目标
 
 - 掌握各种创建 NumPy 数组的方法

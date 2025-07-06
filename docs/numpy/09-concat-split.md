@@ -1,7 +1,5 @@
 # 连接与分割
 
-> 对应代码: [09_concat_split.py](file:///d:/Nayey/Code/NayukiChiba/Machine-Learning-Algorithms/Basic/Numpy/09_concat_split.py)
-
 ## 学习目标
 
 - 掌握 NumPy 数组的连接方法

@@ -1,7 +1,5 @@
 # NumPy 基础入门
 
-> 对应代码: [01_basics.py](file:///d:/Nayey/Code/NayukiChiba/Machine-Learning-Algorithms/Basic/Numpy/01_basics.py)
-
 ## 学习目标
 
 - 了解什么是 NumPy 及其重要性
