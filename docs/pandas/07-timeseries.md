@@ -1,7 +1,5 @@
 # 时间序列处理
 
-> 对应代码: [07_timeseries.py](file:///d:/Nayey/Code/NayukiChiba/Machine-Learning-Algorithms/Basic/Pandas/07_timeseries.py)
-
 ## 学习目标
 
 - 掌握时间序列的创建和索引

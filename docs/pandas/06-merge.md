@@ -1,7 +1,5 @@
 # 数据合并与连接
 
-> 对应代码: [06_merge.py](file:///d:/Nayey/Code/NayukiChiba/Machine-Learning-Algorithms/Basic/Pandas/06_merge.py)
-
 ## 学习目标
 
 - 掌握 concat 纵向和横向合并

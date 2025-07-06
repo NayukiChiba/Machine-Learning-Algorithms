@@ -1,7 +1,5 @@
 # Pandas 数据可视化
 
-> 对应代码: [08_visualization.py](file:///d:/Nayey/Code/NayukiChiba/Machine-Learning-Algorithms/Basic/Pandas/08_visualization.py)
-
 ## 学习目标
 
 - 掌握 df.plot() 基本绑图
@@ -108,6 +106,10 @@ plt.title('堆叠柱状图')
 plt.show()
 ```
 
+**效果**：
+
+![pandas_bar_plot](https://img.yumeko.site/file/articles/pdlearn/pandas_bar_plot.png)
+
 ### 2. 散点图（Scatter Plot）
 
 ```python
@@ -126,6 +128,10 @@ plt.show()
 
 **应用**：分析两个变量之间的相关性。
 
+**效果**：
+
+![pandas_scatter](https://img.yumeko.site/file/articles/pdlearn/pandas_scatter.png)
+
 ### 3. 直方图（Histogram）
 
 ```python
@@ -143,6 +149,10 @@ plt.show()
 - `bins`：柱子数量（区间数）
 - `edgecolor`：边框颜色
 - `alpha`：透明度
+
+**效果**：
+
+![pandas_histogram](https://img.yumeko.site/file/articles/pdlearn/pandas_histogram.png)
 
 ### 4. 箱线图（Box Plot）
 
@@ -167,6 +177,10 @@ plt.show()
 - 须线：1.5 * IQR 范围
 - 圆点：异常值
 
+**效果**：
+
+![pandas_boxplot](https://img.yumeko.site/file/articles/pdlearn/pandas_boxplot.png)
+
 ### 5. 饼图（Pie Chart）
 
 ```python
@@ -182,22 +196,9 @@ plt.ylabel('')  # 隐藏 y 轴标签
 plt.show()
 ```
 
-### 6. 面积图（Area Chart）
+**效果**：
 
-```python
-# 创建时间序列数据
-dates = pd.date_range('2024-01-01', periods=30, freq='D')
-df = pd.DataFrame({
-    '产品A': np.random.randint(10, 30, 30),
-    '产品B': np.random.randint(15, 35, 30),
-    '产品C': np.random.randint(8, 25, 30)
-}, index=dates)
-
-df.plot(kind='area', figsize=(12, 6), alpha=0.4)
-plt.title('产品销售趋势')
-plt.ylabel('销量')
-plt.show()
-```
+![pandas_pie](https://img.yumeko.site/file/articles/pdlearn/pandas_pie.png)
 
 ### 图表类型总结
 
