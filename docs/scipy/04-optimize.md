@@ -1,7 +1,5 @@
 # 优化算法
 
-> 对应代码: [04_optimize.py](file:///d:/Nayey/Code/NayukiChiba/Machine-Learning-Algorithms/Basic/Scipy/04_optimize.py)
-
 ## 曲线拟合 (Curve Fitting)
 
 曲线拟合用于找到最佳参数，使模型曲线与数据点拟合最好。
@@ -28,30 +26,27 @@ def model(x, a, b, c):
 
 # 拟合参数
 
+```python
 params, covariance = optimize.curve_fit(model, x_data, y_data)
 a, b, c = params
 
 print(f"拟合参数: a={a:.2f}, b={b:.2f}, c={c:.2f}")
 print(f"真实参数: a=2.00, b=-3.00, c=5.00")
 print(f"参数标准差: {np.sqrt(np.diag(covariance))}")
-
 # 预测
 
 y_fitted = model(x_data, a, b, c)
 print(f"拟合优度 R²: {1 - np.sum((y_data - y_fitted)**2) / np.sum((y_data - np.mean(y_data))**2):.4f}")
-
 ```
 
-**输出**:
+**输出**：
 
 ```
-
 拟合参数: a=2.02, b=-3.15, c=5.43
 真实参数: a=2.00, b=-3.00, c=5.00
 参数标准差: [0.015 0.234 1.123]
 拟合优度 R²: 0.9956
-
-````
+```
 
 **应用**: 物理实验数据拟合、趋势分析、预测模型。
 
@@ -68,7 +63,7 @@ y_data = 10 * np.exp(-0.5 * x_data) + 2 + np.random.normal(0, 0.3, 30)
 
 params, _ = optimize.curve_fit(exp_decay, x_data, y_data)
 print(f"拟合参数: a={params[0]:.2f}, b={params[1]:.2f}, c={params[2]:.2f}")
-````
+```
 
 **输出**: `拟合参数: a=9.87, b=0.49, c=2.03`
 
@@ -78,7 +73,7 @@ print(f"拟合参数: a={params[0]:.2f}, b={params[1]:.2f}, c={params[2]:.2f}")
 
 下图展示了数据点、拟合曲线及残差分布：
 
-![04_curve_fit](../../outputs/scipy/04_curve_fit.png)
+![04_curve_fit](https://img.yumeko.site/file/articles/scipylearn/04_curve_fit.png)
 
 ## 求根算法 (Root Finding)
 
@@ -150,7 +145,7 @@ print(f"验证: x+y={x+y:.2f}, x-y={x-y:.2f}")
 
 下图展示了一维函数求根和二元方程组解：
 
-![04_roots](../../outputs/scipy/04_roots.png)
+![04_roots](https://img.yumeko.site/file/articles/scipylearn/04_roots.png)
 
 ## 函数最小化 (Minimization)
 
@@ -245,7 +240,7 @@ print(f"约束满足: x+y={sum(result.x):.4f}")
 
 下图展示了一维函数最小化和 Rosenbrock 函数的 BFGS 优化路径：
 
-![04_minimize](../../outputs/scipy/04_minimize.png)
+![04_minimize](https://img.yumeko.site/file/articles/scipylearn/04_minimize.png)
 
 ## 线性规划 (Linear Programming)
 
@@ -326,7 +321,7 @@ print(f"  最大利润: {-result.fun:.0f}元")
 
 下图展示了线性规划的可行域和最优解：
 
-![04_linprog](../../outputs/scipy/04_linprog.png)
+![04_linprog](https://img.yumeko.site/file/articles/scipylearn/04_linprog.png)
 
 ## 练习
 

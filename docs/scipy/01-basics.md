@@ -1,7 +1,5 @@
 # SciPy 基础入门
 
-> 对应代码: [01_basics.py](file:///d:/Nayey/Code/NayukiChiba/Machine-Learning-Algorithms/Basic/Scipy/01_basics.py)
-
 ## SciPy 模块结构
 
 | 模块                | 功能           |
