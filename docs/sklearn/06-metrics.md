@@ -1,26 +1,23 @@
 # 评估指标与可视化
 
-> 对应代码: [code/06_metrics.py](../code/06_metrics.py)
-
-## 目录
-
-- [1. 分类指标](#1-分类指标)
-- [2. 回归指标](#2-回归指标)
-- [3. 可视化工具](#3-可视化工具)
-- [4. 自定义评分](#4-自定义评分)
-
 ---
 
 ## 1. 分类指标
 
 ### 1.1 基础指标
 
-| 指标      | 公式         | 适用场景           |
-| --------- | ------------ | ------------------ |
-| Accuracy  | (TP+TN)/总数 | 类别平衡           |
-| Precision | TP/(TP+FP)   | 关注假正例代价     |
-| Recall    | TP/(TP+FN)   | 关注假负例代价     |
-| F1        | 2PR/(P+R)    | 平衡精确率和召回率 |
+| 指标      | 公式                            | 适用场景           |
+| --------- | ------------------------------- | ------------------ |
+| Accuracy  | $\frac{TP+TN}{TP+TN+FP+FN}$     | 类别平衡           |
+| Precision | $\frac{TP}{TP+FP}$              | 关注假正例代价     |
+| Recall    | $\frac{TP}{TP+FN}$              | 关注假负例代价     |
+| F1        | $\frac{2 \cdot P \cdot R}{P+R}$ | 平衡精确率和召回率 |
+
+### 分类指标可视化
+
+下图展示了乾腘癌数据集上的分类指标：
+
+![06_classification_metrics](https://img.yumeko.site/file/articles/sklearn/06_classification_metrics.png)
 
 ```python
 from sklearn.metrics import accuracy_score, precision_score, recall_score, f1_score
@@ -46,6 +43,18 @@ f1_score(y_true, y_pred, average='macro')
 
 ### 1.3 ROC AUC
 
+**ROC 曲线**: 不同阈值下 TPR (召回率) 与 FPR (假正识率) 的曲线。
+
+- **TPR (True Positive Rate)**: $TPR = \frac{TP}{TP+FN}$
+- **FPR (False Positive Rate)**: $FPR = \frac{FP}{FP+TN}$
+- **AUC**: 曲线下面积，$1$ 为完美，$0.5$ 为随机
+
+### ROC 和 PR 曲线可视化
+
+下图展示了 ROC 曲线和 Precision-Recall 曲线：
+
+![06_roc_pr](https://img.yumeko.site/file/articles/sklearn/06_roc_pr.png)
+
 ```python
 roc_auc_score(
     y_true,
@@ -66,13 +75,18 @@ print(classification_report(y_true, y_pred, target_names=['负类', '正类']))
 
 ## 2. 回归指标
 
-| 指标 | 函数                             | 说明                       |
-| ---- | -------------------------------- | -------------------------- |
-| R²   | `r2_score`                       | 决定系数，1最好            |
-| MSE  | `mean_squared_error`             | 均方误差，对大误差敏感     |
-| RMSE | `sqrt(MSE)`                      | 均方根误差                 |
-| MAE  | `mean_absolute_error`            | 平均绝对误差，对异常值鲁棒 |
-| MAPE | `mean_absolute_percentage_error` | 百分比误差                 |
+| 指标  | 公式                             | 说明                       |
+| ----- | -------------------------------- | -------------------------- |
+| $R^2$ | $1 - \frac{SS_{res}}{SS_{tot}}$  | 决定系数，$1$ 最好         |
+| MSE   | $\frac{1}{n}\sum(y - \hat{y})^2$ | 均方误差，对大误差敏感     |
+| RMSE  | $\sqrt{MSE}$                     | 均方根误差                 |
+| MAE   | $\frac{1}{n}\sum y - \hat{y}$    | 平均绝对误差，对异常值鲁棒 |
+
+### 回归指标可视化
+
+下图展示了回归模型的预测 vs 真实值和残差分布：
+
+![06_regression_metrics](https://img.yumeko.site/file/articles/sklearn/06_regression_metrics(1).png)
 
 ```python
 from sklearn.metrics import r2_score, mean_squared_error, mean_absolute_error
@@ -85,6 +99,12 @@ mean_absolute_error(y_true, y_pred)
 ---
 
 ## 3. 可视化工具
+
+### 混淆矩阵可视化
+
+下图展示了混淆矩阵及其解读：
+
+![06_confusion_matrix](https://img.yumeko.site/file/articles/sklearn/06_confusion_matrix(1).png)
 
 ### 3.1 ConfusionMatrixDisplay
 
