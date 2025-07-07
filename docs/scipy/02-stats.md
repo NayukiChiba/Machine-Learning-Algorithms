@@ -1,7 +1,5 @@
 # 统计分布与描述统计
 
-> 对应代码: [02_stats.py](file:///d:/Nayey/Code/NayukiChiba/Machine-Learning-Algorithms/Basic/Scipy/02_stats.py)
-
 ## 概率分布 (scipy.stats)
 
 SciPy 提供了80+种概率分布，每种分布都包含完整的统计方法。
@@ -149,7 +147,7 @@ print("方差:", poisson.var())
 
 下图展示了正态分布的 PDF/CDF 曲线、二项分布和泊松分布的 PMF：
 
-![02_distributions](../../outputs/scipy/02_distributions.png)
+![02_distributions](https://img.yumeko.site/file/articles/scipylearn/02_distributions.png)
 
 ### 5. 其他常用分布
 
@@ -326,11 +324,11 @@ for p, v in zip(percentiles, values):
 
 下图展示了数据分布直方图、正态拟合曲线以及箱线图：
 
-![02_descriptive](../../outputs/scipy/02_descriptive.png)
+![02_descriptive](https://img.yumeko.site/file/articles/scipylearn/02_descriptive.png)
 
 下图展示了百分位数分布曲线：
 
-![02_percentiles](../../outputs/scipy/02_percentiles.png)
+![02_percentiles](https://img.yumeko.site/file/articles/scipylearn/02_percentiles.png)
 
 ### 5. 完整统计摘要
 

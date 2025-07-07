@@ -1,7 +1,5 @@
 # 插值方法
 
-> 对应代码: [05_interpolate.py](file:///d:/Nayey/Code/NayukiChiba/Machine-Learning-Algorithms/Basic/Scipy/05_interpolate.py)
-
 ## 插值基础
 
 插值是在已知数据点之间估算未知值的方法，广泛应用于数据平滑、上采样和曲线绘制。
@@ -92,7 +90,7 @@ cubic        插值: y(2.5) = 2.7344
 
 下图展示了线性插值与三次插值的对比：
 
-![05_interp1d](../../outputs/scipy/05_interp1d.png)
+![05_interp1d](https://img.yumeko.site/file/articles/scipylearn/05_interp1d.png)
 
 ## 样条插值 (Spline)
 
@@ -151,7 +149,7 @@ print("平滑拟合可以去除噪声影响")
 
 下图展示了样条插值曲线及其导数：
 
-![05_spline](../../outputs/scipy/05_spline.png)
+![05_spline](https://img.yumeko.site/file/articles/scipylearn/05_spline.png)
 
 ## 二维插值 (2D Interpolation)
 
@@ -225,7 +223,7 @@ print("插值网格大小:", grid_z.shape)
 
 下图展示了二维网格插值结果：
 
-![05_interp2d](../../outputs/scipy/05_interp2d.png)
+![05_interp2d](https://img.yumeko.site/file/articles/scipylearn/05_interp2d.png)
 
 ## 径向基函数插值 (RBF)
 
@@ -267,7 +265,7 @@ print("RBF插值结果:", interp_values)
 
 下图展示了径向基函数插值结果：
 
-![05_rbf](../../outputs/scipy/05_rbf.png)
+![05_rbf](https://img.yumeko.site/file/articles/scipylearn/05_rbf.png)
 
 ## 插值方法选择指南
 

@@ -1,7 +1,5 @@
 # 线性代数扩展
 
-> 对应代码: [07_linalg.py](file:///d:/Nayey/Code/NayukiChiba/Machine-Learning-Algorithms/Basic/Scipy/07_linalg.py)
-
 ## 矩阵分解 (Matrix Decomposition)
 
 矩阵分解是线性代数的核心,广泛应用于数值计算和数据分析。
@@ -61,7 +59,7 @@ print(np.allclose(P @ A, L @ U))
 
 下图展示了 LU 分解的矩阵热力图：
 
-![07_lu](../../outputs/scipy/07_lu.png)
+![07_lu](https://img.yumeko.site/file/articles/scipylearn/07_lu.png)
 
 ### 2. QR 分解
 
@@ -126,7 +124,7 @@ print("\n重构误差:", np.max(np.abs(A - A_reconstructed)))
 
 下图展示了奇异值分解结果：
 
-![07_svd](../../outputs/scipy/07_svd.png)
+![07_svd](https://img.yumeko.site/file/articles/scipylearn/07_svd.png)
 
 ### 4. Cholesky 分解
 
@@ -236,7 +234,7 @@ print("特征向量正交:", np.allclose(eigenvectors.T @ eigenvectors, np.eye(3
 
 下图展示了特征向量和矩阵变换效果：
 
-![07_eig](../../outputs/scipy/07_eig.png)
+![07_eig](https://img.yumeko.site/file/articles/scipylearn/07_eig.png)
 
 ## 线性方程组 (Linear Systems)
 
