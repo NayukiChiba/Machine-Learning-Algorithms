@@ -1,17 +1,5 @@
 # Pipeline 流水线
 
-> 对应代码: [code/04_pipeline.py](../code/04_pipeline.py)
-
-## 目录
-
-- [1. 为什么用 Pipeline](#1-为什么用-pipeline)
-- [2. 创建 Pipeline](#2-创建-pipeline)
-- [3. 参数访问](#3-参数访问)
-- [4. 与 GridSearchCV 结合](#4-与-gridsearchcv-结合)
-- [5. ColumnTransformer](#5-columntransformer)
-
----
-
 ## 1. 为什么用 Pipeline
 
 | 问题         | Pipeline 解决方案      |

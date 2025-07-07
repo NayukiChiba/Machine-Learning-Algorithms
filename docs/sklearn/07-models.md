@@ -1,28 +1,23 @@
 # 常用模型速查
 
-> 对应代码: [code/07_models.py](../code/07_models.py)
-
-## 目录
-
-- [1. 线性模型](#1-线性模型)
-- [2. 树模型与集成](#2-树模型与集成)
-- [3. SVM](#3-svm)
-- [4. 朴素贝叶斯](#4-朴素贝叶斯)
-- [5. 聚类](#5-聚类)
-- [6. 降维](#6-降维)
-
 ---
 
 ## 1. 线性模型
 
 ### 1.1 回归
 
-| 模型               | 正则化 | 关键参数            |
-| ------------------ | ------ | ------------------- |
-| `LinearRegression` | 无     | -                   |
-| `Ridge`            | L2     | `alpha`             |
-| `Lasso`            | L1     | `alpha`             |
-| `ElasticNet`       | L1+L2  | `alpha`, `l1_ratio` |
+| 模型               | 正则化               | 损失函数                                 |
+| ------------------ | -------------------- | ---------------------------------------- |
+| `LinearRegression` | 无                   | $\|y - X\beta\|^2$                       |
+| `Ridge`            | L2 ($\|\beta\|_2^2$) | $\|y - X\beta\|^2 + \alpha\|\beta\|_2^2$ |
+| `Lasso`            | L1 ($\|\beta\|_1$)   | $\|y - X\beta\|^2 + \alpha\|\beta\|_1$   |
+| `ElasticNet`       | L1+L2                | 混合正则化                               |
+
+### 线性模型可视化
+
+下图展示了不同正则化方法的系数对比：
+
+![07_linear_models](https://img.yumeko.site/file/articles/sklearn/07_linear_models.png)
 
 ```python
 Ridge(alpha=1.0)  # alpha 越大，正则化越强
@@ -125,6 +120,12 @@ SVC(
 | `C`     | 大=拟合训练数据，小=更平滑边界 |
 | `gamma` | 大=更复杂边界，小=更平滑       |
 
+### SVM 决策边界可视化
+
+下图展示了不同核函数的决策边界：
+
+![07_svm](https://img.yumeko.site/file/articles/sklearn/07_svm.png)
+
 > ⚠️ **SVM 必须标准化数据！**
 
 ---
@@ -174,6 +175,12 @@ DBSCAN(
 | `eps` 大         | 更大的簇               |
 | `min_samples` 大 | 更少的噪声点，更小的簇 |
 
+### 聚类算法可视化
+
+下图展示了 KMeans 和 DBSCAN 的聚类结果对比：
+
+![07_clustering](https://img.yumeko.site/file/articles/sklearn/07_clustering.png)
+
 ---
 
 ## 6. 降维
@@ -198,3 +205,9 @@ TSNE(
 ```
 
 > ⚠️ **t-SNE 只能 fit_transform，不能 transform 新数据！**
+
+### 降维结果可视化
+
+下图展示了 PCA 和 t-SNE 的降维结果对比：
+
+![07_dimensionality_reduction](https://img.yumeko.site/file/articles/sklearn/07_dimensionality_reduction.png)

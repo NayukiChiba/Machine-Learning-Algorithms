@@ -1,7 +1,5 @@
 # 基础入门
 
-> 对应代码: [code/01_basics.py](../code/01_basics.py)
-
 ## 运行方式
 
 ```python
@@ -17,12 +15,6 @@ from code.01_basics import demo_all
 demo_all()
 ```
 
-## 目录
-
-- [1. 数据集加载](#1-数据集加载)
-- [2. 数据划分](#2-数据划分)
-- [3. 估计器 API](#3-估计器-api)
-
 ---
 
 ## 1. 数据集加载
@@ -36,6 +28,12 @@ demo_all()
 | `load_breast_cancer()` | 乳腺癌   | 二分类 | 569    |
 | `load_digits()`        | 手写数字 | 分类   | 1797   |
 | `load_diabetes()`      | 糖尿病   | 回归   | 442    |
+
+### 数据集可视化
+
+下图展示了鸢尾花数据集的特征分布和类别分布：
+
+![01_datasets](https://img.yumeko.site/file/articles/sklearn/01_datasets.png)
 
 ### 1.2 load_xxx() 参数
 
@@ -60,6 +58,12 @@ datasets.load_iris(
 | `make_blobs()`          | 聚类   | `centers`, `cluster_std`                |
 | `make_moons()`          | 月牙形 | `noise`                                 |
 | `make_circles()`        | 同心圆 | `noise`, `factor`                       |
+
+### 人工数据集可视化
+
+下图展示了各种人工生成数据集：
+
+![01_generate_data](https://img.yumeko.site/file/articles/sklearn/01_generate_data.png)
 
 ---
 
@@ -86,6 +90,12 @@ train_test_split(
 | `stratify`     | None | **分类问题必须设 `stratify=y`！** |
 
 > ⚠️ 分类问题不设 `stratify=y` 可能导致某类别全在训练集或测试集！
+
+### 数据划分可视化
+
+下图展示了训练集/测试集划分和分层抽样效果：
+
+![01_train_test_split](https://img.yumeko.site/file/articles/sklearn/01_train_test_split.png)
 
 ---
 
@@ -134,3 +144,9 @@ scaler.fit_transform(X_test)
 
 **Q: random_state 作用？**
 设置随机种子保证每次结果一致。常用 `random_state=42`
+
+### KNN 模型可视化
+
+下图展示了 KNN 分类器的决策边界和不同 k 值的准确率：
+
+![01_knn](https://img.yumeko.site/file/articles/sklearn/01_knn.png)
