@@ -1,7 +1,5 @@
 # Matplotlib 基础入门
 
-> 对应代码: [01_matplotlib_basics.py](file:///d:/Nayey/Code/NayukiChiba/Machine-Learning-Algorithms/Basic/Visualization/01_matplotlib_basics.py)
-
 ## 图表结构
 
 ```
@@ -53,3 +51,11 @@ axes[0, 0].plot(x, y)
 ```bash
 python Basic/Visualization/01_matplotlib_basics.py
 ```
+
+![01_subplots](https://img.yumeko.site/file/articles/viz/01_subplots.png)
+
+![01_basic](https://img.yumeko.site/file/articles/viz/01_basic.png)
+
+![01_line_styles](https://img.yumeko.site/file/articles/viz/01_line_styles.png)
+
+![01_markers](https://img.yumeko.site/file/articles/viz/01_markers.png)
