@@ -1,7 +1,5 @@
 # 模型决策过程可视化
 
-> 对应代码: [07_model_decision.py](file:///d:/Nayey/Code/NayukiChiba/Machine-Learning-Algorithms/Basic/Visualization/07_model_decision.py)
-
 ## 决策边界
 
 ```python
@@ -15,6 +13,8 @@ ax.contourf(xx, yy, Z, alpha=0.3)
 ax.scatter(X[:, 0], X[:, 1], c=y)
 ```
 
+![07_boundary](https://img.yumeko.site/file/articles/viz/07_boundary.png)
+
 ## 决策树可视化
 
 ```python
@@ -23,6 +23,8 @@ from sklearn.tree import plot_tree
 plot_tree(clf, filled=True, feature_names=names)
 ```
 
+![07_tree](https://img.yumeko.site/file/articles/viz/07_tree.png)
+
 ## 特征重要性
 
 ```python
@@ -30,6 +32,8 @@ importances = clf.feature_importances_
 indices = np.argsort(importances)[::-1]
 ax.barh(range(len(importances)), importances[indices])
 ```
+
+![07_importance](https://img.yumeko.site/file/articles/viz/07_importance.png)
 
 ## 练习
 

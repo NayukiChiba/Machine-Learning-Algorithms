@@ -1,7 +1,5 @@
 # 模型性能评估可视化
 
-> 对应代码: [08_model_evaluation.py](file:///d:/Nayey/Code/NayukiChiba/Machine-Learning-Algorithms/Basic/Visualization/08_model_evaluation.py)
-
 ## 混淆矩阵
 
 ```python
@@ -10,6 +8,8 @@ from sklearn.metrics import confusion_matrix, ConfusionMatrixDisplay
 cm = confusion_matrix(y_true, y_pred)
 ConfusionMatrixDisplay(cm).plot()
 ```
+
+![08_confusion](https://img.yumeko.site/file/articles/viz/08_confusion.png)
 
 ## ROC 曲线
 
@@ -23,6 +23,8 @@ ax.plot(fpr, tpr, label=f'AUC = {roc_auc:.3f}')
 ax.plot([0, 1], [0, 1], 'r--')
 ```
 
+![08_roc](https://img.yumeko.site/file/articles/viz/08_roc.png)
+
 ## 学习曲线
 
 ```python
@@ -33,6 +35,8 @@ train_sizes, train_scores, test_scores = learning_curve(clf, X, y)
 ax.plot(train_sizes, train_scores.mean(axis=1), label='Training')
 ax.plot(train_sizes, test_scores.mean(axis=1), label='Validation')
 ```
+
+![08_learning](https://img.yumeko.site/file/articles/viz/08_learning.png)
 
 ## 练习
 

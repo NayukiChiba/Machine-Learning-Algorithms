@@ -1,7 +1,5 @@
 # 数据预处理可视化
 
-> 对应代码: [06_preprocessing_viz.py](file:///d:/Nayey/Code/NayukiChiba/Machine-Learning-Algorithms/Basic/Visualization/06_preprocessing_viz.py)
-
 ## 缺失值可视化
 
 ```python
@@ -11,6 +9,8 @@ sns.heatmap(df.isnull(), cbar=True, cmap='YlOrRd')
 # 缺失比例
 (df.isnull().mean() * 100).plot(kind='bar')
 ```
+
+![06_missing](https://img.yumeko.site/file/articles/viz/06_missing.png)
 
 ## 异常值可视化
 
@@ -24,6 +24,8 @@ iqr = q3 - q1
 lower, upper = q1 - 1.5*iqr, q3 + 1.5*iqr
 ```
 
+![06_outlier](https://img.yumeko.site/file/articles/viz/06_outlier.png)
+
 ## 特征变换
 
 ```python
@@ -33,6 +35,8 @@ np.log1p(data)
 # 标准化
 (data - data.mean()) / data.std()
 ```
+
+![06_transform](https://img.yumeko.site/file/articles/viz/06_transform.png)
 
 ## 练习
 
