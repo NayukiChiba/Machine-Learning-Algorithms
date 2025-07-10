@@ -67,7 +67,7 @@ print("各种滤波器设计完成")
 
 下图展示了滤波前后的时域对比和频率响应：
 
-![08_filter](https://img.yumeko.site/file/articles/scipylearn/08_filter.png)
+![08_filter](https://nayukichiba.github.io/Machine-Learning-Algorithms/outputs/scipy/08_filter.png)
 
 ## 卷积 (Convolution)
 
@@ -131,7 +131,7 @@ print("最大相关位置:", np.argmax(crosscorr))
 
 下图展示了卷积运算结果：
 
-![08_conv](https://img.yumeko.site/file/articles/scipylearn/08_conv.png)
+![08_conv](https://nayukichiba.github.io/Machine-Learning-Algorithms/outputs/scipy/08_conv.png)
 
 ## 傅里叶变换 (FFT)
 
@@ -174,7 +174,7 @@ print("真实频率: [50, 120] Hz")
 
 下图展示了时域信号和频谱分析：
 
-![08_fft](https://img.yumeko.site/file/articles/scipylearn/08_fft.png)
+![08_fft](https://nayukichiba.github.io/Machine-Learning-Algorithms/outputs/scipy/08_fft.png)
 
 ## 峰值检测 (Peak Detection)
 
@@ -214,7 +214,7 @@ print("峰值高度:", properties['peak_heights'])
 
 下图展示了峰值检测结果：
 
-![08_peaks](https://img.yumeko.site/file/articles/scipylearn/08_peaks.png)
+![08_peaks](https://nayukichiba.github.io/Machine-Learning-Algorithms/outputs/scipy/08_peaks.png)
 
 ## 窗函数 (Window Functions)
 

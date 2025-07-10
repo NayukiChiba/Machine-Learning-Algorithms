@@ -52,10 +52,10 @@ axes[0, 0].plot(x, y)
 python Basic/Visualization/01_matplotlib_basics.py
 ```
 
-![01_subplots](https://img.yumeko.site/file/articles/viz/01_subplots.png)
+![01_subplots](https://nayukichiba.github.io/Machine-Learning-Algorithms/outputs/visualization/01_subplots.png)
 
-![01_basic](https://img.yumeko.site/file/articles/viz/01_basic.png)
+![01_basic](https://nayukichiba.github.io/Machine-Learning-Algorithms/outputs/visualization/01_basic.png)
 
-![01_line_styles](https://img.yumeko.site/file/articles/viz/01_line_styles.png)
+![01_line_styles](https://nayukichiba.github.io/Machine-Learning-Algorithms/outputs/visualization/01_line_styles.png)
 
-![01_markers](https://img.yumeko.site/file/articles/viz/01_markers.png)
+![01_markers](https://nayukichiba.github.io/Machine-Learning-Algorithms/outputs/visualization/01_markers.png)
