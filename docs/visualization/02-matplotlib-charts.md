@@ -7,7 +7,7 @@ ax.bar(x, y)       # 垂直
 ax.barh(x, y)      # 水平
 ```
 
-![02_bar](https://img.yumeko.site/file/articles/viz/02_bar.png)
+![02_bar](https://nayukichiba.github.io/Machine-Learning-Algorithms/outputs/visualization/02_bar.png)
 
 ## 散点图
 
@@ -15,7 +15,7 @@ ax.barh(x, y)      # 水平
 ax.scatter(x, y, c=colors, s=sizes, alpha=0.6, cmap='viridis')
 ```
 
-![02_scatter](https://img.yumeko.site/file/articles/viz/02_scatter.png)
+![02_scatter](https://nayukichiba.github.io/Machine-Learning-Algorithms/outputs/visualization/02_scatter.png)
 
 ## 直方图
 
@@ -23,7 +23,7 @@ ax.scatter(x, y, c=colors, s=sizes, alpha=0.6, cmap='viridis')
 ax.hist(data, bins=30, edgecolor='black')
 ```
 
-![02_histogram](https://img.yumeko.site/file/articles/viz/02_histogram.png)
+![02_histogram](https://nayukichiba.github.io/Machine-Learning-Algorithms/outputs/visualization/02_histogram.png)
 
 ## 饼图
 
@@ -31,7 +31,7 @@ ax.hist(data, bins=30, edgecolor='black')
 ax.pie(sizes, labels=labels, autopct='%1.1f%%')
 ```
 
-![02_pie](https://img.yumeko.site/file/articles/viz/02_pie.png)
+![02_pie](https://nayukichiba.github.io/Machine-Learning-Algorithms/outputs/visualization/02_pie.png)
 
 ## 箱线图
 
@@ -39,7 +39,7 @@ ax.pie(sizes, labels=labels, autopct='%1.1f%%')
 ax.boxplot(data)
 ```
 
-![02_boxplot](https://img.yumeko.site/file/articles/viz/02_boxplot.png)
+![02_boxplot](https://nayukichiba.github.io/Machine-Learning-Algorithms/outputs/visualization/02_boxplot.png)
 
 ## 练习
 

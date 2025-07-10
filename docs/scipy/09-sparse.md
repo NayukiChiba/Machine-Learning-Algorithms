@@ -145,7 +145,7 @@ print(f"非零元素: {random_sparse.nnz}")
 
 下图展示了稀疏矩阵的结构 (spy 图)：
 
-![09_create](https://img.yumeko.site/file/articles/scipylearn/09_create.png)
+![09_create](https://nayukichiba.github.io/Machine-Learning-Algorithms/outputs/scipy/09_create.png)
 
 ## 稀疏矩阵操作
 
@@ -191,7 +191,7 @@ print(E.toarray())
 
 下图展示了稀疏矩阵加法结果：
 
-![09_ops](https://img.yumeko.site/file/articles/scipylearn/09_ops.png)
+![09_ops](https://nayukichiba.github.io/Machine-Learning-Algorithms/outputs/scipy/09_ops.png)
 
 ### 2. 切片和索引
 
@@ -266,7 +266,7 @@ print(f"残差: {np.linalg.norm(A @ x - b):.2e}")
 
 下图展示了三对角矩阵的结构和线性方程组解：
 
-![09_linalg](https://img.yumeko.site/file/articles/scipylearn/09_linalg.png)
+![09_linalg](https://nayukichiba.github.io/Machine-Learning-Algorithms/outputs/scipy/09_linalg.png)
 
 ### 2. 迭代求解器
 
@@ -354,7 +354,7 @@ print(f"加速比: {dense_time/sparse_time:.1f}x")
 
 下图展示了密集矩阵与稀疏矩阵的内存对比：
 
-![09_efficiency](https://img.yumeko.site/file/articles/scipylearn/09_efficiency.png)
+![09_efficiency](https://nayukichiba.github.io/Machine-Learning-Algorithms/outputs/scipy/09_efficiency.png)
 
 ## 练习
 
