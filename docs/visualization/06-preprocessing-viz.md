@@ -10,7 +10,7 @@ sns.heatmap(df.isnull(), cbar=True, cmap='YlOrRd')
 (df.isnull().mean() * 100).plot(kind='bar')
 ```
 
-![06_missing](https://nayukichiba.github.io/Machine-Learning-Algorithms/outputs/visualization/06_missing.png)
+![06_missing](https://img.yumeko.site/file/articles/viz/06_missing.png)
 
 ## 异常值可视化
 
@@ -24,7 +24,7 @@ iqr = q3 - q1
 lower, upper = q1 - 1.5*iqr, q3 + 1.5*iqr
 ```
 
-![06_outlier](https://nayukichiba.github.io/Machine-Learning-Algorithms/outputs/visualization/06_outlier.png)
+![06_outlier](https://img.yumeko.site/file/articles/viz/06_outlier.png)
 
 ## 特征变换
 
@@ -36,7 +36,7 @@ np.log1p(data)
 (data - data.mean()) / data.std()
 ```
 
-![06_transform](https://nayukichiba.github.io/Machine-Learning-Algorithms/outputs/visualization/06_transform.png)
+![06_transform](https://img.yumeko.site/file/articles/viz/06_transform.png)
 
 ## 练习
 

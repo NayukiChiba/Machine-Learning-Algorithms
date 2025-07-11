@@ -17,7 +17,7 @@
 
 下图展示了乾腘癌数据集上的分类指标：
 
-![06_classification_metrics](https://nayukichiba.github.io/Machine-Learning-Algorithms/outputs/sklearn/06_classification_metrics.png)
+![06_classification_metrics](https://img.yumeko.site/file/articles/sklearn/06_classification_metrics.png)
 
 ```python
 from sklearn.metrics import accuracy_score, precision_score, recall_score, f1_score
@@ -53,7 +53,7 @@ f1_score(y_true, y_pred, average='macro')
 
 下图展示了 ROC 曲线和 Precision-Recall 曲线：
 
-![06_roc_pr](https://nayukichiba.github.io/Machine-Learning-Algorithms/outputs/sklearn/06_roc_pr.png)
+![06_roc_pr](https://img.yumeko.site/file/articles/sklearn/06_roc_pr.png)
 
 ```python
 roc_auc_score(
@@ -86,7 +86,7 @@ print(classification_report(y_true, y_pred, target_names=['负类', '正类']))
 
 下图展示了回归模型的预测 vs 真实值和残差分布：
 
-![06_regression_metrics](https://nayukichiba.github.io/Machine-Learning-Algorithms/outputs/sklearn/06_regression_metrics(1).png)
+![06_regression_metrics](https://img.yumeko.site/file/articles/sklearn/06_regression_metrics(1).png)
 
 ```python
 from sklearn.metrics import r2_score, mean_squared_error, mean_absolute_error
@@ -104,7 +104,7 @@ mean_absolute_error(y_true, y_pred)
 
 下图展示了混淆矩阵及其解读：
 
-![06_confusion_matrix](https://nayukichiba.github.io/Machine-Learning-Algorithms/outputs/sklearn/06_confusion_matrix(1).png)
+![06_confusion_matrix](https://img.yumeko.site/file/articles/sklearn/06_confusion_matrix(1).png)
 
 ### 3.1 ConfusionMatrixDisplay
 
