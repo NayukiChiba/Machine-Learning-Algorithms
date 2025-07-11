@@ -59,7 +59,7 @@ print(np.allclose(P @ A, L @ U))
 
 下图展示了 LU 分解的矩阵热力图：
 
-![07_lu](https://nayukichiba.github.io/Machine-Learning-Algorithms/outputs/scipy/07_lu.png)
+![07_lu](https://img.yumeko.site/file/articles/scipylearn/07_lu.png)
 
 ### 2. QR 分解
 
@@ -124,7 +124,7 @@ print("\n重构误差:", np.max(np.abs(A - A_reconstructed)))
 
 下图展示了奇异值分解结果：
 
-![07_svd](https://nayukichiba.github.io/Machine-Learning-Algorithms/outputs/scipy/07_svd.png)
+![07_svd](https://img.yumeko.site/file/articles/scipylearn/07_svd.png)
 
 ### 4. Cholesky 分解
 
@@ -234,7 +234,7 @@ print("特征向量正交:", np.allclose(eigenvectors.T @ eigenvectors, np.eye(3
 
 下图展示了特征向量和矩阵变换效果：
 
-![07_eig](https://nayukichiba.github.io/Machine-Learning-Algorithms/outputs/scipy/07_eig.png)
+![07_eig](https://img.yumeko.site/file/articles/scipylearn/07_eig.png)
 
 ## 线性方程组 (Linear Systems)
 

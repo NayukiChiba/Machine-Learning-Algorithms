@@ -9,7 +9,7 @@ cm = confusion_matrix(y_true, y_pred)
 ConfusionMatrixDisplay(cm).plot()
 ```
 
-![08_confusion](https://nayukichiba.github.io/Machine-Learning-Algorithms/outputs/visualization/08_confusion.png)
+![08_confusion](https://img.yumeko.site/file/articles/viz/08_confusion.png)
 
 ## ROC 曲线
 
@@ -23,7 +23,7 @@ ax.plot(fpr, tpr, label=f'AUC = {roc_auc:.3f}')
 ax.plot([0, 1], [0, 1], 'r--')
 ```
 
-![08_roc](https://nayukichiba.github.io/Machine-Learning-Algorithms/outputs/visualization/08_roc.png)
+![08_roc](https://img.yumeko.site/file/articles/viz/08_roc.png)
 
 ## 学习曲线
 
@@ -36,7 +36,7 @@ ax.plot(train_sizes, train_scores.mean(axis=1), label='Training')
 ax.plot(train_sizes, test_scores.mean(axis=1), label='Validation')
 ```
 
-![08_learning](https://nayukichiba.github.io/Machine-Learning-Algorithms/outputs/visualization/08_learning.png)
+![08_learning](https://img.yumeko.site/file/articles/viz/08_learning.png)
 
 ## 练习
 

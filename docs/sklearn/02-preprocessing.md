@@ -13,7 +13,7 @@
 
 下图展示了不同缩放器处理含异常值数据的效果：
 
-![02_scalers](https://nayukichiba.github.io/Machine-Learning-Algorithms/outputs/sklearn/02_scalers.png)
+![02_scalers](https://img.yumeko.site/file/articles/sklearn/02_scalers.png)
 
 ### 选择建议
 
@@ -123,7 +123,7 @@ RobustScaler(
 
 下图展示了 LabelEncoder 和 OneHotEncoder 的区别：
 
-![02_encoding](https://nayukichiba.github.io/Machine-Learning-Algorithms/outputs/sklearn/02_encoding.png)
+![02_encoding](https://img.yumeko.site/file/articles/sklearn/02_encoding.png)
 
 ### 5.2 OneHotEncoder 参数详解
 

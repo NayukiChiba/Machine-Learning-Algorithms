@@ -147,7 +147,7 @@ print("方差:", poisson.var())
 
 下图展示了正态分布的 PDF/CDF 曲线、二项分布和泊松分布的 PMF：
 
-![02_distributions](https://nayukichiba.github.io/Machine-Learning-Algorithms/outputs/scipy/02_distributions.png)
+![02_distributions](https://img.yumeko.site/file/articles/scipylearn/02_distributions.png)
 
 ### 5. 其他常用分布
 
@@ -324,11 +324,11 @@ for p, v in zip(percentiles, values):
 
 下图展示了数据分布直方图、正态拟合曲线以及箱线图：
 
-![02_descriptive](https://nayukichiba.github.io/Machine-Learning-Algorithms/outputs/scipy/02_descriptive.png)
+![02_descriptive](https://img.yumeko.site/file/articles/scipylearn/02_descriptive.png)
 
 下图展示了百分位数分布曲线：
 
-![02_percentiles](https://nayukichiba.github.io/Machine-Learning-Algorithms/outputs/scipy/02_percentiles.png)
+![02_percentiles](https://img.yumeko.site/file/articles/scipylearn/02_percentiles.png)
 
 ### 5. 完整统计摘要
 
