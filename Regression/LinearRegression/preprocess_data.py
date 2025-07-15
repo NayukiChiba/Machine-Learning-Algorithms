@@ -48,7 +48,7 @@ def preprocess_data(data:DataFrame, test_size:float=0.2, random_state:int=42):
     # 特征标准化
     scaler = StandardScaler()
     X_train_scaled = scaler.fit_transform(X_train)
-    X_test_scaled = scaler.fit_transform(X_test)
+    X_test_scaled = scaler.transform(X_test)  # 测试集用 transform
 
     print("特征标准化完成")
     print(f"标准化前均值: {X_train.mean().values.round(2)}")
