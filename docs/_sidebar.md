@@ -70,3 +70,15 @@
   - [结果可视化](linear-regression/07-visualize-results.md)
   - [完整流程](linear-regression/08-main-pipeline.md)
   - [常见问题](linear-regression/09-faq.md)
+
+- **DecisionTree 项目**
+  - [数学基础](decision-tree/00-math.md)
+  - [加载数据](decision-tree/01-generate-data.md)
+  - [数据探索](decision-tree/02-explore-data.md)
+  - [数据可视化](decision-tree/03-visualize-data.md)
+  - [数据预处理](decision-tree/04-preprocess-data.md)
+  - [模型训练](decision-tree/05-train-model.md)
+  - [模型评估](decision-tree/06-evaluate-model.md)
+  - [结果可视化](decision-tree/07-visualize-results.md)
+  - [完整流程](decision-tree/08-main-pipeline.md)
+  - [常见问题](decision-tree/09-faq.md)
