@@ -39,7 +39,7 @@ y_train_pred = model.predict(X_train)
 y_test_pred = model.predict(X_test)
 ```
 
-- `predict` 只是把特征代入公式得到 \(\hat{y}\)
+- `predict` 只是把特征代入公式得到 $\hat{y}$
 
 ---
 
@@ -47,28 +47,28 @@ y_test_pred = model.predict(X_test)
 
 ### 4.1 MSE / RMSE
 
-\[
+$$
 \text{MSE} = \frac{1}{n}\sum (y_i - \hat{y}_i)^2
-\]
-\[
+$$
+$$
 \text{RMSE} = \sqrt{\text{MSE}}
-\]
+$$
 
 - RMSE 与原始单位一致，更直观
 
 ### 4.2 MAE
 
-\[
+$$
 \text{MAE} = \frac{1}{n}\sum |y_i - \hat{y}_i|
-\]
+$$
 
 - 对异常值更“温和”
 
 ### 4.3 R²
 
-\[
+$$
 R^2 = 1 - \frac{\sum (y_i - \hat{y}_i)^2}{\sum (y_i - \bar{y})^2}
-\]
+$$
 
 - R² 越接近 1 越好
 - 负值表示模型很差（甚至不如直接预测均值）

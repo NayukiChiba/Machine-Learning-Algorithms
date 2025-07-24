@@ -53,9 +53,9 @@ age  = np.random.uniform(low=1,  high=20, size=n_samples)
 
 核心公式：
 
-\[
+$$
 \text{价格} = 2\cdot\text{面积} + 10\cdot\text{房间数} - 3\cdot\text{房龄} + \epsilon + 50
-\]
+$$
 
 ```python
 price = 2*area + 10*num - 3*age + np.random.normal(0, noise, n_samples) + 50
@@ -63,7 +63,7 @@ price = 2*area + 10*num - 3*age + np.random.normal(0, noise, n_samples) + 50
 
 解释：
 - **线性关系**：面积和房间数对价格正向影响，房龄负向影响
-- **噪声项 \(\epsilon\)**：让数据更接近真实场景
+- **噪声项 $\epsilon$**：让数据更接近真实场景
 - **+50**：让价格整体上移（类似“基准价”）
 
 ---

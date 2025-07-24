@@ -21,66 +21,66 @@
 
 ### 2.1 一元线性回归
 
-\[
+$$
 \hat{y} = \beta_0 + \beta_1 x
-\]
+$$
 
-- \(\beta_0\)：截距（常数项）
-- \(\beta_1\)：斜率（特征权重）
+- $\beta_0$：截距（常数项）
+- $\beta_1$：斜率（特征权重）
 
 ### 2.2 多元线性回归
 
-\[
+$$
 \hat{y} = \beta_0 + \beta_1 x_1 + \beta_2 x_2 + \cdots + \beta_p x_p
-\]
+$$
 
 ---
 
 ## 3. 矩阵表示
 
-为了推导方便，我们把偏置项 \(\beta_0\) 合并进参数向量：
+为了推导方便，我们把偏置项 $\beta_0$ 合并进参数向量：
 
-\[
+$$
 \mathbf{X} = \begin{bmatrix}
 1 & x_{11} & x_{12} & \cdots & x_{1p} \\
 1 & x_{21} & x_{22} & \cdots & x_{2p} \\
 \vdots & \vdots & \vdots & \ddots & \vdots \\
 1 & x_{n1} & x_{n2} & \cdots & x_{np}
 \end{bmatrix}
-\]
+$$
 
-\[
+$$
 \boldsymbol{\beta} = \begin{bmatrix}\beta_0 \\ \beta_1 \\ \vdots \\ \beta_p\end{bmatrix}
-\]
+$$
 
 预测写成：
 
-\[
+$$
 \hat{\mathbf{y}} = \mathbf{X}\boldsymbol{\beta}
-\]
+$$
 
 ---
 
 ## 4. 损失函数（最小二乘）
 
-我们希望预测值 \(\hat{y}\) 与真实值 \(y\) 的差越小越好。
+我们希望预测值 $\hat{y}$ 与真实值 $y$ 的差越小越好。
 
 ### 4.1 SSE / MSE
 
 **SSE（误差平方和）**：
-\[
+$$
 \text{SSE} = \sum_{i=1}^{n}(y_i - \hat{y}_i)^2
-\]
+$$
 
 **MSE（均方误差）**：
-\[
+$$
 \text{MSE} = \frac{1}{n}\sum_{i=1}^{n}(y_i - \hat{y}_i)^2
-\]
+$$
 
 向量形式：
-\[
+$$
 J(\boldsymbol{\beta}) = \frac{1}{n}\|\mathbf{y} - \mathbf{X}\boldsymbol{\beta}\|^2
-\]
+$$
 
 ---
 
@@ -88,31 +88,31 @@ J(\boldsymbol{\beta}) = \frac{1}{n}\|\mathbf{y} - \mathbf{X}\boldsymbol{\beta}\|
 
 ### 5.1 目标函数
 
-\[
+$$
 J(\boldsymbol{\beta}) = \frac{1}{n}(\mathbf{y} - \mathbf{X}\boldsymbol{\beta})^T(\mathbf{y} - \mathbf{X}\boldsymbol{\beta})
-\]
+$$
 
 ### 5.2 对参数求导
 
-\[
+$$
 \frac{\partial J}{\partial \boldsymbol{\beta}} = -\frac{2}{n}\mathbf{X}^T(\mathbf{y} - \mathbf{X}\boldsymbol{\beta})
-\]
+$$
 
 ### 5.3 令导数为 0
 
-\[
+$$
 \mathbf{X}^T\mathbf{X}\boldsymbol{\beta} = \mathbf{X}^T\mathbf{y}
-\]
+$$
 
 ### 5.4 解出参数
 
-\[
+$$
 \boldsymbol{\beta} = (\mathbf{X}^T\mathbf{X})^{-1}\mathbf{X}^T\mathbf{y}
-\]
+$$
 
 > 这就是正规方程（Normal Equation）。
 
-**注意**：如果 \(\mathbf{X}^T\mathbf{X}\) 不可逆，可以用伪逆或 SVD 求解。
+**注意**：如果 $\mathbf{X}^T\mathbf{X}$ 不可逆，可以用伪逆或 SVD 求解。
 
 ---
 
@@ -122,15 +122,15 @@ J(\boldsymbol{\beta}) = \frac{1}{n}(\mathbf{y} - \mathbf{X}\boldsymbol{\beta})^T
 
 ### 6.1 更新公式
 
-\[
+$$
 \boldsymbol{\beta}^{(t+1)} = \boldsymbol{\beta}^{(t)} - \alpha \cdot \nabla J(\boldsymbol{\beta})
-\]
+$$
 
-\[
+$$
 \nabla J(\boldsymbol{\beta}) = -\frac{2}{n}\mathbf{X}^T(\mathbf{y} - \mathbf{X}\boldsymbol{\beta})
-\]
+$$
 
-### 6.2 学习率 \(\alpha\)
+### 6.2 学习率 $\alpha$
 
 - 太小：收敛慢
 - 太大：可能发散
@@ -139,11 +139,11 @@ J(\boldsymbol{\beta}) = \frac{1}{n}(\mathbf{y} - \mathbf{X}\boldsymbol{\beta})^T
 
 ## 7. 线性回归的概率视角
 
-如果假设误差 \(\epsilon\) 服从高斯分布：
+如果假设误差 $\epsilon$ 服从高斯分布：
 
-\[
+$$
 \epsilon \sim \mathcal{N}(0, \sigma^2)
-\]
+$$
 
 则最大似然估计会导出最小二乘解。也就是说：
 
@@ -154,24 +154,24 @@ J(\boldsymbol{\beta}) = \frac{1}{n}(\mathbf{y} - \mathbf{X}\boldsymbol{\beta})^T
 ## 8. 评价指标（用于代码评估部分）
 
 **MSE**：
-\[
+$$
 \text{MSE} = \frac{1}{n}\sum_{i=1}^n (y_i - \hat{y}_i)^2
-\]
+$$
 
 **RMSE**：
-\[
+$$
 \text{RMSE} = \sqrt{\text{MSE}}
-\]
+$$
 
 **MAE**：
-\[
+$$
 \text{MAE} = \frac{1}{n}\sum_{i=1}^n |y_i - \hat{y}_i|
-\]
+$$
 
 **R²**：
-\[
+$$
 R^2 = 1 - \frac{\sum (y_i - \hat{y}_i)^2}{\sum (y_i - \bar{y})^2}
-\]
+$$
 
 ---
 
@@ -197,9 +197,9 @@ R^2 = 1 - \frac{\sum (y_i - \hat{y}_i)^2}{\sum (y_i - \bar{y})^2}
 
 标准化公式：
 
-\[
+$$
  x' = \frac{x - \mu}{\sigma}
-\]
+$$
 
 ---
 
@@ -216,15 +216,15 @@ R^2 = 1 - \frac{\sum (y_i - \hat{y}_i)^2}{\sum (y_i - \bar{y})^2}
 
 ### 12.1 Ridge（L2）
 
-\[
+$$
 J(\boldsymbol{\beta}) = \text{MSE} + \lambda \sum \beta_i^2
-\]
+$$
 
 ### 12.2 Lasso（L1）
 
-\[
+$$
 J(\boldsymbol{\beta}) = \text{MSE} + \lambda \sum |\beta_i|
-\]
+$$
 
 - Ridge：更稳定，降低方差
 - Lasso：可做特征选择
