@@ -211,3 +211,6 @@ outputs/
 Basic/outputs/
 
 .claude
+.obsidian/
+_copilot/
+copilot/
