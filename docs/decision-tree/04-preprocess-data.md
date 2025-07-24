@@ -1,4 +1,4 @@
-﻿# 数据预处理（preprocess_data.py）
+# 数据预处理（preprocess_data.py）
 
 这一模块负责划分训练集/测试集。决策树不需要标准化，但必须保证评估公平。
 
