@@ -18,8 +18,8 @@ features = data.drop("价格", axis=1)
 price = data["价格"]
 ```
 
-- `features` 是输入 \(X\)
-- `price` 是输出 \(y\)
+- `features` 是输入 $X$
+- `price` 是输出 $y$
 
 ---
 
@@ -45,9 +45,9 @@ X_train, X_test, y_train, y_test = train_test_split(
 
 标准化公式：
 
-\[
+$$
  x' = \frac{x - \mu}{\sigma}
-\]
+$$
 
 代码：
 

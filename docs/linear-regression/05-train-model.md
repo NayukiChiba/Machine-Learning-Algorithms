@@ -8,9 +8,9 @@
 
 通过最小二乘法拟合参数：
 
-\[
+$$
 \boldsymbol{\beta} = (\mathbf{X}^T\mathbf{X})^{-1}\mathbf{X}^T\mathbf{y}
-\]
+$$
 
 在代码中，`sklearn` 会用数值稳定的方法（如 SVD）实现这个过程。
 
@@ -39,7 +39,7 @@ model = LinearRegression()
 model.fit(X_train, y_train)
 ```
 
-- `.fit()` 会计算参数 \(\beta\)
+- `.fit()` 会计算参数 $\beta$
 - 训练结束后可用 `coef_` 和 `intercept_` 访问参数
 
 ---
@@ -54,8 +54,8 @@ for name, coef in zip(features_names, model.coef_):
 ```
 
 解释：
-- `intercept_` 是 \(\beta_0\)
-- `coef_` 是 \(\beta_1 ... \beta_p\)
+- `intercept_` 是 $\beta_0$
+- `coef_` 是 $\beta_1 ... \beta_p$
 
 正负号含义：
 - **正数**：特征值增大，预测值增大
