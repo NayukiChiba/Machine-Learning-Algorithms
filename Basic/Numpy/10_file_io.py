@@ -89,16 +89,22 @@ def demo_savetxt_loadtxt():
     np.savetxt(filepath, arr)
     print(f"默认格式保存到: {filepath}")
 
-    with open(filepath, 'r') as f:
+    with open(filepath, "r") as f:
         print(f"文件内容:\n{f.read()}")
 
     # 自定义格式保存 (CSV)
     filepath_csv = output_dir / "array.csv"
-    np.savetxt(filepath_csv, arr, delimiter=',', fmt='%.4f',
-               header='col1,col2,col3,col4', comments='')
+    np.savetxt(
+        filepath_csv,
+        arr,
+        delimiter=",",
+        fmt="%.4f",
+        header="col1,col2,col3,col4",
+        comments="",
+    )
     print(f"CSV 格式保存到: {filepath_csv}")
 
-    with open(filepath_csv, 'r') as f:
+    with open(filepath_csv, "r") as f:
         print(f"CSV 内容:\n{f.read()}")
 
     # 加载
@@ -115,24 +121,23 @@ def demo_format_options():
 
     output_dir = get_output_dir("numpy")
 
-    arr = np.array([[1.23456789, 2.34567890],
-                    [3.45678901, 4.56789012]])
+    arr = np.array([[1.23456789, 2.34567890], [3.45678901, 4.56789012]])
     print(f"原数组:\n{arr}")
     print()
 
     formats = [
-        ('%.2f', '2位小数'),
-        ('%.4f', '4位小数'),
-        ('%d', '整数'),
-        ('%.2e', '科学计数法'),
-        ('%10.4f', '宽度10,4位小数'),
+        ("%.2f", "2位小数"),
+        ("%.4f", "4位小数"),
+        ("%d", "整数"),
+        ("%.2e", "科学计数法"),
+        ("%10.4f", "宽度10,4位小数"),
     ]
 
     for fmt, desc in formats:
         filepath = output_dir / f"fmt_{desc}.txt"
         try:
             np.savetxt(filepath, arr, fmt=fmt)
-            with open(filepath, 'r') as f:
+            with open(filepath, "r") as f:
                 content = f.readline().strip()
             print(f"{desc} ({fmt}): {content}")
         except Exception as e:
@@ -151,15 +156,14 @@ def demo_header_skiprows():
 
     # 保存带表头的文件
     filepath = output_dir / "with_header.csv"
-    np.savetxt(filepath, arr, delimiter=',', fmt='%d',
-               header='A,B,C', comments='')
+    np.savetxt(filepath, arr, delimiter=",", fmt="%d", header="A,B,C", comments="")
 
     print("保存的文件内容:")
-    with open(filepath, 'r') as f:
+    with open(filepath, "r") as f:
         print(f.read())
 
     # 加载时跳过表头
-    loaded = np.loadtxt(filepath, delimiter=',', skiprows=1)
+    loaded = np.loadtxt(filepath, delimiter=",", skiprows=1)
     print(f"加载的数组 (skiprows=1):\n{loaded}")
 
 
