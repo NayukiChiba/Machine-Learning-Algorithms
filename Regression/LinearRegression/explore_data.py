@@ -1,8 +1,10 @@
-'''
+"""
 数据探索部分
-'''
+"""
+
 from pathlib import Path
 import sys
+
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent.parent))
 
 
@@ -10,14 +12,15 @@ from pandas import DataFrame
 from utils.decorate import print_func_info
 from generate_data import generate_data
 
+
 @print_func_info
-def explore_data(data:DataFrame):
-    '''
+def explore_data(data: DataFrame):
+    """
     数据探索分析
-    
+
     args:
         data(DataFrame): 数据是DataFrame类型
-    '''
+    """
     print("1. 数据集基本信息:")
     print(f"样本数量: {len(data)}")
     print(f"特征数量: {len(data.columns) - 1}")
