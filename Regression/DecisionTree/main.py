@@ -1,6 +1,7 @@
 # Regression/DecisionTree/main.py
 import sys
 from pathlib import Path
+
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent.parent))
 
 from generate_data import generate_data
@@ -29,15 +30,18 @@ print("=" * 60)
 visualize_data(df)
 
 # 4. 数据预处理
-X_train, X_test, y_train, y_test, X, y = preprocess_data(df, test_size=0.2, random_state=42)
+X_train, X_test, y_train, y_test, X, y = preprocess_data(
+    df, test_size=0.2, random_state=42
+)
 
 # 5. 模型训练
 model = train_model(
-    X_train, y_train,
+    X_train,
+    y_train,
     max_depth=6,
     min_samples_split=6,
     min_samples_leaf=3,
-    random_state=42
+    random_state=42,
 )
 
 # 6. 模型评估

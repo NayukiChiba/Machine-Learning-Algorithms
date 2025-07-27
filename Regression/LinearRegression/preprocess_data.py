@@ -1,10 +1,12 @@
-'''
+"""
 数据的预处理和划分操作
-'''
+"""
+
 # 导入根目录为搜索路径
 import os
 import sys
 from pathlib import Path
+
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent.parent))
 
 from pandas import DataFrame
@@ -15,8 +17,8 @@ from generate_data import generate_data
 
 
 @print_func_info
-def preprocess_data(data:DataFrame, test_size:float=0.2, random_state:int=42):
-    '''
+def preprocess_data(data: DataFrame, test_size: float = 0.2, random_state: int = 42):
+    """
     数据的预处理和划分
 
     args:
@@ -31,19 +33,20 @@ def preprocess_data(data:DataFrame, test_size:float=0.2, random_state:int=42):
         scaler: 归一化方法
         X_train: 训练集
         X_test: 测试集
-    '''
+    """
     # 分离特征和目标变量
     features = data.drop("价格", axis=1)
     price = data["价格"]
 
     # 划分训练集和测试集
     X_train, X_test, y_train, y_test = train_test_split(
-        features, price, test_size=test_size, random_state=random_state)
+        features, price, test_size=test_size, random_state=random_state
+    )
 
     print(f"训练集大小: {len(X_train)}个样本")
     print(f"测试集大小: {len(X_test)}个样本")
-    print(f"训练集占比: {(1-test_size)*100:.0f}%")
-    print(f"测试集占比: {test_size*100:.0f}%")
+    print(f"训练集占比: {(1 - test_size) * 100:.0f}%")
+    print(f"测试集占比: {test_size * 100:.0f}%")
 
     # 特征标准化
     scaler = StandardScaler()
