@@ -5,6 +5,7 @@
 import sys
 from pathlib import Path
 
+# 将项目根目录加入模块搜索路径，便于直接导入公共工具
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent.parent))
 
 from sklearn.metrics import (
@@ -32,32 +33,38 @@ def evaluate_model(model, X_train, X_test, y_train, y_test):
     returns:
         y_train_pred, y_test_pred
     """
+    # 预测训练集和测试集
     y_train_pred = model.predict(X_train)
     y_test_pred = model.predict(X_test)
 
+    # 训练集指标
     train_acc = accuracy_score(y_train, y_train_pred)
     train_precision = precision_score(y_train, y_train_pred, zero_division=0)
     train_recall = recall_score(y_train, y_train_pred, zero_division=0)
     train_f1 = f1_score(y_train, y_train_pred, zero_division=0)
 
+    # 测试集指标
     test_acc = accuracy_score(y_test, y_test_pred)
     test_precision = precision_score(y_test, y_test_pred, zero_division=0)
     test_recall = recall_score(y_test, y_test_pred, zero_division=0)
     test_f1 = f1_score(y_test, y_test_pred, zero_division=0)
 
+    # 输出训练集性能
     print("训练集性能:")
     print(f"Accuracy:  {train_acc:.4f}")
     print(f"Precision: {train_precision:.4f}")
     print(f"Recall:    {train_recall:.4f}")
     print(f"F1-Score:  {train_f1:.4f}")
 
+    # 输出测试集性能
     print("测试集性能:")
     print(f"Accuracy:  {test_acc:.4f}")
     print(f"Precision: {test_precision:.4f}")
     print(f"Recall:    {test_recall:.4f}")
     print(f"F1-Score:  {test_f1:.4f}")
 
-    print("泛化检查:")
+    # 简单泛化检查：训练集准确率和测试集准确率的差异
+    print("泛化检查")
     acc_diff = train_acc - test_acc
     if acc_diff < 0.03:
         print(f"模型泛化良好 (Accuracy差异: {acc_diff:.4f})")
@@ -66,6 +73,7 @@ def evaluate_model(model, X_train, X_test, y_train, y_test):
     else:
         print(f"存在过拟合风险 (Accuracy差异: {acc_diff:.4f})")
 
+    # 输出分类报告（每一类的 precision/recall/f1）
     print("\n测试集分类报告:")
     print(classification_report(y_test, y_test_pred, digits=4, zero_division=0))
 
@@ -73,6 +81,7 @@ def evaluate_model(model, X_train, X_test, y_train, y_test):
 
 
 if __name__ == "__main__":
+    # 模块自测：训练并评估
     X_train, X_test, y_train, y_test, scaler, X_train_orig, X_test_orig = (
         preprocess_data(generate_data())
     )
