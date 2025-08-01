@@ -6,6 +6,7 @@ import os
 import sys
 from pathlib import Path
 
+# 将项目根目录加入模块搜索路径，便于直接导入公共工具
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent.parent))
 
 from matplotlib import pyplot as plt
@@ -15,8 +16,10 @@ from utils.decorate import print_func_info
 from config import OUTPUTS_ROOT
 from generate_data import generate_data
 
+# 输出目录
 SVM_OUTPUTS = os.path.join(OUTPUTS_ROOT, "SVM")
 
+# 中文字体设置（避免中文乱码）
 plt.rcParams["font.sans-serif"] = ["SimHei", "Microsoft YaHei"]
 plt.rcParams["axes.unicode_minus"] = False
 
@@ -29,13 +32,16 @@ def visualize_data(data: DataFrame):
     args:
         data(DataFrame): 数据
     """
+    # 创建输出目录
     os.makedirs(SVM_OUTPUTS, exist_ok=True)
 
-    # 类别分布柱状图
+    # 1. 类别分布柱状图
     class_count = data["label"].value_counts().sort_index()
     plt.figure(figsize=(6, 4))
     plt.bar(
-        class_count.index.astype(str), class_count.values, colors=["steelblue", "coral"]
+        class_count.index.astype(str),
+        class_count.values,
+        color=["steelblue", "coral"],
     )
     plt.title("类别分布", fontsize=14, fontweight="bold")
     plt.xlabel("类别")
@@ -44,12 +50,12 @@ def visualize_data(data: DataFrame):
     plt.tight_layout()
     filepath = os.path.join(SVM_OUTPUTS, "01_class_distribution.png")
     plt.savefig(filepath, dpi=300, bbox_inches="tight")
-    print(f"保存图像:{filepath}")
+    print(f"保存图像: {filepath}")
 
-    # 特征散点图
+    # 2. 特征散点图（展示双月牙结构）
     plt.figure(figsize=(7, 6))
     for label, color in zip([0, 1], ["steelblue", "coral"]):
-        part = data(data["label"] == label)
+        part = data[data["label"] == label]
         plt.scatter(
             part["x1"],
             part["x2"],
@@ -68,7 +74,7 @@ def visualize_data(data: DataFrame):
     plt.savefig(filepath, dpi=300, bbox_inches="tight")
     print(f"保存图像: {filepath}")
 
-    # 相关性热力图
+    # 3. 相关性热力图
     plt.figure(figsize=(6, 5))
     corr = data.corr(numeric_only=True)
     sns.heatmap(corr, annot=True, fmt=".2f", cmap="coolwarm", center=0, square=True)
@@ -80,4 +86,5 @@ def visualize_data(data: DataFrame):
 
 
 if __name__ == "__main__":
+    # 模块自测：生成数据并进行可视化
     visualize_data(generate_data())
