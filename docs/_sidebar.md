@@ -82,3 +82,15 @@
   - [结果可视化](decision-tree/07-visualize-results.md)
   - [完整流程](decision-tree/08-main-pipeline.md)
   - [常见问题](decision-tree/09-faq.md)
+
+- **SVM 项目**
+  - [数学基础](svm/00-math.md)
+  - [生成数据](svm/01-generate-data.md)
+  - [数据探索](svm/02-explore-data.md)
+  - [数据可视化](svm/03-visualize-data.md)
+  - [数据预处理](svm/04-preprocess-data.md)
+  - [模型训练](svm/05-train-model.md)
+  - [模型评估](svm/06-evaluate-model.md)
+  - [结果可视化](svm/07-visualize-results.md)
+  - [完整流程](svm/08-main-pipeline.md)
+  - [常见问题](svm/09-faq.md)
