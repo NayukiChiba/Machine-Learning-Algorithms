@@ -22,7 +22,7 @@ from preprocess_data import preprocess_data
 from evaluate_model import evaluate_model
 
 # 输出目录
-SVM_OUTPUTS = os.path.join(OUTPUTS_ROOT, "SVM")
+SVC_OUTPUTS = os.path.join(OUTPUTS_ROOT, "SVC")
 
 # 中文字体设置（避免中文乱码）
 plt.rcParams["font.sans-serif"] = ["SimHei", "Microsoft YaHei"]
@@ -115,7 +115,7 @@ def visualize_results(
         y_train_pred, y_test_pred: 预测标签
     """
     # 创建输出目录
-    os.makedirs(SVM_OUTPUTS, exist_ok=True)
+    os.makedirs(SVC_OUTPUTS, exist_ok=True)
 
     # 1. 混淆矩阵
     train_cm = confusion_matrix(y_train, y_train_pred)
@@ -135,7 +135,7 @@ def visualize_results(
     axes[1].set_ylabel("真实标签")
 
     plt.tight_layout()
-    filepath = os.path.join(SVM_OUTPUTS, "04_confusion_matrix.png")
+    filepath = os.path.join(SVC_OUTPUTS, "04_confusion_matrix.png")
     plt.savefig(filepath, dpi=300, bbox_inches="tight")
     print(f"保存图像: {filepath}")
 
@@ -152,7 +152,7 @@ def visualize_results(
     axes[1].legend(unique.values(), unique.keys(), loc="best")
 
     plt.tight_layout()
-    filepath = os.path.join(SVM_OUTPUTS, "05_decision_boundary.png")
+    filepath = os.path.join(SVC_OUTPUTS, "05_decision_boundary.png")
     plt.savefig(filepath, dpi=300, bbox_inches="tight")
     print(f"保存图像: {filepath}")
 
