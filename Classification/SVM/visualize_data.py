@@ -17,7 +17,7 @@ from config import OUTPUTS_ROOT
 from generate_data import generate_data
 
 # 输出目录
-SVM_OUTPUTS = os.path.join(OUTPUTS_ROOT, "SVM")
+SVC_OUTPUTS = os.path.join(OUTPUTS_ROOT, "SVC")
 
 # 中文字体设置（避免中文乱码）
 plt.rcParams["font.sans-serif"] = ["SimHei", "Microsoft YaHei"]
@@ -33,7 +33,7 @@ def visualize_data(data: DataFrame):
         data(DataFrame): 数据
     """
     # 创建输出目录
-    os.makedirs(SVM_OUTPUTS, exist_ok=True)
+    os.makedirs(SVC_OUTPUTS, exist_ok=True)
 
     # 1. 类别分布柱状图
     class_count = data["label"].value_counts().sort_index()
@@ -48,7 +48,7 @@ def visualize_data(data: DataFrame):
     plt.ylabel("样本数")
     plt.grid(True, axis="y", alpha=0.3)
     plt.tight_layout()
-    filepath = os.path.join(SVM_OUTPUTS, "01_class_distribution.png")
+    filepath = os.path.join(SVC_OUTPUTS, "01_class_distribution.png")
     plt.savefig(filepath, dpi=300, bbox_inches="tight")
     print(f"保存图像: {filepath}")
 
@@ -70,7 +70,7 @@ def visualize_data(data: DataFrame):
     plt.legend()
     plt.grid(True, alpha=0.3)
     plt.tight_layout()
-    filepath = os.path.join(SVM_OUTPUTS, "02_data_scatter.png")
+    filepath = os.path.join(SVC_OUTPUTS, "02_data_scatter.png")
     plt.savefig(filepath, dpi=300, bbox_inches="tight")
     print(f"保存图像: {filepath}")
 
@@ -80,7 +80,7 @@ def visualize_data(data: DataFrame):
     sns.heatmap(corr, annot=True, fmt=".2f", cmap="coolwarm", center=0, square=True)
     plt.title("特征相关性热力图", fontsize=14, fontweight="bold")
     plt.tight_layout()
-    filepath = os.path.join(SVM_OUTPUTS, "03_correlation_heatmap.png")
+    filepath = os.path.join(SVC_OUTPUTS, "03_correlation_heatmap.png")
     plt.savefig(filepath, dpi=300, bbox_inches="tight")
     print(f"保存图像: {filepath}")
 
