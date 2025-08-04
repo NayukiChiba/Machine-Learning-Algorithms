@@ -13,15 +13,13 @@ from pandas import DataFrame
 from utils.decorate import print_func_info
 import seaborn as sns
 from matplotlib import pyplot as plt
+from config import OUTPUTS_ROOT
+from generate_data import generate_data
+
 
 plt.rcParams["font.sans-serif"] = ["SimHei", "Microsoft YaHei"]
 plt.rcParams["axes.unicode_minus"] = False
-from config import OUTPUTS_ROOT
-
 LR_OUTPUTS = os.path.join(OUTPUTS_ROOT, "LinearRegression")
-
-
-from generate_data import generate_data
 
 
 @print_func_info
@@ -100,4 +98,4 @@ def visualize_data(data: DataFrame):
 
 
 if __name__ == "__main__":
-    visulize_data(generate_data())
+    visualize_data(generate_data())
