@@ -38,17 +38,38 @@ def _plot_decision_boundary(
     title: str,
 ):
     """
-    绘制决策边界
+    绘制决策边界（自动选择系数最大的两个特征）
     """
-    x1_min, x1_max = X_data["x1"].min() - 0.6, X_data["x1"].max() + 0.6
-    x2_min, x2_max = X_data["x2"].min() - 0.6, X_data["x2"].max() + 0.6
+    # 找出系数绝对值最大的两个特征
+    coef_abs = np.abs(model.coef_[0])
+    top_2_idx = np.argsort(coef_abs)[-2:][::-1]  # 降序排列
+    feature_names = X_data.columns.tolist()
+    feat1, feat2 = feature_names[top_2_idx[0]], feature_names[top_2_idx[1]]
 
-    xx, yy = np.meshgrid(
-        np.linspace(x1_min, x1_max, 300),
-        np.linspace(x2_min, x2_max, 300),
+    print(
+        f"  使用特征: {feat1} (系数={model.coef_[0][top_2_idx[0]]:.4f}), "
+        f"{feat2} (系数={model.coef_[0][top_2_idx[1]]:.4f})"
     )
 
-    grid = DataFrame(np.c_[xx.ravel(), yy.ravel()], columns=["x1", "x2"])
+    f1_min, f1_max = X_data[feat1].min() - 0.6, X_data[feat1].max() + 0.6
+    f2_min, f2_max = X_data[feat2].min() - 0.6, X_data[feat2].max() + 0.6
+
+    xx, yy = np.meshgrid(
+        np.linspace(f1_min, f1_max, 300),
+        np.linspace(f2_min, f2_max, 300),
+    )
+
+    # 创建网格，包含所有特征
+    grid = DataFrame(np.c_[xx.ravel(), yy.ravel()], columns=[feat1, feat2])
+
+    # 为其他特征填充均值
+    for col in X_data.columns:
+        if col not in [feat1, feat2]:
+            grid[col] = X_data[col].mean()
+
+    # 确保列的顺序与训练数据一致
+    grid = grid[X_data.columns]
+
     grid_scaled = scaler.transform(grid)
     zz = model.predict(grid_scaled).reshape(xx.shape)
 
@@ -59,8 +80,8 @@ def _plot_decision_boundary(
     for label, color in zip([0, 1], ["steelblue", "coral"]):
         part = plot_data[plot_data["label"] == label]
         ax.scatter(
-            part["x1"],
-            part["x2"],
+            part[feat1],
+            part[feat2],
             s=25,
             alpha=0.8,
             color=color,
@@ -68,8 +89,8 @@ def _plot_decision_boundary(
         )
 
     ax.set_title(title, fontsize=12, fontweight="bold")
-    ax.set_xlabel("x1")
-    ax.set_ylabel("x2")
+    ax.set_xlabel(feat1)
+    ax.set_ylabel(feat2)
     ax.grid(True, alpha=0.3)
 
 
