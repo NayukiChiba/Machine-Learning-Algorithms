@@ -1,4 +1,4 @@
-﻿# Machine-Learning-Algorithms
+# Machine-Learning-Algorithms
 
 机器学习算法学习与实现的总结库。下面是算法分类清单，你可以按这个分类建文件夹。
 
