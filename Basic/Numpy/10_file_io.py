@@ -7,7 +7,12 @@ NumPy 文件操作
 """
 
 import numpy as np
-import os
+import sys
+from pathlib import Path
+
+# 添加项目根目录到搜索路径
+sys.path.insert(0, str(Path(__file__).parent.parent.parent))
+from config import get_output_dir
 
 
 def demo_save_load_npy():
@@ -15,24 +20,23 @@ def demo_save_load_npy():
     print("=" * 50)
     print("1. save 和 load (.npy 二进制格式)")
     print("=" * 50)
-    
-    # 创建输出目录
-    output_dir = "outputs"
-    os.makedirs(output_dir, exist_ok=True)
-    
+
+    # 获取输出目录
+    output_dir = get_output_dir("numpy")
+
     # 创建测试数组
     np.random.seed(42)
     arr = np.random.random((3, 4))
     print(f"原数组:\n{arr}")
     print()
-    
+
     # 保存
-    filepath = os.path.join(output_dir, "array.npy")
+    filepath = output_dir / "array.npy"
     np.save(filepath, arr)
     print(f"已保存到: {filepath}")
-    print(f"文件大小: {os.path.getsize(filepath)} 字节")
+    print(f"文件大小: {filepath.stat().st_size} 字节")
     print()
-    
+
     # 加载
     loaded = np.load(filepath)
     print(f"加载的数组:\n{loaded}")
@@ -44,21 +48,20 @@ def demo_savez():
     print("=" * 50)
     print("2. savez 保存多个数组 (.npz)")
     print("=" * 50)
-    
-    output_dir = "outputs"
-    os.makedirs(output_dir, exist_ok=True)
-    
+
+    output_dir = get_output_dir("numpy")
+
     # 创建多个数组
     arr1 = np.array([1, 2, 3, 4, 5])
     arr2 = np.array([[1, 2], [3, 4]])
     arr3 = np.arange(10)
-    
+
     # 保存多个数组
-    filepath = os.path.join(output_dir, "arrays.npz")
+    filepath = output_dir / "arrays.npz"
     np.savez(filepath, a=arr1, b=arr2, c=arr3)
     print(f"已保存到: {filepath}")
     print()
-    
+
     # 加载
     data = np.load(filepath)
     print(f"包含的数组: {list(data.keys())}")
@@ -72,33 +75,32 @@ def demo_savetxt_loadtxt():
     print("=" * 50)
     print("3. savetxt 和 loadtxt (文本格式)")
     print("=" * 50)
-    
-    output_dir = "outputs"
-    os.makedirs(output_dir, exist_ok=True)
-    
+
+    output_dir = get_output_dir("numpy")
+
     # 创建测试数组
     np.random.seed(42)
     arr = np.random.random((3, 4))
     print(f"原数组:\n{arr}")
     print()
-    
+
     # 默认格式保存
-    filepath = os.path.join(output_dir, "array.txt")
+    filepath = output_dir / "array.txt"
     np.savetxt(filepath, arr)
     print(f"默认格式保存到: {filepath}")
-    
+
     with open(filepath, 'r') as f:
         print(f"文件内容:\n{f.read()}")
-    
+
     # 自定义格式保存 (CSV)
-    filepath_csv = os.path.join(output_dir, "array.csv")
-    np.savetxt(filepath_csv, arr, delimiter=',', fmt='%.4f', 
+    filepath_csv = output_dir / "array.csv"
+    np.savetxt(filepath_csv, arr, delimiter=',', fmt='%.4f',
                header='col1,col2,col3,col4', comments='')
     print(f"CSV 格式保存到: {filepath_csv}")
-    
+
     with open(filepath_csv, 'r') as f:
         print(f"CSV 内容:\n{f.read()}")
-    
+
     # 加载
     loaded = np.loadtxt(filepath)
     print(f"加载的数组:\n{loaded}")
@@ -110,15 +112,14 @@ def demo_format_options():
     print("=" * 50)
     print("4. 格式选项 (fmt)")
     print("=" * 50)
-    
-    output_dir = "outputs"
-    os.makedirs(output_dir, exist_ok=True)
-    
+
+    output_dir = get_output_dir("numpy")
+
     arr = np.array([[1.23456789, 2.34567890],
                     [3.45678901, 4.56789012]])
     print(f"原数组:\n{arr}")
     print()
-    
+
     formats = [
         ('%.2f', '2位小数'),
         ('%.4f', '4位小数'),
@@ -126,9 +127,9 @@ def demo_format_options():
         ('%.2e', '科学计数法'),
         ('%10.4f', '宽度10,4位小数'),
     ]
-    
+
     for fmt, desc in formats:
-        filepath = os.path.join(output_dir, f"fmt_{desc}.txt")
+        filepath = output_dir / f"fmt_{desc}.txt"
         try:
             np.savetxt(filepath, arr, fmt=fmt)
             with open(filepath, 'r') as f:
@@ -143,21 +144,20 @@ def demo_header_skiprows():
     print("=" * 50)
     print("5. 带表头的文件处理")
     print("=" * 50)
-    
-    output_dir = "outputs"
-    os.makedirs(output_dir, exist_ok=True)
-    
+
+    output_dir = get_output_dir("numpy")
+
     arr = np.array([[1, 2, 3], [4, 5, 6], [7, 8, 9]])
-    
+
     # 保存带表头的文件
-    filepath = os.path.join(output_dir, "with_header.csv")
+    filepath = output_dir / "with_header.csv"
     np.savetxt(filepath, arr, delimiter=',', fmt='%d',
                header='A,B,C', comments='')
-    
+
     print("保存的文件内容:")
     with open(filepath, 'r') as f:
         print(f.read())
-    
+
     # 加载时跳过表头
     loaded = np.loadtxt(filepath, delimiter=',', skiprows=1)
     print(f"加载的数组 (skiprows=1):\n{loaded}")
