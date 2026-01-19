@@ -8,9 +8,15 @@ import matplotlib.pyplot as plt
 from sklearn.datasets import make_classification
 from sklearn.tree import DecisionTreeClassifier, plot_tree
 from sklearn.ensemble import RandomForestClassifier
+import sys
+from pathlib import Path
+
+# 添加项目根目录到搜索路径
+sys.path.insert(0, str(Path(__file__).parent.parent.parent))
+from config import get_output_dir
 
 
-def demo_decision_boundary():
+def demo_decision_boundary(output_dir):
     """演示决策边界可视化"""
     print("=" * 50)
     print("1. 决策边界")
@@ -40,12 +46,12 @@ def demo_decision_boundary():
     ax.set_title('Decision Boundary')
     
     plt.tight_layout()
-    plt.savefig('../outputs/viz_07_boundary.png', dpi=100)
+    plt.savefig(output_dir / 'viz_07_boundary.png', dpi=100)
     plt.close()
     print("图表已保存")
 
 
-def demo_tree_viz():
+def demo_tree_viz(output_dir):
     """演示决策树可视化"""
     print("=" * 50)
     print("2. 决策树可视化")
@@ -63,12 +69,12 @@ def demo_tree_viz():
     ax.set_title('Decision Tree Visualization')
     
     plt.tight_layout()
-    plt.savefig('../outputs/viz_07_tree.png', dpi=100)
+    plt.savefig(output_dir / 'viz_07_tree.png', dpi=100)
     plt.close()
     print("图表已保存")
 
 
-def demo_feature_importance():
+def demo_feature_importance(output_dir):
     """演示特征重要性"""
     print("=" * 50)
     print("3. 特征重要性")
@@ -94,21 +100,20 @@ def demo_feature_importance():
     ax.invert_yaxis()
     
     plt.tight_layout()
-    plt.savefig('../outputs/viz_07_importance.png', dpi=100)
+    plt.savefig(output_dir / 'viz_07_importance.png', dpi=100)
     plt.close()
     print("图表已保存")
 
 
 def demo_all():
     """运行所有演示"""
-    import os
-    os.makedirs('../outputs', exist_ok=True)
-    
-    demo_decision_boundary()
+    output_dir = get_output_dir("visualization")
+
+    demo_decision_boundary(output_dir)
     print()
-    demo_tree_viz()
+    demo_tree_viz(output_dir)
     print()
-    demo_feature_importance()
+    demo_feature_importance(output_dir)
 
 
 if __name__ == "__main__":

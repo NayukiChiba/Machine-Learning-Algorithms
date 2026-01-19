@@ -9,9 +9,15 @@ from sklearn.datasets import make_classification
 from sklearn.model_selection import train_test_split, learning_curve
 from sklearn.linear_model import LogisticRegression
 from sklearn.metrics import confusion_matrix, roc_curve, auc, ConfusionMatrixDisplay
+import sys
+from pathlib import Path
+
+# 添加项目根目录到搜索路径
+sys.path.insert(0, str(Path(__file__).parent.parent.parent))
+from config import get_output_dir
 
 
-def demo_confusion_matrix():
+def demo_confusion_matrix(output_dir):
     """演示混淆矩阵"""
     print("=" * 50)
     print("1. 混淆矩阵")
@@ -33,12 +39,12 @@ def demo_confusion_matrix():
     ax.set_title('Confusion Matrix')
     
     plt.tight_layout()
-    plt.savefig('../outputs/viz_08_confusion.png', dpi=100)
+    plt.savefig(output_dir / 'viz_08_confusion.png', dpi=100)
     plt.close()
     print("图表已保存")
 
 
-def demo_roc_curve():
+def demo_roc_curve(output_dir):
     """演示 ROC 曲线"""
     print("=" * 50)
     print("2. ROC 曲线")
@@ -66,12 +72,12 @@ def demo_roc_curve():
     ax.grid(True, alpha=0.3)
     
     plt.tight_layout()
-    plt.savefig('../outputs/viz_08_roc.png', dpi=100)
+    plt.savefig(output_dir / 'viz_08_roc.png', dpi=100)
     plt.close()
     print("图表已保存")
 
 
-def demo_learning_curve():
+def demo_learning_curve(output_dir):
     """演示学习曲线"""
     print("=" * 50)
     print("3. 学习曲线")
@@ -103,21 +109,20 @@ def demo_learning_curve():
     ax.grid(True, alpha=0.3)
     
     plt.tight_layout()
-    plt.savefig('../outputs/viz_08_learning.png', dpi=100)
+    plt.savefig(output_dir / 'viz_08_learning.png', dpi=100)
     plt.close()
     print("图表已保存")
 
 
 def demo_all():
     """运行所有演示"""
-    import os
-    os.makedirs('../outputs', exist_ok=True)
-    
-    demo_confusion_matrix()
+    output_dir = get_output_dir("visualization")
+
+    demo_confusion_matrix(output_dir)
     print()
-    demo_roc_curve()
+    demo_roc_curve(output_dir)
     print()
-    demo_learning_curve()
+    demo_learning_curve(output_dir)
 
 
 if __name__ == "__main__":

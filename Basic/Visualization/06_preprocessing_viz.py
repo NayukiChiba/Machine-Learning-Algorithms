@@ -7,9 +7,15 @@ import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
 import seaborn as sns
+import sys
+from pathlib import Path
+
+# 添加项目根目录到搜索路径
+sys.path.insert(0, str(Path(__file__).parent.parent.parent))
+from config import get_output_dir
 
 
-def demo_missing_viz():
+def demo_missing_viz(output_dir):
     """演示缺失值可视化"""
     print("=" * 50)
     print("1. 缺失值可视化")
@@ -36,12 +42,12 @@ def demo_missing_viz():
     axes[1].set_ylabel('%')
     
     plt.tight_layout()
-    plt.savefig('../outputs/viz_06_missing.png', dpi=100)
+    plt.savefig(output_dir / 'viz_06_missing.png', dpi=100)
     plt.close()
     print("图表已保存")
 
 
-def demo_outlier_viz():
+def demo_outlier_viz(output_dir):
     """演示异常值可视化"""
     print("=" * 50)
     print("2. 异常值可视化")
@@ -69,12 +75,12 @@ def demo_outlier_viz():
     axes[1].legend()
     
     plt.tight_layout()
-    plt.savefig('../outputs/viz_06_outlier.png', dpi=100)
+    plt.savefig(output_dir / 'viz_06_outlier.png', dpi=100)
     plt.close()
     print("图表已保存")
 
 
-def demo_transform_viz():
+def demo_transform_viz(output_dir):
     """演示特征变换可视化"""
     print("=" * 50)
     print("3. 特征变换可视化")
@@ -105,21 +111,20 @@ def demo_transform_viz():
     axes[1, 1].set_title('Standardization')
     
     plt.tight_layout()
-    plt.savefig('../outputs/viz_06_transform.png', dpi=100)
+    plt.savefig(output_dir / 'viz_06_transform.png', dpi=100)
     plt.close()
     print("图表已保存")
 
 
 def demo_all():
     """运行所有演示"""
-    import os
-    os.makedirs('../outputs', exist_ok=True)
-    
-    demo_missing_viz()
+    output_dir = get_output_dir("visualization")
+
+    demo_missing_viz(output_dir)
     print()
-    demo_outlier_viz()
+    demo_outlier_viz(output_dir)
     print()
-    demo_transform_viz()
+    demo_transform_viz(output_dir)
 
 
 if __name__ == "__main__":

@@ -7,9 +7,15 @@ import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
 import seaborn as sns
+import sys
+from pathlib import Path
+
+# 添加项目根目录到搜索路径
+sys.path.insert(0, str(Path(__file__).parent.parent.parent))
+from config import get_output_dir
 
 
-def demo_distribution_analysis():
+def demo_distribution_analysis(output_dir):
     """演示分布分析"""
     print("=" * 50)
     print("1. 分布分析")
@@ -32,12 +38,12 @@ def demo_distribution_analysis():
         ax.legend()
     
     plt.tight_layout()
-    plt.savefig('../outputs/viz_05_distribution.png', dpi=100)
+    plt.savefig(output_dir / 'viz_05_distribution.png', dpi=100)
     plt.close()
     print("图表已保存")
 
 
-def demo_correlation_analysis():
+def demo_correlation_analysis(output_dir):
     """演示相关性分析"""
     print("=" * 50)
     print("2. 相关性分析")
@@ -64,12 +70,12 @@ def demo_correlation_analysis():
     axes[1].axis('off')
     
     plt.tight_layout()
-    plt.savefig('../outputs/viz_05_correlation.png', dpi=100)
+    plt.savefig(output_dir / 'viz_05_correlation.png', dpi=100)
     plt.close()
     print("图表已保存")
 
 
-def demo_categorical_analysis():
+def demo_categorical_analysis(output_dir):
     """演示分类变量分析"""
     print("=" * 50)
     print("3. 分类变量分析")
@@ -92,23 +98,22 @@ def demo_categorical_analysis():
     axes[1].set_title('Value by Category')
     
     plt.tight_layout()
-    plt.savefig('../outputs/viz_05_categorical.png', dpi=100)
+    plt.savefig(output_dir / 'viz_05_categorical.png', dpi=100)
     plt.close()
     print("图表已保存")
 
 
 def demo_all():
     """运行所有演示"""
-    import os
-    os.makedirs('../outputs', exist_ok=True)
-    
+    output_dir = get_output_dir("visualization")
+
     sns.set_theme(style='whitegrid')
-    
-    demo_distribution_analysis()
+
+    demo_distribution_analysis(output_dir)
     print()
-    demo_correlation_analysis()
+    demo_correlation_analysis(output_dir)
     print()
-    demo_categorical_analysis()
+    demo_categorical_analysis(output_dir)
 
 
 if __name__ == "__main__":
