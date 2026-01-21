@@ -1,6 +1,5 @@
 # Pandas 基础入门
 
-> 对应代码: [01_basics.py](file:///d:/Nayey/Code/NayukiChiba/Machine-Learning-Algorithms/Basic/Pandas/01_basics.py)
 
 ## 学习目标
 

@@ -1,6 +1,5 @@
 # 数据选择与过滤
 
-> 对应代码: [03_selection.py](file:///d:/Nayey/Code/NayukiChiba/Machine-Learning-Algorithms/Basic/Pandas/03_selection.py)
 
 ## 学习目标
 
