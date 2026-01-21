@@ -11,6 +11,11 @@ Scikit-learn 数据预处理
 import numpy as np
 import pandas as pd
 from sklearn import datasets
+import matplotlib.pyplot as plt
+
+# 设置中文字体
+plt.rcParams['font.sans-serif'] = ['SimHei', 'Microsoft YaHei', 'Arial Unicode MS']
+plt.rcParams['axes.unicode_minus'] = False
 
 
 def demo_scalers():
@@ -33,11 +38,60 @@ def demo_scalers():
         'MaxAbsScaler': MaxAbsScaler()
     }
     
-    for name, scaler in scalers.items():
+    # === 可视化: 缩放器对比 ===
+    fig, axes = plt.subplots(2, 3, figsize=(15, 10))
+    
+    # 原始数据
+    ax_orig = axes[0, 0]
+    ax_orig.scatter(X[:, 0], X[:, 1], c='#45B7D1', alpha=0.7, s=40, edgecolors='white')
+    ax_orig.scatter(X[0, 0], X[0, 1], c='red', s=150, marker='*', label='异常值', edgecolors='black')
+    ax_orig.set_title('原始数据')
+    ax_orig.set_xlabel('特征 1')
+    ax_orig.set_ylabel('特征 2')
+    ax_orig.legend()
+    ax_orig.grid(True, alpha=0.3)
+    
+    colors = ['#FF6B6B', '#4ECDC4', '#45B7D1', '#96CEB4']
+    for idx, ((name, scaler), color) in enumerate(zip(scalers.items(), colors)):
         X_scaled = scaler.fit_transform(X)
+        ax = axes.flatten()[idx + 1]
+        ax.scatter(X_scaled[1:, 0], X_scaled[1:, 1], c=color, alpha=0.7, s=40, edgecolors='white')
+        ax.scatter(X_scaled[0, 0], X_scaled[0, 1], c='red', s=150, marker='*', edgecolors='black')
+        ax.set_title(f'{name}\n范围: [{X_scaled.min():.2f}, {X_scaled.max():.2f}]')
+        ax.set_xlabel('特征 1')
+        ax.set_ylabel('特征 2')
+        ax.axhline(0, color='gray', linestyle='--', alpha=0.3)
+        ax.axvline(0, color='gray', linestyle='--', alpha=0.3)
+        ax.grid(True, alpha=0.3)
+        
         print(f"{name}:")
         print(f"  范围: [{X_scaled.min():.2f}, {X_scaled.max():.2f}]")
         print(f"  均值: {X_scaled.mean():.4f}, 标准差: {X_scaled.std():.4f}")
+    
+    # 最后一个子图: 公式说明
+    ax_formula = axes[1, 2]
+    ax_formula.axis('off')
+    formula_text = """
+缩放公式说明:
+
+StandardScaler:
+  z = (x - mean) / std
+
+MinMaxScaler:
+  x' = (x - min) / (max - min)
+
+RobustScaler:
+  x' = (x - median) / IQR
+
+MaxAbsScaler:
+  x' = x / max(|x|)
+"""
+    ax_formula.text(0.1, 0.5, formula_text, fontsize=12, family='monospace',
+                   verticalalignment='center', bbox=dict(boxstyle='round', facecolor='wheat', alpha=0.5))
+    
+    plt.tight_layout()
+    plt.savefig('outputs/sklearn/02_scalers.png', dpi=150, bbox_inches='tight')
+    plt.close()
 
 
 def demo_standard_scaler():
@@ -96,6 +150,7 @@ def demo_power_transformer():
     print("=" * 50)
     
     from sklearn.preprocessing import PowerTransformer
+    from scipy import stats
     
     # 创建偏态数据
     np.random.seed(42)
@@ -113,6 +168,40 @@ def demo_power_transformer():
     print(f"Yeo-Johnson后: 均值={X_yj.mean():.4f}, 标准差={X_yj.std():.4f}")
     print(f"Yeo-Johnson lambda: {pt_yj.lambdas_}")
     print(f"Box-Cox lambda: {pt_bc.lambdas_}")
+    
+    # === 可视化: 幂变换效果 ===
+    fig, axes = plt.subplots(1, 3, figsize=(15, 4))
+    
+    ax1 = axes[0]
+    ax1.hist(X_skewed, bins=30, color='#FF6B6B', edgecolor='black', alpha=0.7)
+    ax1.axvline(X_skewed.mean(), color='black', linestyle='--', lw=2, label=f'均值={X_skewed.mean():.2f}')
+    ax1.set_title(f'原始数据 (偏度={stats.skew(X_skewed)[0]:.2f})')
+    ax1.set_xlabel('值')
+    ax1.set_ylabel('频数')
+    ax1.legend()
+    ax1.grid(True, alpha=0.3)
+    
+    ax2 = axes[1]
+    ax2.hist(X_yj, bins=30, color='#4ECDC4', edgecolor='black', alpha=0.7)
+    ax2.axvline(X_yj.mean(), color='black', linestyle='--', lw=2, label=f'均值={X_yj.mean():.2f}')
+    ax2.set_title(f'Yeo-Johnson 变换 (偏度={stats.skew(X_yj)[0]:.2f})')
+    ax2.set_xlabel('值')
+    ax2.set_ylabel('频数')
+    ax2.legend()
+    ax2.grid(True, alpha=0.3)
+    
+    ax3 = axes[2]
+    ax3.hist(X_bc, bins=30, color='#45B7D1', edgecolor='black', alpha=0.7)
+    ax3.axvline(X_bc.mean(), color='black', linestyle='--', lw=2, label=f'均值={X_bc.mean():.2f}')
+    ax3.set_title(f'Box-Cox 变换 (偏度={stats.skew(X_bc)[0]:.2f})')
+    ax3.set_xlabel('值')
+    ax3.set_ylabel('频数')
+    ax3.legend()
+    ax3.grid(True, alpha=0.3)
+    
+    plt.tight_layout()
+    plt.savefig('outputs/sklearn/02_power_transform.png', dpi=150, bbox_inches='tight')
+    plt.close()
 
 
 def demo_encoders():
@@ -139,6 +228,42 @@ def demo_encoders():
     print(f"\nOneHotEncoder:")
     print(f"  特征名: {ohe.get_feature_names_out()}")
     print(f"  编码:\n{colors_ohe}")
+    
+    # === 可视化: 编码对比 ===
+    fig, axes = plt.subplots(1, 2, figsize=(12, 5))
+    
+    # LabelEncoder 可视化
+    ax1 = axes[0]
+    categories = ['红', '绿', '蓝']
+    encoded = [0, 1, 2]
+    bars = ax1.barh(categories, encoded, color=['#FF6B6B', '#4ECDC4', '#45B7D1'], edgecolor='black')
+    ax1.set_xlabel('编码值')
+    ax1.set_title('LabelEncoder 编码')
+    for bar, val in zip(bars, encoded):
+        ax1.annotate(f'{val}', xy=(val + 0.1, bar.get_y() + bar.get_height()/2),
+                    va='center', fontsize=14, fontweight='bold')
+    ax1.set_xlim(0, 3)
+    ax1.grid(True, alpha=0.3, axis='x')
+    
+    # OneHotEncoder 可视化
+    ax2 = axes[1]
+    onehot_data = np.array([[1, 0, 0],
+                            [0, 1, 0],
+                            [0, 0, 1]])
+    im = ax2.imshow(onehot_data, cmap='Blues', aspect='auto')
+    ax2.set_xticks([0, 1, 2])
+    ax2.set_xticklabels(['x0_红', 'x0_绿', 'x0_蓝'])
+    ax2.set_yticks([0, 1, 2])
+    ax2.set_yticklabels(['红', '绿', '蓝'])
+    ax2.set_title('OneHotEncoder 编码')
+    for i in range(3):
+        for j in range(3):
+            ax2.text(j, i, onehot_data[i, j], ha='center', va='center', 
+                    color='white' if onehot_data[i, j] == 1 else 'black', fontsize=14, fontweight='bold')
+    
+    plt.tight_layout()
+    plt.savefig('outputs/sklearn/02_encoding.png', dpi=150, bbox_inches='tight')
+    plt.close()
 
 
 def demo_imputers():
@@ -221,6 +346,9 @@ def demo_column_transformer():
 
 def demo_all():
     """运行所有演示"""
+    import os
+    os.makedirs('outputs/sklearn', exist_ok=True)
+    
     demo_scalers()
     print()
     demo_standard_scaler()
@@ -238,3 +366,4 @@ def demo_all():
 
 if __name__ == "__main__":
     demo_all()
+
