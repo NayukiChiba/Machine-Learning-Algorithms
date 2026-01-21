@@ -1,7 +1,5 @@
 # 数组变形
 
-> 对应代码: [07_reshape.py](file:///d:/Nayey/Code/NayukiChiba/Machine-Learning-Algorithms/Basic/Numpy/07_reshape.py)
-
 ## 学习目标
 
 - 掌握 NumPy 数组的变形方法

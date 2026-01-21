@@ -1,7 +1,5 @@
 # 实用函数
 
-> 对应代码: [11_utilities.py](file:///d:/Nayey/Code/NayukiChiba/Machine-Learning-Algorithms/Basic/Numpy/11_utilities.py)
-
 ## 学习目标
 
 - 掌握 NumPy 的实用函数

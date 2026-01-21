@@ -1,7 +1,5 @@
 # 综合实战
 
-> 对应代码: [12_practice.py](file:///d:/Nayey/Code/NayukiChiba/Machine-Learning-Algorithms/Basic/Numpy/12_practice.py)
-
 ## 学习目标
 
 - 综合运用所学的 NumPy 知识

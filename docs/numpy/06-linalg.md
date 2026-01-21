@@ -1,7 +1,5 @@
 # 线性代数
 
-> 对应代码: [06_linalg.py](file:///d:/Nayey/Code/NayukiChiba/Machine-Learning-Algorithms/Basic/Numpy/06_linalg.py)
-
 ## 学习目标
 
 - 掌握 NumPy 中的线性代数运算

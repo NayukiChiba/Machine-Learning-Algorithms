@@ -1,7 +1,5 @@
 # 文件操作
 
-> 对应代码: [10_file_io.py](file:///d:/Nayey/Code/NayukiChiba/Machine-Learning-Algorithms/Basic/Numpy/10_file_io.py)
-
 ## 学习目标
 
 - 掌握 NumPy 数组的保存和加载方法

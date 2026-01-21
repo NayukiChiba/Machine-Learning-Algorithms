@@ -1,7 +1,5 @@
 # 数组属性
 
-> 对应代码: [03_attributes.py](file:///d:/Nayey/Code/NayukiChiba/Machine-Learning-Algorithms/Basic/Numpy/03_attributes.py)
-
 ## 学习目标
 
 - 掌握 NumPy 数组的重要属性

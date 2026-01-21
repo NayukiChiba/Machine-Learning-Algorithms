@@ -1,7 +1,5 @@
 # 数组运算
 
-> 对应代码: [05_operations.py](file:///d:/Nayey/Code/NayukiChiba/Machine-Learning-Algorithms/Basic/Numpy/05_operations.py)
-
 ## 学习目标
 
 - 掌握 NumPy 数组的基本数学运算
