@@ -88,7 +88,7 @@ print(f"理论值: {np.sqrt(np.pi):.6f}")
 
 下图展示了定积分的区域填充：
 
-![06_quad](https://nayukichiba.github.io/Machine-Learning-Algorithms/outputs/scipy/06_quad.png)
+![06_quad](https://img.yumeko.site/file/articles/scipylearn/06_quad.png)
 
 ### 4. 多重积分
 
@@ -170,7 +170,7 @@ P(-2<X<2) = 0.9545 = 95.45%
 
 下图展示了二重积分区域和单位圆面积：
 
-![06_dblquad](https://nayukichiba.github.io/Machine-Learning-Algorithms/outputs/scipy/06_dblquad.png)
+![06_dblquad](https://img.yumeko.site/file/articles/scipylearn/06_dblquad.png)
 
 ## 常微分方程 (ODE)
 
@@ -266,7 +266,7 @@ print("周期:", 2*np.pi, "秒")
 
 下图展示了数值解与解析解的对比及向量场：
 
-![06_ode](https://nayukichiba.github.io/Machine-Learning-Algorithms/outputs/scipy/06_ode.png)
+![06_ode](https://img.yumeko.site/file/articles/scipylearn/06_ode.png)
 
 ### 4. 实际案例：人口增长模型
 
@@ -302,7 +302,7 @@ print("环境容量:", 1000)
 
 下图展示了捕食者-猕物模型的时间演化和相轨迹：
 
-![06_lotka](https://nayukichiba.github.io/Machine-Learning-Algorithms/outputs/scipy/06_lotka.png)
+![06_lotka](https://img.yumeko.site/file/articles/scipylearn/06_lotka.png)
 
 ## 积分方法选择
 

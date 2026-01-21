@@ -91,7 +91,7 @@ print(f"对称矩阵: {np.allclose(dist_matrix, dist_matrix.T)}")
 
 下图展示了距离矩阵热力图：
 
-![10_distance](https://nayukichiba.github.io/Machine-Learning-Algorithms/outputs/scipy/10_distance.png)
+![10_distance](https://img.yumeko.site/file/articles/scipylearn/10_distance.png)
 
 ### 3. 成对距离
 
@@ -209,7 +209,7 @@ print(f"\n半径{radius}内的点数: {len(indices)}")
 
 下图展示了 KD-树最近邻搜索：
 
-![10_kdtree](https://nayukichiba.github.io/Machine-Learning-Algorithms/outputs/scipy/10_kdtree.png)
+![10_kdtree](https://img.yumeko.site/file/articles/scipylearn/10_kdtree.png)
 
 ## 计算几何 (Computational Geometry)
 
@@ -249,7 +249,7 @@ print(f"\n凸包顶点索引: {hull.vertices}")
 
 下图展示了凸包计算结果：
 
-![10_hull](https://nayukichiba.github.io/Machine-Learning-Algorithms/outputs/scipy/10_hull.png)
+![10_hull](https://img.yumeko.site/file/articles/scipylearn/10_hull.png)
 
 ### 2. Voronoi图
 
@@ -291,7 +291,7 @@ Voronoi顶点:
 
 下图展示了 Voronoi 图：
 
-![10_voronoi](https://nayukichiba.github.io/Machine-Learning-Algorithms/outputs/scipy/10_voronoi.png)
+![10_voronoi](https://img.yumeko.site/file/articles/scipylearn/10_voronoi.png)
 
 ### 3. Delaunay三角剖分
 
@@ -351,7 +351,7 @@ for i, idx in enumerate(simplex_indices):
 
 下图展示了 Delaunay 三角剖分和 Voronoi 图的对偶关系：
 
-![10_delaunay](https://nayukichiba.github.io/Machine-Learning-Algorithms/outputs/scipy/10_delaunay.png)
+![10_delaunay](https://img.yumeko.site/file/articles/scipylearn/10_delaunay.png)
 
 ## 实际应用示例
 

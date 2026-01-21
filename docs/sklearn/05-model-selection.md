@@ -21,7 +21,7 @@ cross_val_score(
 
 下图展示了 5 折交叉验证的各折得分：
 
-![05_cross_val](https://nayukichiba.github.io/Machine-Learning-Algorithms/outputs/sklearn/05_cross_val.png)
+![05_cross_val](https://img.yumeko.site/file/articles/sklearn/05_cross_val.png)
 
 ### 1.2 cross_validate
 
@@ -196,7 +196,7 @@ learning_curve(
 
 下图展示了模型的学习曲线：
 
-![05_learning_curve](https://nayukichiba.github.io/Machine-Learning-Algorithms/outputs/sklearn/05_learning_curve.png)
+![05_learning_curve](https://img.yumeko.site/file/articles/sklearn/05_learning_curve.png)
 
 ### 解读
 
@@ -227,4 +227,4 @@ validation_curve(
 
 下图展示了 SVC 参数 C 的验证曲线：
 
-![05_validation_curve](https://nayukichiba.github.io/Machine-Learning-Algorithms/outputs/sklearn/05_validation_curve.png)
+![05_validation_curve](https://img.yumeko.site/file/articles/sklearn/05_validation_curve.png)

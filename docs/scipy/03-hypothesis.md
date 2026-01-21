@@ -143,7 +143,7 @@ p值: 0.0003
 
 下图展示了 t 分布、拒绝域以及独立样本和配对样本的对比：
 
-![03_ttest](https://nayukichiba.github.io/Machine-Learning-Algorithms/outputs/scipy/03_ttest.png)
+![03_ttest](https://img.yumeko.site/file/articles/scipylearn/03_ttest.png)
 
 ## 卡方检验 (Chi-Square Test)
 
@@ -239,7 +239,7 @@ p值: 0.0005
 
 下图展示了卡方拟合优度检验、列联表热力图以及卡方分布：
 
-![03_chi2](https://nayukichiba.github.io/Machine-Learning-Algorithms/outputs/scipy/03_chi2.png)
+![03_chi2](https://img.yumeko.site/file/articles/scipylearn/03_chi2.png)
 
 ## 方差分析 (ANOVA)
 
@@ -288,7 +288,7 @@ p值: 0.0004
 
 下图展示了三组数据的箱线图和 F 分布：
 
-![03_anova](https://nayukichiba.github.io/Machine-Learning-Algorithms/outputs/scipy/03_anova.png)
+![03_anova](https://img.yumeko.site/file/articles/scipylearn/03_anova.png)
 
 ## 非参数检验
 
@@ -368,7 +368,7 @@ p值: 0.002
 
 下图展示了 Mann-Whitney U 检验和 Wilcoxon 符号秩检验的对比：
 
-![03_nonparam](https://nayukichiba.github.io/Machine-Learning-Algorithms/outputs/scipy/03_nonparam.png)
+![03_nonparam](https://img.yumeko.site/file/articles/scipylearn/03_nonparam.png)
 
 ## 检验方法选择指南
 

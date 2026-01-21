@@ -108,7 +108,7 @@ plt.show()
 
 **效果**：
 
-![pandas_bar_plot](https://nayukichiba.github.io/Machine-Learning-Algorithms/outputs/pandas/pandas_bar_plot.png)
+![pandas_bar_plot](https://img.yumeko.site/file/articles/pdlearn/pandas_bar_plot.png)
 
 ### 2. 散点图（Scatter Plot）
 
@@ -130,7 +130,7 @@ plt.show()
 
 **效果**：
 
-![pandas_scatter](https://nayukichiba.github.io/Machine-Learning-Algorithms/outputs/pandas/pandas_scatter.png)
+![pandas_scatter](https://img.yumeko.site/file/articles/pdlearn/pandas_scatter.png)
 
 ### 3. 直方图（Histogram）
 
@@ -152,7 +152,7 @@ plt.show()
 
 **效果**：
 
-![pandas_histogram](https://nayukichiba.github.io/Machine-Learning-Algorithms/outputs/pandas/pandas_histogram.png)
+![pandas_histogram](https://img.yumeko.site/file/articles/pdlearn/pandas_histogram.png)
 
 ### 4. 箱线图（Box Plot）
 
@@ -179,7 +179,7 @@ plt.show()
 
 **效果**：
 
-![pandas_boxplot](https://nayukichiba.github.io/Machine-Learning-Algorithms/outputs/pandas/pandas_boxplot.png)
+![pandas_boxplot](https://img.yumeko.site/file/articles/pdlearn/pandas_boxplot.png)
 
 ### 5. 饼图（Pie Chart）
 
@@ -198,7 +198,7 @@ plt.show()
 
 **效果**：
 
-![pandas_pie](https://nayukichiba.github.io/Machine-Learning-Algorithms/outputs/pandas/pandas_pie.png)
+![pandas_pie](https://img.yumeko.site/file/articles/pdlearn/pandas_pie.png)
 
 ### 图表类型总结
 

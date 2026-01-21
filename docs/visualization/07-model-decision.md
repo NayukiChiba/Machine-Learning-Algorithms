@@ -13,7 +13,7 @@ ax.contourf(xx, yy, Z, alpha=0.3)
 ax.scatter(X[:, 0], X[:, 1], c=y)
 ```
 
-![07_boundary](https://nayukichiba.github.io/Machine-Learning-Algorithms/outputs/visualization/07_boundary.png)
+![07_boundary](https://img.yumeko.site/file/articles/viz/07_boundary.png)
 
 ## 决策树可视化
 
@@ -23,7 +23,7 @@ from sklearn.tree import plot_tree
 plot_tree(clf, filled=True, feature_names=names)
 ```
 
-![07_tree](https://nayukichiba.github.io/Machine-Learning-Algorithms/outputs/visualization/07_tree.png)
+![07_tree](https://img.yumeko.site/file/articles/viz/07_tree.png)
 
 ## 特征重要性
 
@@ -33,7 +33,7 @@ indices = np.argsort(importances)[::-1]
 ax.barh(range(len(importances)), importances[indices])
 ```
 
-![07_importance](https://nayukichiba.github.io/Machine-Learning-Algorithms/outputs/visualization/07_importance.png)
+![07_importance](https://img.yumeko.site/file/articles/viz/07_importance.png)
 
 ## 练习
 
