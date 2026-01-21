@@ -1,15 +1,5 @@
 # 模型选择与调参
 
-> 对应代码: [code/05_model_selection.py](../code/05_model_selection.py)
-
-## 目录
-
-- [1. 交叉验证](#1-交叉验证)
-- [2. 划分策略](#2-划分策略)
-- [3. 网格搜索](#3-网格搜索)
-- [4. 随机搜索](#4-随机搜索)
-- [5. 学习曲线](#5-学习曲线)
-
 ---
 
 ## 1. 交叉验证
@@ -26,6 +16,12 @@ cross_val_score(
 ```
 
 返回每折的得分数组。
+
+### 交叉验证可视化
+
+下图展示了 5 折交叉验证的各折得分：
+
+![05_cross_val](https://img.yumeko.site/file/articles/sklearn/05_cross_val.png)
 
 ### 1.2 cross_validate
 
@@ -196,6 +192,12 @@ learning_curve(
 
 返回: `train_sizes, train_scores, test_scores`
 
+### 学习曲线可视化
+
+下图展示了模型的学习曲线：
+
+![05_learning_curve](https://img.yumeko.site/file/articles/sklearn/05_learning_curve.png)
+
 ### 解读
 
 | 现象           | 诊断   | 解决                 |
@@ -220,3 +222,9 @@ validation_curve(
 ```
 
 返回: `train_scores, test_scores`
+
+### 验证曲线可视化
+
+下图展示了 SVC 参数 C 的验证曲线：
+
+![05_validation_curve](https://img.yumeko.site/file/articles/sklearn/05_validation_curve.png)

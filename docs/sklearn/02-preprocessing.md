@@ -1,27 +1,19 @@
 # 数据预处理
 
-> 对应代码: [code/02_preprocessing.py](../code/02_preprocessing.py)
-
-## 目录
-
-- [1. 缩放器对比](#1-缩放器对比)
-- [2. StandardScaler](#2-standardscaler)
-- [3. MinMaxScaler](#3-minmaxscaler)
-- [4. RobustScaler](#4-robustscaler)
-- [5. 类别编码](#5-类别编码)
-- [6. 缺失值处理](#6-缺失值处理)
-- [7. ColumnTransformer](#7-columntransformer)
-
----
-
 ## 1. 缩放器对比
 
-| 缩放器           | 公式              | 输出范围 | 对异常值 | 适用场景                   |
-| ---------------- | ----------------- | -------- | :------: | -------------------------- |
-| `StandardScaler` | (x-μ)/σ           | 无界     | ⚠️ 敏感  | 正态分布数据，SVM/逻辑回归 |
-| `MinMaxScaler`   | (x-min)/(max-min) | [0,1]    | ⚠️ 敏感  | 神经网络，需要有界输出     |
-| `RobustScaler`   | (x-中位数)/IQR    | 无界     | ✅ 鲁棒  | 含异常值的数据             |
-| `MaxAbsScaler`   | x/\|max\|         | [-1,1]   | ⚠️ 敏感  | 稀疏数据                   |
+| 缩放器           | 公式                                         | 输出范围 | 对异常值 | 适用场景                   |
+| ---------------- | -------------------------------------------- | -------- | :------: | -------------------------- |
+| `StandardScaler` | $z = \frac{x - \mu}{\sigma}$                 | 无界     | ⚠️ 敏感  | 正态分布数据，SVM/逻辑回归 |
+| `MinMaxScaler`   | $x' = \frac{x - x_{min}}{x_{max} - x_{min}}$ | $[0,1]$  | ⚠️ 敏感  | 神经网络，需要有界输出     |
+| `RobustScaler`   | $x' = \frac{x - median}{IQR}$                | 无界     | ✅ 鲁棒  | 含异常值的数据             |
+| `MaxAbsScaler`   | $x' = \frac{x}{\vert x_{max} \vert}$         | $[-1,1]$ | ⚠️ 敏感  | 稀疏数据                   |
+
+### 缩放器可视化
+
+下图展示了不同缩放器处理含异常值数据的效果：
+
+![02_scalers](https://img.yumeko.site/file/articles/sklearn/02_scalers.png)
 
 ### 选择建议
 
@@ -37,7 +29,9 @@
 
 ## 2. StandardScaler
 
-**作用**: 标准化，转换为均值0、标准差1
+**作用**: 标准化，转换为均值 $\mu = 0$、标准差 $\sigma = 1$
+
+**公式**: $z = \frac{x - \mu}{\sigma}$
 
 ```python
 StandardScaler(
@@ -69,6 +63,8 @@ scaler.var_     # 每个特征的方差
 
 **作用**: 归一化，缩放到指定范围
 
+**公式**: $x' = \frac{x - x_{min}}{x_{max} - x_{min}} \times (max - min) + min$
+
 ```python
 MinMaxScaler(
     feature_range=(0, 1),  # 目标范围
@@ -96,6 +92,8 @@ scaler.data_range_ # max - min
 
 **作用**: 使用中位数和 IQR 缩放，对异常值鲁棒
 
+**公式**: $x' = \frac{x - median}{Q_3 - Q_1}$
+
 ```python
 RobustScaler(
     with_centering=True,        # 是否减去中位数
@@ -115,11 +113,17 @@ RobustScaler(
 
 ### 5.1 编码器对比
 
-| 编码器           | 输出            | 用途            |
-| ---------------- | --------------- | --------------- |
-| `LabelEncoder`   | 整数 (0,1,2...) | 目标变量 y 编码 |
-| `OrdinalEncoder` | 整数矩阵        | 有序类别特征    |
-| `OneHotEncoder`  | 二进制矩阵      | 无序类别特征    |
+| 编码器           | 输出              | 用途              |
+| ---------------- | ----------------- | ----------------- |
+| `LabelEncoder`   | 整数 $(0,1,2...)$ | 目标变量 $y$ 编码 |
+| `OrdinalEncoder` | 整数矩阵          | 有序类别特征      |
+| `OneHotEncoder`  | 二进制矩阵        | 无序类别特征      |
+
+### 编码方法可视化
+
+下图展示了 LabelEncoder 和 OneHotEncoder 的区别：
+
+![02_encoding](https://img.yumeko.site/file/articles/sklearn/02_encoding.png)
 
 ### 5.2 OneHotEncoder 参数详解
 
@@ -195,7 +199,7 @@ ColumnTransformer(
 
 | 参数        | 默认   | 作用       | ⚠️ 什么时候改            |
 | ----------- | ------ | ---------- | ------------------------ |
-| `remainder` | 'drop' | 剩余列处理 | `'passthrough'` 保留原样 |
+| `remainder` | `drop` | 剩余列处理 | `'passthrough'` 保留原样 |
 | `n_jobs`    | None   | 并行       | `-1` 用全部 CPU          |
 
 ### columns 指定方式
