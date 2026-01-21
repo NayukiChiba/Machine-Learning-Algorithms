@@ -11,6 +11,11 @@ Scikit-learn 基础入门
 import numpy as np
 import pandas as pd
 from sklearn import datasets
+import matplotlib.pyplot as plt
+
+# 设置中文字体
+plt.rcParams['font.sans-serif'] = ['SimHei', 'Microsoft YaHei', 'Arial Unicode MS']
+plt.rcParams['axes.unicode_minus'] = False
 
 
 def demo_load_datasets():
@@ -35,6 +40,38 @@ def demo_load_datasets():
     iris_df = datasets.load_iris(as_frame=True)
     print(f"\nas_frame=True:\n{iris_df.frame.head()}")
     
+    # === 可视化 ===
+    fig, axes = plt.subplots(1, 2, figsize=(14, 5))
+    
+    # 左图: 散点图 - 特征可视化
+    ax1 = axes[0]
+    colors = ['#FF6B6B', '#4ECDC4', '#45B7D1']
+    for i, (name, color) in enumerate(zip(iris.target_names, colors)):
+        mask = iris.target == i
+        ax1.scatter(iris.data[mask, 0], iris.data[mask, 1], 
+                   c=color, label=name, alpha=0.7, s=60, edgecolors='white')
+    ax1.set_xlabel('花萼长度 (cm)')
+    ax1.set_ylabel('花萼宽度 (cm)')
+    ax1.set_title('鸢尾花数据集 - 特征分布')
+    ax1.legend(title='类别')
+    ax1.grid(True, alpha=0.3)
+    
+    # 右图: 柱状图 - 类别分布
+    ax2 = axes[1]
+    unique, counts = np.unique(iris.target, return_counts=True)
+    bars = ax2.bar(iris.target_names, counts, color=colors, edgecolor='black', alpha=0.8)
+    ax2.set_xlabel('类别')
+    ax2.set_ylabel('样本数量')
+    ax2.set_title('鸢尾花数据集 - 类别分布')
+    for bar, count in zip(bars, counts):
+        ax2.annotate(f'{count}', xy=(bar.get_x() + bar.get_width()/2, bar.get_height()),
+                    ha='center', va='bottom', fontsize=12, fontweight='bold')
+    ax2.grid(True, alpha=0.3, axis='y')
+    
+    plt.tight_layout()
+    plt.savefig('outputs/sklearn/01_datasets.png', dpi=150, bbox_inches='tight')
+    plt.close()
+    
     return iris
 
 
@@ -44,7 +81,7 @@ def demo_generate_data():
     print("2. 生成人工数据集")
     print("=" * 50)
     
-    from sklearn.datasets import make_classification, make_regression, make_blobs
+    from sklearn.datasets import make_classification, make_regression, make_blobs, make_moons, make_circles
     
     # 分类数据
     X_clf, y_clf = make_classification(
@@ -75,6 +112,53 @@ def demo_generate_data():
     )
     print(f"聚类数据: X={X_blob.shape}, y={np.unique(y_blob)}")
     
+    # === 可视化: 人工数据集 ===
+    fig, axes = plt.subplots(2, 2, figsize=(12, 10))
+    
+    # blobs
+    ax1 = axes[0, 0]
+    scatter = ax1.scatter(X_blob[:, 0], X_blob[:, 1], c=y_blob, cmap='viridis', 
+                         alpha=0.7, s=40, edgecolors='white')
+    ax1.set_title('make_blobs - 聚类数据')
+    ax1.set_xlabel('特征 1')
+    ax1.set_ylabel('特征 2')
+    ax1.grid(True, alpha=0.3)
+    
+    # moons
+    X_moons, y_moons = make_moons(n_samples=300, noise=0.1, random_state=42)
+    ax2 = axes[0, 1]
+    ax2.scatter(X_moons[y_moons==0, 0], X_moons[y_moons==0, 1], c='#FF6B6B', label='类别 0', alpha=0.7, s=40)
+    ax2.scatter(X_moons[y_moons==1, 0], X_moons[y_moons==1, 1], c='#4ECDC4', label='类别 1', alpha=0.7, s=40)
+    ax2.set_title('make_moons - 月牙形数据')
+    ax2.set_xlabel('特征 1')
+    ax2.set_ylabel('特征 2')
+    ax2.legend()
+    ax2.grid(True, alpha=0.3)
+    
+    # circles
+    X_circles, y_circles = make_circles(n_samples=300, noise=0.05, factor=0.5, random_state=42)
+    ax3 = axes[1, 0]
+    ax3.scatter(X_circles[y_circles==0, 0], X_circles[y_circles==0, 1], c='#FF6B6B', label='类别 0', alpha=0.7, s=40)
+    ax3.scatter(X_circles[y_circles==1, 0], X_circles[y_circles==1, 1], c='#4ECDC4', label='类别 1', alpha=0.7, s=40)
+    ax3.set_title('make_circles - 同心圆数据')
+    ax3.set_xlabel('特征 1')
+    ax3.set_ylabel('特征 2')
+    ax3.legend()
+    ax3.grid(True, alpha=0.3)
+    
+    # regression
+    X_reg_2d, y_reg_2d = make_regression(n_samples=200, n_features=1, noise=15, random_state=42)
+    ax4 = axes[1, 1]
+    ax4.scatter(X_reg_2d, y_reg_2d, c='#45B7D1', alpha=0.6, s=40, edgecolors='white')
+    ax4.set_title('make_regression - 回归数据')
+    ax4.set_xlabel('特征')
+    ax4.set_ylabel('目标值')
+    ax4.grid(True, alpha=0.3)
+    
+    plt.tight_layout()
+    plt.savefig('outputs/sklearn/01_generate_data.png', dpi=150, bbox_inches='tight')
+    plt.close()
+    
     return X_clf, y_clf
 
 
@@ -100,6 +184,39 @@ def demo_train_test_split():
     print(f"测试集: {X_test.shape[0]} 样本")
     print(f"训练集类别分布: {np.bincount(y_train)}")
     print(f"测试集类别分布: {np.bincount(y_test)}")
+    
+    # === 可视化: 训练/测试集划分 ===
+    fig, axes = plt.subplots(1, 2, figsize=(14, 5))
+    
+    # 左图: 散点图 - 训练集 vs 测试集
+    ax1 = axes[0]
+    ax1.scatter(X_train[:, 0], X_train[:, 1], c='#4ECDC4', label=f'训练集 ({len(X_train)})', 
+                alpha=0.6, s=50, edgecolors='white')
+    ax1.scatter(X_test[:, 0], X_test[:, 1], c='#FF6B6B', label=f'测试集 ({len(X_test)})', 
+                alpha=0.8, s=80, marker='s', edgecolors='black')
+    ax1.set_xlabel('花萼长度 (cm)')
+    ax1.set_ylabel('花萼宽度 (cm)')
+    ax1.set_title('数据划分可视化 (test_size=0.3)')
+    ax1.legend()
+    ax1.grid(True, alpha=0.3)
+    
+    # 右图: 柱状图 - 类别分布对比
+    ax2 = axes[1]
+    x = np.arange(3)
+    width = 0.35
+    bars1 = ax2.bar(x - width/2, np.bincount(y_train), width, label='训练集', color='#4ECDC4', edgecolor='black')
+    bars2 = ax2.bar(x + width/2, np.bincount(y_test), width, label='测试集', color='#FF6B6B', edgecolor='black')
+    ax2.set_xlabel('类别')
+    ax2.set_ylabel('样本数量')
+    ax2.set_title('分层抽样 (stratify=y) 类别分布对比')
+    ax2.set_xticks(x)
+    ax2.set_xticklabels(['setosa', 'versicolor', 'virginica'])
+    ax2.legend()
+    ax2.grid(True, alpha=0.3, axis='y')
+    
+    plt.tight_layout()
+    plt.savefig('outputs/sklearn/01_train_test_split.png', dpi=150, bbox_inches='tight')
+    plt.close()
     
     return X_train, X_test, y_train, y_test
 
@@ -132,6 +249,65 @@ def demo_first_model():
     # 评估
     print(f"准确率: {accuracy_score(y_test, y_pred):.4f}")
     print(f"score方法: {knn.score(X_test, y_test):.4f}")
+    
+    # === 可视化: KNN 决策边界 (使用前两个特征) ===
+    fig, axes = plt.subplots(1, 2, figsize=(14, 5))
+    
+    # 只使用前两个特征进行可视化
+    X_2d = X[:, :2]
+    X_train_2d, X_test_2d, y_train_2d, y_test_2d = train_test_split(
+        X_2d, y, test_size=0.3, random_state=42, stratify=y
+    )
+    
+    knn_2d = KNeighborsClassifier(n_neighbors=5)
+    knn_2d.fit(X_train_2d, y_train_2d)
+    
+    # 左图: 决策边界
+    ax1 = axes[0]
+    h = 0.02  # 网格步长
+    x_min, x_max = X_2d[:, 0].min() - 0.5, X_2d[:, 0].max() + 0.5
+    y_min, y_max = X_2d[:, 1].min() - 0.5, X_2d[:, 1].max() + 0.5
+    xx, yy = np.meshgrid(np.arange(x_min, x_max, h), np.arange(y_min, y_max, h))
+    Z = knn_2d.predict(np.c_[xx.ravel(), yy.ravel()])
+    Z = Z.reshape(xx.shape)
+    
+    ax1.contourf(xx, yy, Z, alpha=0.3, cmap='viridis')
+    colors = ['#FF6B6B', '#4ECDC4', '#45B7D1']
+    iris = datasets.load_iris()
+    for i, (name, color) in enumerate(zip(iris.target_names, colors)):
+        mask = y_train_2d == i
+        ax1.scatter(X_train_2d[mask, 0], X_train_2d[mask, 1], c=color, label=name, 
+                   alpha=0.7, s=60, edgecolors='white')
+    ax1.set_xlabel('花萼长度 (cm)')
+    ax1.set_ylabel('花萼宽度 (cm)')
+    ax1.set_title(f'KNN (k=5) 决策边界')
+    ax1.legend(title='类别')
+    ax1.grid(True, alpha=0.3)
+    
+    # 右图: 不同 k 值的准确率
+    ax2 = axes[1]
+    k_values = range(1, 21)
+    train_scores = []
+    test_scores = []
+    for k in k_values:
+        knn_k = KNeighborsClassifier(n_neighbors=k)
+        knn_k.fit(X_train, y_train)
+        train_scores.append(knn_k.score(X_train, y_train))
+        test_scores.append(knn_k.score(X_test, y_test))
+    
+    ax2.plot(k_values, train_scores, 'o-', color='#4ECDC4', label='训练集', lw=2, markersize=6)
+    ax2.plot(k_values, test_scores, 's-', color='#FF6B6B', label='测试集', lw=2, markersize=6)
+    ax2.axvline(5, color='gray', linestyle='--', alpha=0.5, label='k=5')
+    ax2.set_xlabel('k (邻居数量)')
+    ax2.set_ylabel('准确率')
+    ax2.set_title('KNN 不同 k 值的准确率')
+    ax2.legend()
+    ax2.grid(True, alpha=0.3)
+    ax2.set_xticks(k_values)
+    
+    plt.tight_layout()
+    plt.savefig('outputs/sklearn/01_knn.png', dpi=150, bbox_inches='tight')
+    plt.close()
     
     return knn
 
@@ -181,6 +357,9 @@ def demo_estimator_methods():
 
 def demo_all():
     """运行所有演示"""
+    import os
+    os.makedirs('outputs/sklearn', exist_ok=True)
+    
     demo_load_datasets()
     print()
     demo_generate_data()
@@ -194,3 +373,4 @@ def demo_all():
 
 if __name__ == "__main__":
     demo_all()
+
