@@ -73,7 +73,7 @@ print(f"拟合参数: a={params[0]:.2f}, b={params[1]:.2f}, c={params[2]:.2f}")
 
 下图展示了数据点、拟合曲线及残差分布：
 
-![04_curve_fit](https://img.yumeko.site/file/articles/scipylearn/04_curve_fit.png)
+![04_curve_fit](https://nayukichiba.github.io/Machine-Learning-Algorithms/outputs/scipy/04_curve_fit.png)
 
 ## 求根算法 (Root Finding)
 
@@ -145,7 +145,7 @@ print(f"验证: x+y={x+y:.2f}, x-y={x-y:.2f}")
 
 下图展示了一维函数求根和二元方程组解：
 
-![04_roots](https://img.yumeko.site/file/articles/scipylearn/04_roots.png)
+![04_roots](https://nayukichiba.github.io/Machine-Learning-Algorithms/outputs/scipy/04_roots.png)
 
 ## 函数最小化 (Minimization)
 
@@ -240,7 +240,7 @@ print(f"约束满足: x+y={sum(result.x):.4f}")
 
 下图展示了一维函数最小化和 Rosenbrock 函数的 BFGS 优化路径：
 
-![04_minimize](https://img.yumeko.site/file/articles/scipylearn/04_minimize.png)
+![04_minimize](https://nayukichiba.github.io/Machine-Learning-Algorithms/outputs/scipy/04_minimize.png)
 
 ## 线性规划 (Linear Programming)
 
@@ -321,7 +321,7 @@ print(f"  最大利润: {-result.fun:.0f}元")
 
 下图展示了线性规划的可行域和最优解：
 
-![04_linprog](https://img.yumeko.site/file/articles/scipylearn/04_linprog.png)
+![04_linprog](https://nayukichiba.github.io/Machine-Learning-Algorithms/outputs/scipy/04_linprog.png)
 
 ## 练习
 

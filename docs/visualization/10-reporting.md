@@ -17,7 +17,7 @@ ax2 = fig.add_subplot(gs[0, 2])
 ax3 = fig.add_subplot(gs[1, 0])
 ```
 
-![10_multipanel](https://img.yumeko.site/file/articles/viz/10_multipanel.png)
+![10_multipanel](https://nayukichiba.github.io/Machine-Learning-Algorithms/outputs/visualization/10_multipanel.png)
 
 ## 导出选项
 
@@ -35,7 +35,7 @@ plt.savefig('fig.svg')  # 矢量格式
 | 发散 | coolwarm, RdBu         |
 | 定性 | Set1, Set2, tab10      |
 
-![10_professional](https://img.yumeko.site/file/articles/viz/10_professional.png)
+![10_professional](https://nayukichiba.github.io/Machine-Learning-Algorithms/outputs/visualization/10_professional.png)
 
 ## 练习
 

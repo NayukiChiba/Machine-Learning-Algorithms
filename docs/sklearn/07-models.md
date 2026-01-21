@@ -17,7 +17,7 @@
 
 下图展示了不同正则化方法的系数对比：
 
-![07_linear_models](https://img.yumeko.site/file/articles/sklearn/07_linear_models.png)
+![07_linear_models](https://nayukichiba.github.io/Machine-Learning-Algorithms/outputs/sklearn/07_linear_models.png)
 
 ```python
 Ridge(alpha=1.0)  # alpha 越大，正则化越强
@@ -124,7 +124,7 @@ SVC(
 
 下图展示了不同核函数的决策边界：
 
-![07_svm](https://img.yumeko.site/file/articles/sklearn/07_svm.png)
+![07_svm](https://nayukichiba.github.io/Machine-Learning-Algorithms/outputs/sklearn/07_svm.png)
 
 > ⚠️ **SVM 必须标准化数据！**
 
@@ -179,7 +179,7 @@ DBSCAN(
 
 下图展示了 KMeans 和 DBSCAN 的聚类结果对比：
 
-![07_clustering](https://img.yumeko.site/file/articles/sklearn/07_clustering.png)
+![07_clustering](https://nayukichiba.github.io/Machine-Learning-Algorithms/outputs/sklearn/07_clustering.png)
 
 ---
 
@@ -210,4 +210,4 @@ TSNE(
 
 下图展示了 PCA 和 t-SNE 的降维结果对比：
 
-![07_dimensionality_reduction](https://img.yumeko.site/file/articles/sklearn/07_dimensionality_reduction.png)
+![07_dimensionality_reduction](https://nayukichiba.github.io/Machine-Learning-Algorithms/outputs/sklearn/07_dimensionality_reduction.png)

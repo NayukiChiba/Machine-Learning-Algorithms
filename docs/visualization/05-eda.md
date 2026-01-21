@@ -11,7 +11,7 @@ ax.axvline(df['column'].mean(), color='red', label='Mean')
 ax.axvline(df['column'].median(), color='green', label='Median')
 ```
 
-![05_distribution](https://img.yumeko.site/file/articles/viz/05_distribution.png)
+![05_distribution](https://nayukichiba.github.io/Machine-Learning-Algorithms/outputs/visualization/05_distribution.png)
 
 ## 相关性分析
 
@@ -20,7 +20,7 @@ corr = df.corr()
 sns.heatmap(corr, annot=True, cmap='coolwarm', center=0)
 ```
 
-![05_correlation](https://img.yumeko.site/file/articles/viz/05_correlation.png)
+![05_correlation](https://nayukichiba.github.io/Machine-Learning-Algorithms/outputs/visualization/05_correlation.png)
 
 ## 分类变量分析
 
@@ -32,7 +32,7 @@ df['category'].value_counts().plot(kind='bar')
 sns.boxplot(x='category', y='value', data=df)
 ```
 
-![05_categorical](https://img.yumeko.site/file/articles/viz/05_categorical.png)
+![05_categorical](https://nayukichiba.github.io/Machine-Learning-Algorithms/outputs/visualization/05_categorical.png)
 
 ## 练习
 

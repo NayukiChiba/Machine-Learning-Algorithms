@@ -33,7 +33,7 @@ demo_all()
 
 下图展示了鸢尾花数据集的特征分布和类别分布：
 
-![01_datasets](https://img.yumeko.site/file/articles/sklearn/01_datasets.png)
+![01_datasets](https://nayukichiba.github.io/Machine-Learning-Algorithms/outputs/sklearn/01_datasets.png)
 
 ### 1.2 load_xxx() 参数
 
@@ -63,7 +63,7 @@ datasets.load_iris(
 
 下图展示了各种人工生成数据集：
 
-![01_generate_data](https://img.yumeko.site/file/articles/sklearn/01_generate_data.png)
+![01_generate_data](https://nayukichiba.github.io/Machine-Learning-Algorithms/outputs/sklearn/01_generate_data.png)
 
 ---
 
@@ -95,7 +95,7 @@ train_test_split(
 
 下图展示了训练集/测试集划分和分层抽样效果：
 
-![01_train_test_split](https://img.yumeko.site/file/articles/sklearn/01_train_test_split.png)
+![01_train_test_split](https://nayukichiba.github.io/Machine-Learning-Algorithms/outputs/sklearn/01_train_test_split.png)
 
 ---
 
@@ -149,4 +149,4 @@ scaler.fit_transform(X_test)
 
 下图展示了 KNN 分类器的决策边界和不同 k 值的准确率：
 
-![01_knn](https://img.yumeko.site/file/articles/sklearn/01_knn.png)
+![01_knn](https://nayukichiba.github.io/Machine-Learning-Algorithms/outputs/sklearn/01_knn.png)

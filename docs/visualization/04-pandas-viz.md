@@ -9,9 +9,9 @@ df.plot(kind='area')         # 面积图
 df.plot(kind='box')          # 箱线图
 ```
 
-![04_df_plot](https://img.yumeko.site/file/articles/viz/04_df_plot.png)
+![04_df_plot](https://nayukichiba.github.io/Machine-Learning-Algorithms/outputs/visualization/04_df_plot.png)
 
-![04_series_plot](https://img.yumeko.site/file/articles/viz/04_series_plot.png)
+![04_series_plot](https://nayukichiba.github.io/Machine-Learning-Algorithms/outputs/visualization/04_series_plot.png)
 
 ## kind 参数
 
@@ -32,7 +32,7 @@ df.plot(kind='box')          # 箱线图
 df.groupby('category')['value'].mean().plot(kind='bar')
 ```
 
-![04_groupby](https://img.yumeko.site/file/articles/viz/04_groupby.png)
+![04_groupby](https://nayukichiba.github.io/Machine-Learning-Algorithms/outputs/visualization/04_groupby.png)
 
 ## 练习
 
