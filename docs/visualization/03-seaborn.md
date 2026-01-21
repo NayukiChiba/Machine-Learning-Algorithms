@@ -1,7 +1,5 @@
 # Seaborn 库入门
 
-> 对应代码: [03_seaborn.py](file:///d:/Nayey/Code/NayukiChiba/Machine-Learning-Algorithms/Basic/Visualization/03_seaborn.py)
-
 ## 基本设置
 
 ```python
@@ -17,6 +15,8 @@ sns.boxplot(x='category', y='value', data=df)
 sns.violinplot(x='category', y='value', data=df)
 ```
 
+![03_catplot](https://img.yumeko.site/file/articles/viz/03_catplot.png)
+
 ## 分布图
 
 ```python
@@ -24,11 +24,15 @@ sns.histplot(data, kde=True)
 sns.kdeplot(data, fill=True)
 ```
 
+![03_distplot](https://img.yumeko.site/file/articles/viz/03_distplot.png)
+
 ## 回归图
 
 ```python
 sns.regplot(x='x', y='y', data=df)
 ```
+
+![03_regplot](https://img.yumeko.site/file/articles/viz/03_regplot.png)
 
 ## 热力图
 
@@ -36,11 +40,15 @@ sns.regplot(x='x', y='y', data=df)
 sns.heatmap(corr_matrix, annot=True, cmap='coolwarm')
 ```
 
+![03_heatmap](https://img.yumeko.site/file/articles/viz/03_heatmap.png)
+
 ## 配对图
 
 ```python
 sns.pairplot(df, hue='category')
 ```
+
+![03_pairplot](https://img.yumeko.site/file/articles/viz/03_pairplot.png)
 
 ## 练习
 

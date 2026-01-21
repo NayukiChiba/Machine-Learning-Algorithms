@@ -1,7 +1,5 @@
 # Pandas 数据可视化
 
-> 对应代码: [04_pandas_viz.py](file:///d:/Nayey/Code/NayukiChiba/Machine-Learning-Algorithms/Basic/Visualization/04_pandas_viz.py)
-
 ## DataFrame.plot()
 
 ```python
@@ -10,6 +8,10 @@ df.plot(kind='bar')          # 柱状图
 df.plot(kind='area')         # 面积图
 df.plot(kind='box')          # 箱线图
 ```
+
+![04_df_plot](https://img.yumeko.site/file/articles/viz/04_df_plot.png)
+
+![04_series_plot](https://img.yumeko.site/file/articles/viz/04_series_plot.png)
 
 ## kind 参数
 
@@ -29,6 +31,8 @@ df.plot(kind='box')          # 箱线图
 ```python
 df.groupby('category')['value'].mean().plot(kind='bar')
 ```
+
+![04_groupby](https://img.yumeko.site/file/articles/viz/04_groupby.png)
 
 ## 练习
 

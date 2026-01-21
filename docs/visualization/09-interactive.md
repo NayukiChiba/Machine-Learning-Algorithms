@@ -1,7 +1,5 @@
 # 交互式可视化
 
-> 对应代码: [09_interactive.py](file:///d:/Nayey/Code/NayukiChiba/Machine-Learning-Algorithms/Basic/Visualization/09_interactive.py)
-
 ## Plotly Express
 
 ```python
