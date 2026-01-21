@@ -19,11 +19,15 @@ x_data = np.linspace(0, 10, 50)
 y_true = 2 * x_data**2 - 3 * x_data + 5
 y_data = y_true + np.random.normal(0, 5, 50)
 
-# 定义模型: y = a*x² + b*x + c
+# 定义模型
 def model(x, a, b, c):
     return a * x**2 + b * x + c
+```
+
+模型：$y = ax^2 + bx + c$
 
 # 拟合参数
+
 params, covariance = optimize.curve_fit(model, x_data, y_data)
 a, b, c = params
 
@@ -32,24 +36,30 @@ print(f"真实参数: a=2.00, b=-3.00, c=5.00")
 print(f"参数标准差: {np.sqrt(np.diag(covariance))}")
 
 # 预测
+
 y_fitted = model(x_data, a, b, c)
 print(f"拟合优度 R²: {1 - np.sum((y_data - y_fitted)**2) / np.sum((y_data - np.mean(y_data))**2):.4f}")
+
 ```
 
 **输出**:
+
 ```
+
 拟合参数: a=2.02, b=-3.15, c=5.43
 真实参数: a=2.00, b=-3.00, c=5.00
 参数标准差: [0.015 0.234 1.123]
 拟合优度 R²: 0.9956
-```
+
+````
 
 **应用**: 物理实验数据拟合、趋势分析、预测模型。
 
 ### 2. 指数函数拟合
 
+指数衰减模型：$y = a \cdot e^{-bx} + c$
+
 ```python
-# 指数衰减模型: y = a * e^(-b*x) + c
 def exp_decay(x, a, b, c):
     return a * np.exp(-b * x) + c
 
@@ -58,11 +68,17 @@ y_data = 10 * np.exp(-0.5 * x_data) + 2 + np.random.normal(0, 0.3, 30)
 
 params, _ = optimize.curve_fit(exp_decay, x_data, y_data)
 print(f"拟合参数: a={params[0]:.2f}, b={params[1]:.2f}, c={params[2]:.2f}")
-```
+````
 
 **输出**: `拟合参数: a=9.87, b=0.49, c=2.03`
 
 **应用**: 放射性衰变、药物代谢、电容放电。
+
+### 曲线拟合可视化
+
+下图展示了数据点、拟合曲线及残差分布：
+
+![04_curve_fit](../../outputs/scipy/04_curve_fit.png)
 
 ## 求根算法 (Root Finding)
 
@@ -70,8 +86,9 @@ print(f"拟合参数: a={params[0]:.2f}, b={params[1]:.2f}, c={params[2]:.2f}")
 
 ### 1. 单变量求根
 
+求解方程：$x^2 - 2x - 3 = 0$
+
 ```python
-# 求解方程: x² - 2x - 3 = 0
 def f(x):
     return x**2 - 2*x - 3
 
@@ -90,6 +107,7 @@ print(f"另一个根: {root3:.6f}")
 ```
 
 **输出**:
+
 ```
 Brent方法找到的根: 3.000000
 验证: f(3.000000) = 0.0000000000
@@ -98,15 +116,16 @@ Brent方法找到的根: 3.000000
 ```
 
 **说明**:
+
 - **brentq**: 稳定，需要提供包含根的区间
 - **fsolve**: 快速，但需要好的初值，可能找到局部根
 
 ### 2. 多元方程组求解
 
+求解方程组：
+$$\begin{cases} x + y = 3 \\ x - y = 1 \end{cases}$$
+
 ```python
-# 求解方程组:
-# x + y = 3
-# x - y = 1
 def equations(p):
     x, y = p
     return [x + y - 3, x - y - 1]
@@ -119,6 +138,7 @@ print(f"验证: x+y={x+y:.2f}, x-y={x-y:.2f}")
 ```
 
 **输出**:
+
 ```
 解: x=2.00, y=1.00
 验证: x+y=3.00, x-y=1.00
@@ -126,14 +146,21 @@ print(f"验证: x+y={x+y:.2f}, x-y={x-y:.2f}")
 
 **应用**: 非线性方程组、物理平衡问题。
 
+### 求根算法可视化
+
+下图展示了一维函数求根和二元方程组解：
+
+![04_roots](../../outputs/scipy/04_roots.png)
+
 ## 函数最小化 (Minimization)
 
 找到使函数值最小的参数。
 
 ### 1. 一维最小化
 
+求 $f(x) = (x-2)^2 + 3$ 的最小值
+
 ```python
-# 求 f(x) = (x-2)² + 3 的最小值
 def f(x):
     return (x - 2)**2 + 3
 
@@ -144,6 +171,7 @@ print(f"理论最小值: x=2, f(2)=3")
 ```
 
 **输出**:
+
 ```
 最小值点: x = 2.0000
 最小值: f(x) = 3.0000
@@ -152,9 +180,9 @@ print(f"理论最小值: x=2, f(2)=3")
 
 ### 2. 多维最小化
 
+求 **Rosenbrock 函数** 的最小值：$f(x,y) = (1-x)^2 + 100(y-x^2)^2$
+
 ```python
-# 求 Rosenbrock函数的最小值
-# f(x,y) = (1-x)² + 100(y-x²)²
 def rosenbrock(p):
     x, y = p
     return (1 - x)**2 + 100 * (y - x**2)**2
@@ -169,6 +197,7 @@ print(f"理论最小值: x=1, y=1, f=0")
 ```
 
 **输出**:
+
 ```
 最小值点: x=1.0000, y=1.0000
 最小值: 0.000000
@@ -177,6 +206,7 @@ print(f"理论最小值: x=1, y=1, f=0")
 ```
 
 **常用方法**:
+
 - `'BFGS'`: 拟牛顿法，通用性强
 - `'Nelder-Mead'`: 单纯形法，不需要导数
 - `'L-BFGS-B'`: 带边界约束
@@ -184,9 +214,9 @@ print(f"理论最小值: x=1, y=1, f=0")
 
 ### 3. 带约束优化
 
+最小化 $f(x,y) = x^2 + y^2$，约束条件 $x + y = 1$
+
 ```python
-# 最小化 f(x,y) = x² + y²
-# 约束条件: x + y = 1
 def objective(p):
     x, y = p
     return x**2 + y**2
@@ -204,11 +234,18 @@ print(f"约束满足: x+y={sum(result.x):.4f}")
 ```
 
 **输出**:
+
 ```
 最优解: x=0.5000, y=0.5000
 目标函数值: 0.5000
 约束满足: x+y=1.0000
 ```
+
+### 最小化可视化
+
+下图展示了一维函数最小化和 Rosenbrock 函数的 BFGS 优化路径：
+
+![04_minimize](../../outputs/scipy/04_minimize.png)
 
 ## 线性规划 (Linear Programming)
 
@@ -229,7 +266,7 @@ A_ub = [[1, 1],        # 不等式约束左侧
         [1, 0]]
 b_ub = [4, 2]          # 不等式约束右侧
 
-result = optimize.linprog(c, A_ub=A_ub, b_ub=b_ub, 
+result = optimize.linprog(c, A_ub=A_ub, b_ub=b_ub,
                          bounds=[(0, None), (0, None)])  # x,y≥0
 
 print(f"最优解: x={result.x[0]:.2f}, y={result.x[1]:.2f}")
@@ -240,6 +277,7 @@ print(f"  x = {result.x[0]:.2f} ≤ 2")
 ```
 
 **输出**:
+
 ```
 最优解: x=2.00, y=2.00
 最大值: 10.00
@@ -276,12 +314,19 @@ print(f"  最大利润: {-result.fun:.0f}元")
 ```
 
 **输出**:
+
 ```
 最优生产方案:
   产品A: 0件
   产品B: 4件
   最大利润: 240元
 ```
+
+## 线性规划可视化
+
+下图展示了线性规划的可行域和最优解：
+
+![04_linprog](../../outputs/scipy/04_linprog.png)
 
 ## 练习
 
