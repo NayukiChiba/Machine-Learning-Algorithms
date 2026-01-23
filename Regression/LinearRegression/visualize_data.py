@@ -20,7 +20,7 @@ LR_OUTPUTS = os.path.join(OUTPUTS_ROOT, "LinearRegression")
 from generate_data import generate_data
 
 @print_func_info
-def visulize_data(data:DataFrame):
+def visualize_data(data:DataFrame):
     '''
     数据可视化
     

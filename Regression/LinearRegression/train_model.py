@@ -17,13 +17,14 @@ from preprocess_data import preprocess_data
 
 
 @print_func_info
-def train_model(X_train:DataFrame, y_train:Union[DataFrame, Series]):
+def train_model(X_train, y_train, feature_names=None):
     '''
     训练线性回归模型
 
     args:
-        X_train(DataFrame): 训练集是DataFrame类型
-        y_train(Union[DataFrame, Series]): 标签只有一列, 可以是DataFrame, 也可以是Series
+        X_train: 训练集，可以是DataFrame或numpy数组
+        y_train: 标签，可以是DataFrame、Series或numpy数组
+        feature_names: 特征名称列表（可选）
     '''
     model = LinearRegression()
     model.fit(X_train, y_train)
@@ -32,7 +33,15 @@ def train_model(X_train:DataFrame, y_train:Union[DataFrame, Series]):
     print(f"模型参数: ")
     print(f"截距(intercept): {model.intercept_:.2f}")
     print(f"斜率(coefficients):" )
-    features_names = list(X_train.columns)
+    
+    # 处理列名
+    if feature_names is not None:
+        features_names = feature_names
+    elif hasattr(X_train, 'columns'):
+        features_names = list(X_train.columns)
+    else:
+        features_names = [f"Feature_{i}" for i in range(X_train.shape[1])]
+    
     for name, coef in zip(features_names, model.coef_):
         print(f"{name}: {coef:.2f}")
     return model
