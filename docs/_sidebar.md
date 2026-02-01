@@ -58,3 +58,15 @@
   - [模型性能评估](visualization/08-model-evaluation.md)
   - [交互式可视化](visualization/09-interactive.md)
   - [专业报告](visualization/10-reporting.md)
+
+- **Regression 项目**
+  - [数学基础](linear-regression/00-math.md)
+  - [生成数据](linear-regression/01-generate-data.md)
+  - [数据探索](linear-regression/02-explore-data.md)
+  - [数据可视化](linear-regression/03-visualize-data.md)
+  - [数据预处理](linear-regression/04-preprocess-data.md)
+  - [模型训练](linear-regression/05-train-model.md)
+  - [模型评估](linear-regression/06-evaluate-model.md)
+  - [结果可视化](linear-regression/07-visualize-results.md)
+  - [完整流程](linear-regression/08-main-pipeline.md)
+  - [常见问题](linear-regression/09-faq.md)
