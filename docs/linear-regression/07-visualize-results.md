@@ -32,7 +32,7 @@ axes[1].scatter(y_test, y_test_pred)
 - 纵轴是预测值
 - 越接近对角线越好
 
-![04_prediction_effect](images/linear_regression/04_prediction_effect.png)
+![04_prediction_effect](https://img.yumeko.site/file/articles/LinearRegression/04_Prediction_effect.png)
 
 ---
 
@@ -54,7 +54,7 @@ axes[1].scatter(y_test, y_test_pred)
 - 理想：散点均匀分布在 0 附近
 - 若呈现结构化趋势，说明模型可能遗漏了非线性关系
 
-![05_residual_analysis](images/linear_regression/05_residual_analysis.png)
+![05_residual_analysis](https://img.yumeko.site/file/articles/LinearRegression/05_Residual_analysis.png)
 
 ---
 
@@ -69,7 +69,7 @@ axes[i].scatter(X_test_original.iloc[:, i], y_test_pred)
 - 查看单个特征与目标的关系
 - 对比预测值与真实值在该特征上的分布
 
-![06_single_feature_regression](images/linear_regression/06_single_feature_regression.png)
+![06_single_feature_regression](https://img.yumeko.site/file/articles/LinearRegression/06_Single_feature_regression.png)
 
 ---
 

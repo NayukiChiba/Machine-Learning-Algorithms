@@ -39,7 +39,7 @@ axes[row, col].hist(data[feature], bins=30, color='skyblue')
 - 判断特征范围是否集中
 - 观察是否存在极端值
 
-![01_data_distribution](images/linear_regression/01_data_distribution.png)
+![01_data_distribution](https://img.yumeko.site/file/articles/LinearRegression/01_data_distribution.png)
 
 ---
 
@@ -54,7 +54,7 @@ sns.heatmap(correlation_matrix, annot=True, cmap='coolwarm')
 - 查看特征与目标之间的线性相关
 - 相关系数越接近 1 或 -1，线性关系越明显
 
-![02_correlation_heatmap](images/linear_regression/02_correlation_heatmap.png)
+![02_correlation_heatmap](https://img.yumeko.site/file/articles/LinearRegression/02_correlation_heatmap.png)
 
 ---
 
@@ -68,7 +68,7 @@ axes[i].scatter(data[feature], data["价格"], alpha=0.6)
 - 直接观察线性趋势
 - 如果散点大致呈一条“斜线”，线性回归效果通常不错
 
-![03_feature_relationship](images/linear_regression/03_feature_relationship.png)
+![03_feature_relationship](https://img.yumeko.site/file/articles/LinearRegression/03_Feature_Relationship.png)
 
 ---
 
