@@ -1,4 +1,4 @@
-﻿# 数据可视化（visualize_data.py）
+# 数据可视化（visualize_data.py）
 
 这一模块绘制特征分布、相关性热力图和特征与价格的散点关系。
 
@@ -29,7 +29,7 @@ axes[row, col].hist(data[feature], bins=30, color='skyblue')
 - 查看每个特征的取值范围和分布
 - 判断是否存在偏态或异常值
 
-![01_feature_distribution](images/decision_tree/01_feature_distribution.png)
+![01_feature_distribution](https://img.yumeko.site/file/articles/DecisionTree/01_feature_distribution.png)
 
 ---
 
@@ -43,7 +43,7 @@ sns.heatmap(corr, cmap="coolwarm", center=0)
 作用：
 - 观察特征之间以及与 `price` 的线性相关程度
 
-![02_correlation_heatmap](images/decision_tree/02_correlation_heatmap.png)
+![02_correlation_heatmap](https://img.yumeko.site/file/articles/DecisionTree/02_correlation_heatmap.png)
 
 ---
 
@@ -55,7 +55,7 @@ selected = ["MedInc", "AveRooms", "HouseAge", "Latitude"]
 
 只绘制几个代表性特征，避免图像过于拥挤。
 
-![03_feature_relationship](images/decision_tree/03_feature_relationship.png)
+![03_feature_relationship](https://img.yumeko.site/file/articles/DecisionTree/03_feature_relationship.png)
 
 ---
 

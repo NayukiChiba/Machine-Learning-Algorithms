@@ -1,4 +1,4 @@
-﻿# 加载数据集（generate_data.py）
+# 加载数据集（generate_data.py）
 
 本模块负责加载 **California Housing** 经典房价数据集，并返回 `DataFrame`。
 
