@@ -1,8 +1,10 @@
-'''
+"""
 模型评估
-'''
+"""
+
 import sys
 from pathlib import Path
+
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent.parent))
 
 import numpy as np
@@ -15,7 +17,7 @@ from preprocess_data import preprocess_data
 
 @print_func_info
 def evaluate_model(model, X_train, X_test, y_train, y_test):
-    '''
+    """
     评估模型性能
 
     args:
@@ -24,7 +26,7 @@ def evaluate_model(model, X_train, X_test, y_train, y_test):
         y_train, y_test: 标签
     returns:
         y_train_pred, y_test_pred
-    '''
+    """
     y_train_pred = model.predict(X_train)
     y_test_pred = model.predict(X_test)
 

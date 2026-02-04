@@ -11,7 +11,7 @@ def demo_scipy_modules():
     print("=" * 50)
     print("1. SciPy 模块结构")
     print("=" * 50)
-    
+
     print("SciPy 主要模块:")
     print("  scipy.constants  - 物理和数学常数")
     print("  scipy.special    - 特殊函数")
@@ -30,9 +30,9 @@ def demo_constants():
     print("=" * 50)
     print("2. 物理常数")
     print("=" * 50)
-    
+
     from scipy import constants
-    
+
     print(f"圆周率 π: {constants.pi}")
     print(f"光速 c: {constants.c} m/s")
     print(f"普朗克常数 h: {constants.h} J·s")
@@ -40,7 +40,7 @@ def demo_constants():
     print(f"阿伏伽德罗常数 N_A: {constants.N_A}")
     print(f"电子电荷 e: {constants.e} C")
     print()
-    
+
     # 单位转换
     print("单位转换示例:")
     print(f"  1 英里 = {constants.mile} 米")
@@ -53,22 +53,22 @@ def demo_special_functions():
     print("=" * 50)
     print("3. 特殊函数")
     print("=" * 50)
-    
+
     from scipy import special
-    
+
     # 阶乘和组合数
     print("阶乘和组合数:")
     print(f"  5! = {special.factorial(5)}")
     print(f"  C(10, 3) = {special.comb(10, 3)}")
     print(f"  P(10, 3) = {special.perm(10, 3)}")
     print()
-    
+
     # 伽马函数
     print("伽马函数 Γ(x):")
     print(f"  Γ(5) = 4! = {special.gamma(5)}")
     print(f"  Γ(0.5) = √π = {special.gamma(0.5)}")
     print()
-    
+
     # 贝塞尔函数
     print("贝塞尔函数:")
     print(f"  J_0(1) = {special.jv(0, 1):.6f}")
@@ -80,8 +80,9 @@ def demo_version():
     print("=" * 50)
     print("4. 版本信息")
     print("=" * 50)
-    
+
     import scipy
+
     print(f"SciPy 版本: {scipy.__version__}")
     print(f"NumPy 版本: {np.__version__}")
 

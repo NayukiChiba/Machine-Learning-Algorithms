@@ -1,9 +1,11 @@
-'''
+"""
 评估模型
-'''
+"""
+
 import os
 import sys
 from pathlib import Path
+
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent.parent))
 
 from train_model import train_model
@@ -17,20 +19,24 @@ import numpy as np
 
 
 @print_func_info
-def evaluate_model(model, X_train:DataFrame, X_test:DataFrame, 
-                    y_train:Union[DataFrame, Series], 
-                    y_test:Union[DataFrame, Series]) -> Union[DataFrame, Series]:
-    '''
+def evaluate_model(
+    model,
+    X_train: DataFrame,
+    X_test: DataFrame,
+    y_train: Union[DataFrame, Series],
+    y_test: Union[DataFrame, Series],
+) -> Union[DataFrame, Series]:
+    """
     评估模型性能
-    
+
     args:
         model: 训练好的模型
         X_train(DataFrame), X_test(DataFrame): 训练和测试特征
         y_train(Union[DataFrame, Series]), y_test(Union[DataFrame, Series]): 训练和测试目标
-    
+
     返回:
         y_train_pred(Union[DataFrame, Series]), y_test_pred(Union[DataFrame, Series]): 预测值
-    '''
+    """
     y_train_pred = model.predict(X_train)
     y_test_pred = model.predict(X_test)
 
@@ -52,7 +58,7 @@ def evaluate_model(model, X_train:DataFrame, X_test:DataFrame,
     print(f"  R^2 Score:  {train_r2:.4f}")
     print(f"  RMSE:      {train_rMSE:.2f}")
     print(f"  MAE:       {train_MAE:.2f}")
-    
+
     print("\n测试集性能:")
     print(f"  R^2 Score:  {test_r2:.4f}")
     print(f"  RMSE:      {test_rMSE:.2f}")
@@ -67,11 +73,15 @@ def evaluate_model(model, X_train:DataFrame, X_test:DataFrame,
         print(f"轻微过拟合 (R^2差异: {r2_diff:.4f})")
     else:
         print(f"存在过拟合 (R^2差异: {r2_diff:.4f})")
-    
+
     return y_train_pred, y_test_pred
 
 
 if __name__ == "__main__":
-    X_train_scaled, X_test_scaled, y_train, y_test, scaler, X_train, X_test = preprocess_data(generate_data())
+    X_train_scaled, X_test_scaled, y_train, y_test, scaler, X_train, X_test = (
+        preprocess_data(generate_data())
+    )
     model = train_model(X_train=X_train, y_train=y_train)
-    evaluate_model(model=model , X_train=X_train, X_test=X_test, y_train=y_train, y_test=y_test)
+    evaluate_model(
+        model=model, X_train=X_train, X_test=X_test, y_train=y_train, y_test=y_test
+    )
