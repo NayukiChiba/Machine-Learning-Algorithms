@@ -2,3 +2,5 @@ joblib
 matplotlib
 packaging
 seaborn
+ruff
+pre-commit
