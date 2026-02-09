@@ -11,10 +11,12 @@ if str(_project_root) not in sys.path:
 # 导入配置
 from config import get_output_dir, get_output_path
 
+
 # 便捷函数
 def output_dir():
     """获取 Scikit-learn 模块的输出目录"""
     return get_output_dir("sklearn")
+
 
 def output_path(filename: str):
     """获取 Scikit-learn 模块下文件的完整路径"""

@@ -120,4 +120,6 @@ if __name__ == "__main__":
     print(f"  Visualization: {VISUALIZATION_OUTPUT_DIR}")
     print()
     print("测试 get_output_path:")
-    print(f"  get_output_path('numpy', 'test.npy') = {get_output_path('numpy', 'test.npy')}")
+    print(
+        f"  get_output_path('numpy', 'test.npy') = {get_output_path('numpy', 'test.npy')}"
+    )

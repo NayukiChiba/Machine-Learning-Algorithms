@@ -29,18 +29,18 @@ def demo_figure_axes():
     fig, ax = plt.subplots(figsize=(8, 5))
 
     x = np.linspace(0, 10, 100)
-    ax.plot(x, np.sin(x), label='sin(x)')
-    ax.plot(x, np.cos(x), label='cos(x)')
+    ax.plot(x, np.sin(x), label="sin(x)")
+    ax.plot(x, np.cos(x), label="cos(x)")
 
-    ax.set_xlabel('x')
-    ax.set_ylabel('y')
-    ax.set_title('Basic Plot')
+    ax.set_xlabel("x")
+    ax.set_ylabel("y")
+    ax.set_title("Basic Plot")
     ax.legend()
     ax.grid(True)
 
     output_dir = get_output_dir("visualization")
     plt.tight_layout()
-    plt.savefig(output_dir / 'viz_01_basic.png', dpi=100)
+    plt.savefig(output_dir / "viz_01_basic.png", dpi=100)
     plt.close()
     print("图表已保存到 outputs/visualization/viz_01_basic.png")
 
@@ -55,17 +55,17 @@ def demo_line_styles():
 
     fig, ax = plt.subplots(figsize=(10, 6))
 
-    ax.plot(x, np.sin(x), 'r-', linewidth=2, label='solid')
-    ax.plot(x, np.sin(x+0.5), 'g--', linewidth=2, label='dashed')
-    ax.plot(x, np.sin(x+1), 'b:', linewidth=2, label='dotted')
-    ax.plot(x, np.sin(x+1.5), 'm-.', linewidth=2, label='dashdot')
+    ax.plot(x, np.sin(x), "r-", linewidth=2, label="solid")
+    ax.plot(x, np.sin(x + 0.5), "g--", linewidth=2, label="dashed")
+    ax.plot(x, np.sin(x + 1), "b:", linewidth=2, label="dotted")
+    ax.plot(x, np.sin(x + 1.5), "m-.", linewidth=2, label="dashdot")
 
     ax.legend()
-    ax.set_title('Line Styles')
+    ax.set_title("Line Styles")
 
     output_dir = get_output_dir("visualization")
     plt.tight_layout()
-    plt.savefig(output_dir / 'viz_01_line_styles.png', dpi=100)
+    plt.savefig(output_dir / "viz_01_line_styles.png", dpi=100)
     plt.close()
     print("图表已保存")
 
@@ -86,16 +86,16 @@ def demo_markers():
 
     fig, ax = plt.subplots(figsize=(10, 6))
 
-    markers = ['o', 's', '^', 'D', 'v', 'p', '*', 'x']
+    markers = ["o", "s", "^", "D", "v", "p", "*", "x"]
     for i, m in enumerate(markers):
-        ax.plot(x, np.sin(x) + i*0.5, marker=m, label=f"'{m}'", markersize=8)
+        ax.plot(x, np.sin(x) + i * 0.5, marker=m, label=f"'{m}'", markersize=8)
 
     ax.legend(ncol=4)
-    ax.set_title('Marker Types')
+    ax.set_title("Marker Types")
 
     output_dir = get_output_dir("visualization")
     plt.tight_layout()
-    plt.savefig(output_dir / 'viz_01_markers.png', dpi=100)
+    plt.savefig(output_dir / "viz_01_markers.png", dpi=100)
     plt.close()
     print("图表已保存")
 
@@ -125,20 +125,20 @@ def demo_subplots():
     fig, axes = plt.subplots(2, 2, figsize=(10, 8))
 
     axes[0, 0].plot(x, np.sin(x))
-    axes[0, 0].set_title('sin(x)')
+    axes[0, 0].set_title("sin(x)")
 
     axes[0, 1].plot(x, np.cos(x))
-    axes[0, 1].set_title('cos(x)')
+    axes[0, 1].set_title("cos(x)")
 
-    axes[1, 0].plot(x, np.exp(-x/5) * np.sin(x))
-    axes[1, 0].set_title('Damped sine')
+    axes[1, 0].plot(x, np.exp(-x / 5) * np.sin(x))
+    axes[1, 0].set_title("Damped sine")
 
     axes[1, 1].plot(x, x**2)
-    axes[1, 1].set_title('x²')
+    axes[1, 1].set_title("x²")
 
     output_dir = get_output_dir("visualization")
     plt.tight_layout()
-    plt.savefig(output_dir / 'viz_01_subplots.png', dpi=100)
+    plt.savefig(output_dir / "viz_01_subplots.png", dpi=100)
     plt.close()
     print("图表已保存")
 
