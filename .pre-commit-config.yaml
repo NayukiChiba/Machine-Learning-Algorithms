@@ -15,7 +15,8 @@ repos:
         additional_dependencies: [ruff]
       - id: pipreqs
         name: pipreqs (generate requirements.txt)
-        entry: bash -c 'pipreqs . --force --encoding=utf-8'
-        language: system
+        entry: pipreqs . --force --encoding=utf-8 --mode no-pin
+        language: python
         pass_filenames: false
-        types: [python]
+        always_run: true
+        additional_dependencies: [pipreqs]
