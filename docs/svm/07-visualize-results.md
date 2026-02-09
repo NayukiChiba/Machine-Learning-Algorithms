@@ -7,7 +7,7 @@
 ## 1. 输出目录
 
 ```
-outputs/SVM/
+outputs/SVC/
 ```
 
 输出文件：
@@ -52,4 +52,4 @@ zz = model.predict(grid_scaled).reshape(xx.shape)
 ## 4. 小结
 
 - 混淆矩阵体现分类错误类型
-- 决策边界帮助理解 SVM 的分割方式
+- 决策边界帮助理解 SVC 的分割方式

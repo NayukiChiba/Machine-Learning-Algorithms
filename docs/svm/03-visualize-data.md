@@ -9,7 +9,7 @@
 图像保存到：
 
 ```
-outputs/SVM/
+outputs/SVC/
 ```
 
 对应文件名：
@@ -65,5 +65,5 @@ sns.heatmap(corr, annot=True, fmt=".2f", cmap="coolwarm")
 
 ## 5. 小结
 
-- 可视化可以帮助判断数据结构是否适合 SVM
+- 可视化可以帮助判断数据结构是否适合 SVC
 - 双月牙数据明显非线性，非常适合 RBF 核展示

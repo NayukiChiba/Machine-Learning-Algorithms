@@ -4,7 +4,7 @@
 
 | 缩放器           | 公式                                         | 输出范围 | 对异常值 | 适用场景                   |
 | ---------------- | -------------------------------------------- | -------- | :------: | -------------------------- |
-| `StandardScaler` | $z = \frac{x - \mu}{\sigma}$                 | 无界     | ⚠️ 敏感  | 正态分布数据，SVM/逻辑回归 |
+| `StandardScaler` | $z = \frac{x - \mu}{\sigma}$                 | 无界     | ⚠️ 敏感  | 正态分布数据，SVC/逻辑回归 |
 | `MinMaxScaler`   | $x' = \frac{x - x_{min}}{x_{max} - x_{min}}$ | $[0,1]$  | ⚠️ 敏感  | 神经网络，需要有界输出     |
 | `RobustScaler`   | $x' = \frac{x - median}{IQR}$                | 无界     | ✅ 鲁棒  | 含异常值的数据             |
 | `MaxAbsScaler`   | $x' = \frac{x}{\vert x_{max} \vert}$         | $[-1,1]$ | ⚠️ 敏感  | 稀疏数据                   |

@@ -83,7 +83,7 @@
   - [完整流程](decision-tree/08-main-pipeline.md)
   - [常见问题](decision-tree/09-faq.md)
 
-- **SVM 项目**
+- **SVC 项目**
   - [数学基础](svm/00-math.md)
   - [生成数据](svm/01-generate-data.md)
   - [数据探索](svm/02-explore-data.md)

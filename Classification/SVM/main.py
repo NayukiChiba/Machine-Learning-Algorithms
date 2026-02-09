@@ -1,4 +1,4 @@
-# Regression/SVM/main.py
+# Regression/SVC/main.py
 import sys
 from pathlib import Path
 

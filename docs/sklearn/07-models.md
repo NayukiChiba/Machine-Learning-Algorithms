@@ -95,7 +95,7 @@ GradientBoostingClassifier(
 
 ---
 
-## 3. SVM
+## 3. SVC
 
 ### 3.1 SVC
 
@@ -120,13 +120,13 @@ SVC(
 | `C`     | 大=拟合训练数据，小=更平滑边界 |
 | `gamma` | 大=更复杂边界，小=更平滑       |
 
-### SVM 决策边界可视化
+### SVC 决策边界可视化
 
 下图展示了不同核函数的决策边界：
 
 ![07_svm](https://img.yumeko.site/file/articles/sklearn/07_svm.png)
 
-> ⚠️ **SVM 必须标准化数据！**
+> ⚠️ **SVC 必须标准化数据！**
 
 ---
 

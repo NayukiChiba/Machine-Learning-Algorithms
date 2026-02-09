@@ -1,5 +1,5 @@
 """
-训练 SVM 模型
+训练 SVC 模型
 """
 
 import sys
@@ -38,7 +38,7 @@ def train_model(
     returns:
         model: 训练好的模型
     """
-    # 创建 SVM 分类器
+    # 创建 SVC 分类器
     model = SVC(C=C, kernel=kernel, gamma=gamma, random_state=random_state)
 
     # kernel 说明：

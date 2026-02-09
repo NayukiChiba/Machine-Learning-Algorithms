@@ -1,6 +1,6 @@
 ﻿# 一键运行完整流程（main.py）
 
-`main.py` 是 SVM 项目的入口文件，按顺序调用所有模块。
+`main.py` 是 SVC 项目的入口文件，按顺序调用所有模块。
 
 ---
 
@@ -47,4 +47,4 @@ visualize_results(model, scaler, X_train_orig, X_test_orig, y_train, y_test, y_t
 
 `main.py` 的目的就是：
 
-> 一键跑完整个 SVM 二分类流程。
+> 一键跑完整个 SVC 二分类流程。
