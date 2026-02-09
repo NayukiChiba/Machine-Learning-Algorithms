@@ -1,10 +1,11 @@
 """
-训练SVM模型
+训练 SVM 模型
 """
 
 import sys
 from pathlib import Path
 
+# 将项目根目录加入模块搜索路径，便于直接导入公共工具
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent.parent))
 
 from sklearn.svm import SVC
@@ -37,20 +38,23 @@ def train_model(
     returns:
         model: 训练好的模型
     """
+    # 创建 SVM 分类器
     model = SVC(C=C, kernel=kernel, gamma=gamma, random_state=random_state)
-    """
-    kernel :
-        linear:  K(X1, X2) = <X1, X2>
-        rbf:     K(X1, X2) = exp(-\gamma ||X1 - X2||^2)
-        poly:    K(X1, X2) = (\gamma <X1, X2> + coef0)^{dim}
-        sigmoid: K(X1, X2) = tanh(\gamma <X1, X2> + coef0)
-    gamma: 核参数
-        scale: \gamma = frac{1}{n_features * Var(X)}
-        auto: \gamma = frac{1}{n_features}
-    """
+
+    # kernel 说明：
+    # linear:  K(x1, x2) = <x1, x2>
+    # rbf:     K(x1, x2) = exp(-gamma * ||x1 - x2||^2)
+    # poly:    K(x1, x2) = (gamma * <x1, x2> + coef0)^degree
+    # sigmoid: K(x1, x2) = tanh(gamma * <x1, x2> + coef0)
+    # gamma 说明：
+    # scale: 1 / (n_features * Var(X))
+    # auto:  1 / n_features
+
+    # 训练模型并统计耗时
     with timer(name="模型训练耗时"):
         model.fit(X_train, y_train)
 
+    # 打印训练信息
     print("模型训练完成")
     print(f"支持向量总数: {model.n_support_.sum()}")
     print(f"各类别支持向量数: {model.n_support_.tolist()}")
@@ -59,6 +63,7 @@ def train_model(
 
 
 if __name__ == "__main__":
+    # 模块自测：训练模型
     X_train, X_test, y_train, y_test, scaler, X_train_orig, X_test_orig = (
         preprocess_data(generate_data())
     )

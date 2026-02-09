@@ -1,10 +1,11 @@
 """
-生成适合SVM的数据
+生成适合 SVM 的数据
 """
 
 import sys
 from pathlib import Path
 
+# 将项目根目录加入模块搜索路径，便于直接导入公共工具
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent.parent))
 
 from pandas import DataFrame
@@ -26,10 +27,20 @@ def generate_data(
     returns:
         DataFrame: 包含 x1, x2, label 三列
     """
+    # make_moons 生成二维特征 + 二分类标签
     X, y = make_moons(n_samples=n_samples, noise=noise, random_state=random_state)
-    data = DataFrame({"x1": X[:, 0], "x2": X[:, 1], "label": y})
+
+    # 将 numpy 数据封装成 DataFrame，方便后续处理与可视化
+    data = DataFrame(
+        {
+            "x1": X[:, 0],  # 第 1 维特征
+            "x2": X[:, 1],  # 第 2 维特征
+            "label": y,  # 类别标签（0/1）
+        }
+    )
     return data
 
 
 if __name__ == "__main__":
+    # 模块自测：查看生成的数据前几行
     print(generate_data().head())
