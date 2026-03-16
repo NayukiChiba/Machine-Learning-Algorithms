@@ -199,7 +199,7 @@ class ClassificationData:
 
 classification_data = ClassificationData()
 logistic_regression_data = classification_data.logistic_regression()
-decision_tree_data = classification_data.decision_tree()
+decision_tree_classification_data = classification_data.decision_tree()
 svc_data = classification_data.svc()
 naive_bayes_data = classification_data.naive_bayes()
 knn_data = classification_data.knn()
