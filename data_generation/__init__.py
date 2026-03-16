@@ -6,6 +6,9 @@ from .classification import (
     knn_data,
     random_forest_data,
 )
+from .regression import (
+    linear_regression_data,
+)
 
 __all__ = [
     "logistic_regression_data",
@@ -14,4 +17,5 @@ __all__ = [
     "naive_bayes_data",
     "knn_data",
     "random_forest_data",
+    "linear_regression_data",
 ]
