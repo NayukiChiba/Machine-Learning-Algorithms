@@ -1,5 +1,5 @@
 from pandas import DataFrame
-from sklearn import make_classification
+from sklearn import make_classification, make_blobs
 from dataclasses import dataclass
 
 
@@ -17,7 +17,7 @@ class ClassificationData:
     n_samples: int = 400
     random_state: int = 42
 
-    # 适合LogisticRegression的数据
+    # --- 适合LogisticRegression的数据 ---
     # 特征数量
     lr_n_feature: int = 6
     # 有用的特征数量
@@ -34,6 +34,16 @@ class ClassificationData:
     lr_class_sep: float = 1.2
     # 噪声程度
     lr_flip_y: float = 0.03
+
+    # --- 适合DecisionTree的数据 ---
+    # 样本数量
+    dt_n_samples: int = 400
+    # 特征数量
+    dt_n_features: int = 2
+    # 类别数量
+    dt_centers: int = 4
+    # 类别之间的距离
+    dt_cluster_std: float = 1.0
 
     # 二分类数据集, 用于LogisticRegression
     def logistic_regression(self) -> DataFrame:
@@ -61,6 +71,27 @@ class ClassificationData:
         data["label"] = y
         return data
 
+    def decision_tree(self) -> DataFrame:
+        """
+        生成适合DecisionTree的blob数据
+        特点: 4个类别, 分布在不同的象限, 与决策树的轴对齐分裂天然契合
+
+        Returns:
+            data(DataFrame): 适合DecisionTree的blob数据
+        """
+        X, y = make_blobs(
+            n_samples=self.n_samples,
+            n_features=2,
+            centers=4,
+            cluster_std=1.0,
+            random_state=self.random_state,
+        )
+        columns = [f"x{i + 1}" for i in range(2)]
+        data = DataFrame(X, columns=columns)
+        data["label"] = y
+        return data
+
 
 classification_data = ClassificationData()
 logistic_regression_data = classification_data.logistic_regression()
+decision_tree_data = classification_data.decision_tree()
