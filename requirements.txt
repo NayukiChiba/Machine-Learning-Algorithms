@@ -4,3 +4,4 @@ packaging
 seaborn
 ruff
 pre-commit
+scikit-learn
