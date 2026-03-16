@@ -3,6 +3,7 @@ from .classification import (
     decision_tree_data,
     svc_data,
     naive_bayes_data,
+    knn_data,
 )
 
 __all__ = [
@@ -10,4 +11,5 @@ __all__ = [
     "decision_tree_data",
     "svc_data",
     "naive_bayes_data",
+    "knn_data",
 ]
