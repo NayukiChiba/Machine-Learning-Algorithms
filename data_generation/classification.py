@@ -1,3 +1,8 @@
+"""
+data_generation/classification.py
+分类算法的数据生成
+"""
+
 from pandas import DataFrame
 from sklearn.datasets import (
     make_classification,
