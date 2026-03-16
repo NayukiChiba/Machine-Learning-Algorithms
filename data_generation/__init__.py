@@ -13,6 +13,7 @@ from .regression import (
     decision_tree_regression_data,
     regularization_data,
 )
+from .clustering import kmeans_data, dbscan_data
 
 __all__ = [
     "logistic_regression_data",
@@ -25,4 +26,6 @@ __all__ = [
     "svr_data",
     "decision_tree_regression_data",
     "regularization_data",
+    "kmeans_data",
+    "dbscan_data",
 ]
