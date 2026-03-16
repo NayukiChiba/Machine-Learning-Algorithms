@@ -51,6 +51,20 @@ class ClassificationData:
     # 噪声程度
     knn_noise: float = 0.1
 
+    # --- 适合RandomForest的数据 ---
+    # 特征数量
+    rf_n_features: int = 10
+    # 有用的特征数量
+    rf_n_informative: int = 5
+    # 无用的特征数量
+    rf_n_redundant: int = 3
+    # 类别数量
+    rf_n_classes: int = 3
+    # 类别之间的距离
+    rf_class_sep: float = 0.8
+    # 噪声程度
+    rf_flip_y: float = 0.05
+
     # 二分类数据集, 用于LogisticRegression
     def logistic_regression(self) -> DataFrame:
         """
@@ -147,6 +161,30 @@ class ClassificationData:
         data["label"] = y
         return data
 
+    def random_forest(self) -> DataFrame:
+        """
+        高维、多噪声、多分类数据
+        特点: 10 个特征(5 有效 + 3 冗余 + 2 纯噪声), 3 个类别
+        体现随机森林相对单棵决策树的抗噪优势
+
+        Returns:
+            data(DataFrame): 适合RandomForest的blob数据
+        """
+        X, y = make_classification(
+            n_samples=self.n_samples,
+            n_features=self.rf_n_feature,
+            n_informative=self.rf_n_informative,
+            n_redundant=self.rf_n_redundant,
+            n_classes=self.rf_n_classes,
+            class_sep=self.rf_class_sep,
+            flip_y=self.rf_flip_y,
+            random_state=self.random_state,
+        )
+        columns = [f"x{i + 1}" for i in range(self.rf_n_feature)]
+        data = DataFrame(X, columns=columns)
+        data["label"] = y
+        return data
+
 
 classification_data = ClassificationData()
 logistic_regression_data = classification_data.logistic_regression()
@@ -154,3 +192,4 @@ decision_tree_data = classification_data.decision_tree()
 svc_data = classification_data.svc()
 naive_bayes_data = classification_data.naive_bayes()
 knn_data = classification_data.knn()
+random_forest_data = classification_data.random_forest()

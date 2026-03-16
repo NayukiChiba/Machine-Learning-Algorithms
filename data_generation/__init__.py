@@ -4,6 +4,7 @@ from .classification import (
     svc_data,
     naive_bayes_data,
     knn_data,
+    random_forest_data,
 )
 
 __all__ = [
@@ -12,4 +13,5 @@ __all__ = [
     "svc_data",
     "naive_bayes_data",
     "knn_data",
+    "random_forest_data",
 ]
