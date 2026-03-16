@@ -1,5 +1,11 @@
 from pandas import DataFrame
-from sklearn import make_classification, make_blobs, make_circles, load_iris, make_moons
+from sklearn.datasets import (
+    make_classification,
+    make_blobs,
+    make_circles,
+    load_iris,
+    make_moons,
+)
 from dataclasses import dataclass
 
 
@@ -75,7 +81,7 @@ class ClassificationData:
             data(DataFrame): 适合LogisticRegression的二分类数据
         """
         X, y = make_classification(
-            n_smaples=self.n_samples,
+            n_samples=self.n_samples,
             n_features=self.lr_n_feature,
             n_informative=self.lr_n_informative,
             n_redundant=self.lr_n_redundant,
@@ -172,7 +178,7 @@ class ClassificationData:
         """
         X, y = make_classification(
             n_samples=self.n_samples,
-            n_features=self.rf_n_feature,
+            n_features=self.rf_n_features,
             n_informative=self.rf_n_informative,
             n_redundant=self.rf_n_redundant,
             n_classes=self.rf_n_classes,
@@ -180,7 +186,7 @@ class ClassificationData:
             flip_y=self.rf_flip_y,
             random_state=self.random_state,
         )
-        columns = [f"x{i + 1}" for i in range(self.rf_n_feature)]
+        columns = [f"x{i + 1}" for i in range(self.rf_n_features)]
         data = DataFrame(X, columns=columns)
         data["label"] = y
         return data
