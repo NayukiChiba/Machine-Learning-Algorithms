@@ -1,5 +1,5 @@
 from pandas import DataFrame
-from sklearn import make_classification, make_blobs, make_circles
+from sklearn import make_classification, make_blobs, make_circles, load_iris
 from dataclasses import dataclass
 
 
@@ -111,8 +111,23 @@ class ClassificationData:
         data["label"] = y
         return data
 
+    @staticmethod
+    def naive_bayes() -> DataFrame:
+        """
+        使用真实数据集(Iris), 无需生成, 直接加载
+        特点: 150个样本, 4个特征, 3个类别
+
+        Returns:
+            data(DataFrame): 适合朴素贝叶斯的真实数据集
+        """
+        iris = load_iris()
+        data = DataFrame(iris.data, columns=iris.feature_names)
+        data["label"] = iris.target
+        return data
+
 
 classification_data = ClassificationData()
 logistic_regression_data = classification_data.logistic_regression()
 decision_tree_data = classification_data.decision_tree()
 svc_data = classification_data.svc()
+naive_bayes_data = classification_data.naive_bayes()
