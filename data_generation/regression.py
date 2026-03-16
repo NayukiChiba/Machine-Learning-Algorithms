@@ -39,7 +39,9 @@ class RegressionData:
         手动合成的线性房价数据
         真实关系:price = 2*面积 + 10*房间数 - 3*房龄 + noise + 50
         特点:线性关系完全透明, 适合展示线性回归的参数估计
-        返回列:面积,  房间数,  房龄,  price
+
+        Returns:
+            DataFrame: 列包含 面积, 房间数, 房龄, price
         """
         rng = np.random.RandomState(self.random_state)
 
@@ -63,7 +65,9 @@ class RegressionData:
         真实关系:y = 10*sin(π*x1*x2) + 20*(x3-0.5)² + 10*x4 + 5*x5 + noise
         特点:高度非线性, 前 5 个特征有效, 后 5 个是纯噪声
                完美体现 SVR(RBF 核)拟合非线性的能力
-        返回列:x1~x10,  price
+
+        Returns:
+            DataFrame: 列包含 x1~x10, price
         """
         X, y = make_friedman1(
             n_samples=self.n_samples,
@@ -82,8 +86,10 @@ class RegressionData:
         加利福尼亚房价真实数据集(California Housing)
         特点:8 个特征(地理位置、房龄、收入等), 20640 条真实数据
                特征间交互复杂, 适合展示决策树的非线性分裂能力
-        返回列:MedInc,  HouseAge,  AveRooms,  ... ,  price
         注意:真实数据集, n_samples 参数对此方法无效
+
+        Returns:
+            DataFrame: 列包含 MedInc, HouseAge, AveRooms, ..., price
         """
         data = fetch_california_housing(as_frame=True)
         df = data.frame.rename(columns={"MedHouseVal": "price"})
@@ -97,8 +103,10 @@ class RegressionData:
             - 添加 3 个高度相关特征(多重共线性)→ 让 Ridge 和 Lasso 产生差异
             - 添加 8 个纯噪声特征 → 让 Lasso 的稀疏性(归零)有用武之地
         适合:对比 LinearRegression / Ridge / Lasso / ElasticNet 四种效果
-        返回列:原始特征 + bmi_corr/bp_corr/s5_corr + noise_1~noise_8 + price
         注意:真实数据集, n_samples 参数对此方法无效
+
+        Returns:
+            DataFrame: 列包含 原始特征 + bmi_corr/bp_corr/s5_corr + noise_1~noise_8 + price
         """
         rng = np.random.RandomState(self.random_state)
 
