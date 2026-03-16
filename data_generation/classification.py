@@ -1,5 +1,5 @@
 from pandas import DataFrame
-from sklearn import make_classification, make_blobs
+from sklearn import make_classification, make_blobs, make_circles
 from dataclasses import dataclass
 
 
@@ -36,14 +36,16 @@ class ClassificationData:
     lr_flip_y: float = 0.03
 
     # --- 适合DecisionTree的数据 ---
-    # 样本数量
-    dt_n_samples: int = 400
-    # 特征数量
-    dt_n_features: int = 2
     # 类别数量
     dt_centers: int = 4
     # 类别之间的距离
     dt_cluster_std: float = 1.0
+
+    # --- 适合SVC的数据 ---
+    # 噪声程度
+    svc_noise: float = 0.1
+    # 特征
+    svc_factor: float = 0.5
 
     # 二分类数据集, 用于LogisticRegression
     def logistic_regression(self) -> DataFrame:
@@ -81,9 +83,27 @@ class ClassificationData:
         """
         X, y = make_blobs(
             n_samples=self.n_samples,
-            n_features=2,
-            centers=4,
-            cluster_std=1.0,
+            centers=self.dt_centers,
+            cluster_std=self.dt_cluster_std,
+            random_state=self.random_state,
+        )
+        columns = [f"x{i + 1}" for i in range(2)]
+        data = DataFrame(X, columns=columns)
+        data["label"] = y
+        return data
+
+    def svc(self) -> DataFrame:
+        """
+        同心圆二分类数据
+        适合SVM
+
+        Returns:
+            data(DataFrame): 适合SVM的二分类数据
+        """
+        X, y = make_circles(
+            n_samples=self.n_samples,
+            noise=self.svc_noise,
+            factor=self.svc_factor,
             random_state=self.random_state,
         )
         columns = [f"x{i + 1}" for i in range(2)]
@@ -95,3 +115,4 @@ class ClassificationData:
 classification_data = ClassificationData()
 logistic_regression_data = classification_data.logistic_regression()
 decision_tree_data = classification_data.decision_tree()
+svc_data = classification_data.svc()
