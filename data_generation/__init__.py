@@ -14,6 +14,9 @@ from .regression import (
     regularization_data,
 )
 from .clustering import kmeans_data, dbscan_data
+from .probabilistic import em_data, hmm_data
+from .ensemble import bagging_data, gbdt_data, xgboost_data, lightgbm_data
+from .dimensionality import pca_data, lda_data
 
 __all__ = [
     "logistic_regression_data",
@@ -28,4 +31,12 @@ __all__ = [
     "regularization_data",
     "kmeans_data",
     "dbscan_data",
+    "em_data",
+    "hmm_data",
+    "bagging_data",
+    "gbdt_data",
+    "xgboost_data",
+    "lightgbm_data",
+    "pca_data",
+    "lda_data",
 ]
