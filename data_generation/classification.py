@@ -1,5 +1,5 @@
 from pandas import DataFrame
-from sklearn import make_classification, make_blobs, make_circles, load_iris
+from sklearn import make_classification, make_blobs, make_circles, load_iris, make_moons
 from dataclasses import dataclass
 
 
@@ -46,6 +46,10 @@ class ClassificationData:
     svc_noise: float = 0.1
     # 特征
     svc_factor: float = 0.5
+
+    # --- 适合KNN的数据 ---
+    # 噪声程度
+    knn_noise: float = 0.1
 
     # 二分类数据集, 用于LogisticRegression
     def logistic_regression(self) -> DataFrame:
@@ -125,9 +129,28 @@ class ClassificationData:
         data["label"] = iris.target
         return data
 
+    def knn(self) -> DataFrame:
+        """
+        双月牙二分类数据
+        特点：非线性边界，体现 KNN 局部感知能力
+
+        Returns:
+            data(DataFrame): 适合KNN的二分类数据
+        """
+        X, y = make_moons(
+            n_samples=self.n_samples,
+            noise=self.knn_noise,
+            random_state=self.random_state,
+        )
+        columns = [f"x{i + 1}" for i in range(2)]
+        data = DataFrame(X, columns=columns)
+        data["label"] = y
+        return data
+
 
 classification_data = ClassificationData()
 logistic_regression_data = classification_data.logistic_regression()
 decision_tree_data = classification_data.decision_tree()
 svc_data = classification_data.svc()
 naive_bayes_data = classification_data.naive_bayes()
+knn_data = classification_data.knn()
