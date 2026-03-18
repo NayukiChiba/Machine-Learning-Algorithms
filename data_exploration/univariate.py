@@ -106,7 +106,7 @@ def _print_single_continuous(data: DataFrame, col: str) -> None:
     """
     s = _continuous_stats(data[col])
 
-    print(f"  [{col}]")
+    print(f"[{col}]")
 
     # 值域范围
     print(f"最小值: {s['min']:.3f}")
@@ -133,7 +133,7 @@ def _print_single_continuous(data: DataFrame, col: str) -> None:
             f"(低于 {s['lower_bound']:.3f} 或高于 {s['upper_bound']:.3f})"
         )
     else:
-        print("    异常值: 无")
+        print("异常值: 无")
 
     # 空行分隔不同特征
 
@@ -153,12 +153,12 @@ def _print_discrete_distribution(
     counts = data[col].value_counts().sort_index()
     total = len(data)
 
-    print(f"  [{name}] 共 {counts.nunique()} 个取值")
+    print(f"[{name}] 共 {counts.nunique()} 个取值")
 
     # 逐个打印每个取值的频率和占比
     for val, cnt in counts.items():
         ratio = cnt / total
-        print(f"    值 {val}: {cnt} 个 ({ratio * 100:.1f}%)")
+        print(f"值 {val}: {cnt} 个 ({ratio * 100:.1f}%)")
 
 
 # --- 按数据集类型的分析函数 ---
@@ -190,23 +190,23 @@ def _analyze_classification(
     # 缺失值检查
     missing = data.isnull().sum().sum()
     if missing == 0:
-        print("  缺失值: 无")
+        print("缺失值: 无")
     else:
-        print(f"  缺失值: 共 {missing} 个")
+        print(f"缺失值: 共 {missing} 个")
         # 按列打印缺失情况
         for col in data.columns:
             col_missing = data[col].isnull().sum()
             if col_missing > 0:
-                print(f"    {col}: {col_missing} 个缺失")
+                print(f"{col}: {col_missing} 个缺失")
 
     # 逐个分析每个连续特征
-    print("  --- 各特征单变量分析 ---")
+    print("--- 各特征单变量分析 ---")
 
     for col in feature_cols:
         _print_single_continuous(data, col)
 
     # 目标变量分布
-    print("  --- 目标变量分布 ---")
+    print("--- 目标变量分布 ---")
 
     _print_discrete_distribution(data, target_col, "类别 " + target_col)
 
@@ -240,16 +240,16 @@ def _analyze_regression(data: DataFrame, name: str, target_col: str = "price") -
         for col in data.columns:
             col_missing = data[col].isnull().sum()
             if col_missing > 0:
-                print(f"    {col}: {col_missing} 个缺失")
+                print(f"{col}: {col_missing} 个缺失")
 
     # 逐个分析每个连续特征
-    print("  --- 各特征单变量分析 ---")
+    print("--- 各特征单变量分析 ---")
 
     for col in feature_cols:
         _print_single_continuous(data, col)
 
     # 目标变量也是连续的，同样做单变量分析
-    print("  --- 目标变量分析 ---")
+    print("--- 目标变量分析 ---")
 
     _print_single_continuous(data, target_col)
 
@@ -280,18 +280,18 @@ def _analyze_clustering(
     # 缺失值检查
     missing = data.isnull().sum().sum()
     if missing == 0:
-        print("  缺失值: 无")
+        print("缺失值: 无")
     else:
-        print(f"  缺失值: 共 {missing} 个")
+        print(f"缺失值: 共 {missing} 个")
 
     # 逐个分析每个连续特征
-    print("  --- 各特征单变量分析 ---")
+    print("--- 各特征单变量分析 ---")
 
     for col in feature_cols:
         _print_single_continuous(data, col)
 
     # 真实簇标签分布 (仅作为评估参考)
-    print("  --- 真实簇标签分布 (仅评估用，训练时不可见) ---")
+    print("--- 真实簇标签分布 (仅评估用，训练时不可见) ---")
 
     _print_discrete_distribution(data, label_col, "true_label")
 
@@ -315,7 +315,7 @@ def _analyze_sequence(data: DataFrame, name: str) -> None:
     print(f"字段: {list(data.columns)}")
 
     # 时间步完整性检查
-    print("  --- 时间步检查 ---")
+    print("--- 时间步检查 ---")
 
     t = data["time"]
     print(f"时间步范围: {t.min()} ~ {t.max()}")
@@ -327,12 +327,12 @@ def _analyze_sequence(data: DataFrame, name: str) -> None:
         print("步长一致性: 存在间断，请检查数据")
 
     # 观测符号分布
-    print("  --- 观测符号分布 ---")
+    print("--- 观测符号分布 ---")
 
     _print_discrete_distribution(data, "obs", "观测符号 obs")
 
     # 隐状态分布
-    print("  --- 隐状态分布 (训练时不可见) ---")
+    print("--- 隐状态分布 (训练时不可见) ---")
 
     _print_discrete_distribution(data, "state_true", "隐状态 state_true")
 
@@ -379,7 +379,7 @@ def univariate_analysis() -> None:
     # --- 分类算法数据集 (6 个) ---
 
     print("=" * 50)
-    print("  分类算法数据集 (6 个)")
+    print("分类算法数据集 (6 个)")
     print("=" * 50)
 
     # 1. 逻辑回归: 线性可分的高维二分类数据
@@ -427,7 +427,7 @@ def univariate_analysis() -> None:
     # --- 回归算法数据集 (4 个) ---
 
     print("=" * 50)
-    print("  回归算法数据集 (4 个)")
+    print("回归算法数据集 (4 个)")
     print("=" * 50)
 
     # 1. 线性回归: 手动合成的线性房价数据
@@ -463,7 +463,7 @@ def univariate_analysis() -> None:
     # --- 聚类算法数据集 (2 个) ---
 
     print("=" * 50)
-    print("  聚类算法数据集 (2 个)")
+    print("聚类算法数据集 (2 个)")
     print("=" * 50)
 
     # 1. KMeans: 球形多簇数据
@@ -483,7 +483,7 @@ def univariate_analysis() -> None:
     # --- 集成学习数据集 (4 个) ---
 
     print("=" * 50)
-    print("  集成学习数据集 (4 个)")
+    print("集成学习数据集 (4 个)")
     print("=" * 50)
 
     # 1. Bagging: 高噪声双月牙二分类数据
@@ -518,7 +518,7 @@ def univariate_analysis() -> None:
     # --- 降维算法数据集 (2 个) ---
 
     print("=" * 50)
-    print("  降维算法数据集 (2 个)")
+    print("降维算法数据集 (2 个)")
     print("=" * 50)
 
     # 1. PCA: 高维低秩合成数据
@@ -538,7 +538,7 @@ def univariate_analysis() -> None:
     # --- 概率与序列模型数据集 (2 个) ---
 
     print("=" * 50)
-    print("  概率与序列模型数据集 (2 个)")
+    print("概率与序列模型数据集 (2 个)")
     print("=" * 50)
 
     # 1. EM (GMM): 高斯混合模型数据
@@ -559,7 +559,7 @@ def univariate_analysis() -> None:
     # --- 分析完成 ---
 
     print("=" * 50)
-    print("  单变量分析完成, 共分析 20 个数据集")
+    print("单变量分析完成, 共分析 20 个数据集")
     print("=" * 50)
 
 
