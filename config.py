@@ -12,7 +12,6 @@
     from config import NUMPY_OUTPUT_DIR
 """
 
-import os
 from pathlib import Path
 
 # 项目根目录 (config.py 所在目录)
@@ -21,12 +20,19 @@ PROJECT_ROOT = Path(__file__).parent.absolute()
 # 输出文件根目录
 OUTPUTS_ROOT = PROJECT_ROOT / "outputs"
 
-# 各模块输出目录
+# 基础模块输出目录
 NUMPY_OUTPUT_DIR = OUTPUTS_ROOT / "numpy"
 PANDAS_OUTPUT_DIR = OUTPUTS_ROOT / "pandas"
 SKLEARN_OUTPUT_DIR = OUTPUTS_ROOT / "sklearn"
 SCIPY_OUTPUT_DIR = OUTPUTS_ROOT / "scipy"
 VISUALIZATION_OUTPUT_DIR = OUTPUTS_ROOT / "visualization"
+
+# 数据可视化输出目录
+DATA_VIS_ROOT = OUTPUTS_ROOT / "data_visualization"
+DATA_VIS_DISTRIBUTION_DIR = DATA_VIS_ROOT / "distribution"
+DATA_VIS_SCATTER_DIR = DATA_VIS_ROOT / "scatter"
+DATA_VIS_CORRELATION_DIR = DATA_VIS_ROOT / "correlation"
+DATA_VIS_FEATURE_SPACE_DIR = DATA_VIS_ROOT / "feature_space"
 
 
 def get_output_dir(module: str, create: bool = True) -> Path:
@@ -51,6 +57,10 @@ def get_output_dir(module: str, create: bool = True) -> Path:
         "sklearn": SKLEARN_OUTPUT_DIR,
         "scipy": SCIPY_OUTPUT_DIR,
         "visualization": VISUALIZATION_OUTPUT_DIR,
+        "data_vis_distribution": DATA_VIS_DISTRIBUTION_DIR,
+        "data_vis_scatter": DATA_VIS_SCATTER_DIR,
+        "data_vis_correlation": DATA_VIS_CORRELATION_DIR,
+        "data_vis_feature_space": DATA_VIS_FEATURE_SPACE_DIR,
     }
 
     module_lower = module.lower()
@@ -98,6 +108,10 @@ def init_output_dirs():
         SKLEARN_OUTPUT_DIR,
         SCIPY_OUTPUT_DIR,
         VISUALIZATION_OUTPUT_DIR,
+        DATA_VIS_DISTRIBUTION_DIR,
+        DATA_VIS_SCATTER_DIR,
+        DATA_VIS_CORRELATION_DIR,
+        DATA_VIS_FEATURE_SPACE_DIR,
     ]
     for d in dirs:
         d.mkdir(parents=True, exist_ok=True)
@@ -118,6 +132,12 @@ if __name__ == "__main__":
     print(f"  Scikit-learn:  {SKLEARN_OUTPUT_DIR}")
     print(f"  SciPy:         {SCIPY_OUTPUT_DIR}")
     print(f"  Visualization: {VISUALIZATION_OUTPUT_DIR}")
+    print()
+    print("数据可视化输出目录:")
+    print(f"  分布图:        {DATA_VIS_DISTRIBUTION_DIR}")
+    print(f"  散点图:        {DATA_VIS_SCATTER_DIR}")
+    print(f"  相关性热力图:   {DATA_VIS_CORRELATION_DIR}")
+    print(f"  特征空间:      {DATA_VIS_FEATURE_SPACE_DIR}")
     print()
     print("测试 get_output_path:")
     print(
