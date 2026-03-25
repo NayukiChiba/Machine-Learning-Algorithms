@@ -9,7 +9,6 @@ Scikit-learn 基础入门
 """
 
 import numpy as np
-import pandas as pd
 from sklearn import datasets
 import matplotlib.pyplot as plt
 
@@ -377,7 +376,7 @@ def demo_first_model():
         )
     ax1.set_xlabel("花萼长度 (cm)")
     ax1.set_ylabel("花萼宽度 (cm)")
-    ax1.set_title(f"KNN (k=5) 决策边界")
+    ax1.set_title("KNN (k=5) 决策边界")
     ax1.legend(title="类别")
     ax1.grid(True, alpha=0.3)
 
@@ -454,12 +453,12 @@ def demo_estimator_methods():
 
     # clone() - 克隆模型
     knn_clone = clone(knn)
-    print(f"\nclone():")
+    print("\nclone():")
     print(f"  原模型已训练: {hasattr(knn, 'classes_')}")
     print(f"  克隆模型已训练: {hasattr(knn_clone, 'classes_')}")
 
     # 训练后属性（带下划线）
-    print(f"\n训练后属性:")
+    print("\n训练后属性:")
     print(f"  classes_: {knn.classes_}")
     print(f"  n_features_in_: {knn.n_features_in_}")
 

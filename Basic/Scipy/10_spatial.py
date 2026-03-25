@@ -278,7 +278,7 @@ def demo_voronoi():
     print(f"点数: {len(points)}")
     print(f"Voronoi 顶点数: {len(vor.vertices)}")
     print(f"Voronoi 区域数: {len(vor.regions)}")
-    print(f"\n点对应的区域:")
+    print("\n点对应的区域:")
     for i, region_idx in enumerate(vor.point_region):
         print(f"  点 {i} -> 区域 {region_idx}")
 
@@ -327,7 +327,7 @@ def demo_delaunay():
 
     print(f"点数: {len(points)}")
     print(f"三角形数: {len(tri.simplices)}")
-    print(f"\n前3个三角形顶点索引:")
+    print("\n前3个三角形顶点索引:")
     for i, simplex in enumerate(tri.simplices[:3]):
         print(f"  三角形 {i}: {simplex}")
 

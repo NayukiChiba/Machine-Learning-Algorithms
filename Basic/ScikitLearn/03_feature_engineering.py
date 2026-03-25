@@ -104,14 +104,14 @@ def demo_polynomial_features():
     # degree=2: 生成 1, a, b, a², ab, b²
     poly2 = PolynomialFeatures(degree=2, include_bias=True)
     X_poly2 = poly2.fit_transform(X)
-    print(f"degree=2:")
+    print("degree=2:")
     print(f"  特征: {poly2.get_feature_names_out()}")
     print(f"  结果:\n{X_poly2}")
 
     # 只保留交互项
     poly_inter = PolynomialFeatures(degree=2, interaction_only=True, include_bias=False)
     X_inter = poly_inter.fit_transform(X)
-    print(f"\ninteraction_only=True:")
+    print("\ninteraction_only=True:")
     print(f"  特征: {poly_inter.get_feature_names_out()}")
 
 
@@ -143,8 +143,6 @@ def demo_select_k_best():
     from sklearn.feature_selection import (
         SelectKBest,
         f_classif,
-        chi2,
-        mutual_info_classif,
     )
 
     iris = datasets.load_iris()

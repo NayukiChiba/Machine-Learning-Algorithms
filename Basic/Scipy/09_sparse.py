@@ -81,7 +81,7 @@ def demo_sparse_operations():
 
     np.random.seed(42)
     A = sparse.random(20, 20, density=0.1, format="csr")
-    print(f"随机稀疏矩阵 A (密度=0.1):")
+    print("随机稀疏矩阵 A (密度=0.1):")
     print(f"  形状: {A.shape}")
     print(f"  非零元素数: {A.nnz}")
     print(f"  密度: {A.nnz / (A.shape[0] * A.shape[1]):.2f}")
@@ -134,7 +134,7 @@ def demo_sparse_linalg():
     A = sparse.diags([-1, 2, -1], [-1, 0, 1], shape=(n, n), format="csr")
     b = np.ones(n)
 
-    print(f"稀疏方程组 Ax = b")
+    print("稀疏方程组 Ax = b")
     print(f"  矩阵大小: {n}x{n}")
     print(f"  非零元素: {A.nnz}")
 
@@ -203,7 +203,7 @@ def demo_sparse_efficiency():
 
     print(f"矩阵大小: {n}x{n}")
     print(f"密度: {density * 100}%")
-    print(f"\n内存使用:")
+    print("\n内存使用:")
     print(f"  密集矩阵: {dense_mem / 1024 / 1024:.2f} MB")
     print(f"  稀疏矩阵: {sparse_mem / 1024:.2f} KB")
     print(f"  节省: {(1 - sparse_mem / dense_mem) * 100:.1f}%")
