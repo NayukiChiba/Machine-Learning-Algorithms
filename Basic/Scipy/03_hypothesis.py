@@ -25,7 +25,7 @@ def demo_ttest():
     sample = np.random.normal(105, 15, 30)
     t_stat, p_value = stats.ttest_1samp(sample, 100)
     print(f"  样本均值: {sample.mean():.2f}")
-    print(f"  H0: μ = 100")
+    print("  H0: μ = 100")
     print(f"  t统计量: {t_stat:.4f}")
     print(f"  p值: {p_value:.4f}")
     print()
@@ -323,7 +323,7 @@ def demo_anova():
         stats.f.pdf(x[x >= f_crit], df1, df2),
         color="red",
         alpha=0.4,
-        label=f"拒绝域 (α=0.05)",
+        label="拒绝域 (α=0.05)",
     )
 
     ax2.axvline(

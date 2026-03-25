@@ -57,7 +57,7 @@ def demo_get_set_params():
 
     # 设置参数
     rf.set_params(n_estimators=50, max_depth=5)
-    print(f"\n修改后:")
+    print("\n修改后:")
     print(f"  n_estimators: {rf.get_params()['n_estimators']}")
     print(f"  max_depth: {rf.get_params()['max_depth']}")
 

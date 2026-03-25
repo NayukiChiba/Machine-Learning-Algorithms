@@ -27,7 +27,7 @@ def demo_quad():
     # 积分 ∫sin(x) dx, 从0到π
     result2, error2 = integrate.quad(np.sin, 0, np.pi)
     print(f"∫₀π sin(x) dx = {result2:.6f} (误差: {error2:.2e})")
-    print(f"解析解: 2")
+    print("解析解: 2")
     print()
 
     # 无穷积分 ∫e^(-x^2) dx, 从-inf到+inf
@@ -98,7 +98,7 @@ def demo_dblquad():
         lambda x: 2,  # y 的上限
     )
     print(f"∫₀¹∫₀^2 xy dy dx = {result1:.6f}")
-    print(f"解析解: 1")
+    print("解析解: 1")
     print()
 
     # 圆形区域积分

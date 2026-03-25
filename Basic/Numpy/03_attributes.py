@@ -67,9 +67,9 @@ def demo_dtypes():
         print(f"  {dtype.__name__}: 精度 {info.precision} 位小数")
 
     print("\n其他类型:")
-    print(f"  bool: True/False")
-    print(f"  complex64: 复数 (2个float32)")
-    print(f"  complex128: 复数 (2个float64)")
+    print("  bool: True/False")
+    print("  complex64: 复数 (2个float32)")
+    print("  complex128: 复数 (2个float64)")
 
 
 def demo_astype():

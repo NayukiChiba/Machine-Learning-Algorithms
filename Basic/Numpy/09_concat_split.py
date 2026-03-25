@@ -112,14 +112,14 @@ def demo_split():
 
     # 沿 axis=0 分割成 2 份
     split_0 = np.split(arr, 2, axis=0)
-    print(f"split(arr, 2, axis=0):")
+    print("split(arr, 2, axis=0):")
     for i, part in enumerate(split_0):
         print(f"  第{i + 1}部分:\n{part}")
     print()
 
     # 沿 axis=1 分割成 3 份
     split_1 = np.split(arr, 3, axis=1)
-    print(f"split(arr, 3, axis=1):")
+    print("split(arr, 3, axis=1):")
     for i, part in enumerate(split_1):
         print(f"  第{i + 1}部分: {part.flatten()}")
 

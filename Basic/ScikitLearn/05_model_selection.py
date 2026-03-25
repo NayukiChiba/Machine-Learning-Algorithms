@@ -114,7 +114,6 @@ def demo_cv_splitters():
         KFold,
         StratifiedKFold,
         TimeSeriesSplit,
-        LeaveOneOut,
     )
 
     X = np.arange(10).reshape(-1, 1)

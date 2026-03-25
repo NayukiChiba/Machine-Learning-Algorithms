@@ -2,15 +2,12 @@
 训练线性回归模型
 """
 
-import os
 import sys
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent.parent))
 
 
-from pandas import DataFrame, Series
-from typing import Union
 from sklearn.linear_model import LinearRegression
 from utils.decorate import print_func_info
 from generate_data import generate_data
@@ -30,10 +27,10 @@ def train_model(X_train, y_train, feature_names=None):
     model = LinearRegression()
     model.fit(X_train, y_train)
 
-    print(f"模型训练完成")
-    print(f"模型参数: ")
+    print("模型训练完成")
+    print("模型参数: ")
     print(f"截距(intercept): {model.intercept_:.2f}")
-    print(f"斜率(coefficients):")
+    print("斜率(coefficients):")
 
     # 处理列名
     if feature_names is not None:

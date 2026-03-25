@@ -245,9 +245,9 @@ def demo_solve():
 
     x = linalg.solve(A, b)
 
-    print(f"方程组:")
-    print(f"  3x + y = 9")
-    print(f"  x + 2y = 8")
+    print("方程组:")
+    print("  3x + y = 9")
+    print("  x + 2y = 8")
     print(f"\n解: x = {x[0]:.4f}, y = {x[1]:.4f}")
     print(f"验证 A @ x = {A @ x}")
 
