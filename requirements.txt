@@ -5,3 +5,5 @@ seaborn
 ruff
 pre-commit
 scikit-learn
+hmmlearn
+lightgbm
