@@ -12,6 +12,7 @@ const customElements = [
 ]
 
 export default defineConfig({
+  base: '/Machine-Learning-Algorithms/',
   title: '机器学习算法原理',
   description: 'Machine Learning Algorithms — 数学原理与代码实现',
   lang: 'zh-CN',
