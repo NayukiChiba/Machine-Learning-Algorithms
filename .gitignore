@@ -216,3 +216,9 @@ _copilot/
 copilot/
 
 .vscode/
+node_modules/
+
+# VitePress
+docs/.vitepress/dist/
+docs/.vitepress/cache/
+docs/node_modules/
