@@ -50,7 +50,7 @@ def demo_distributions():
     ax1 = axes[0, 0]
     ax1.plot(x, norm.pdf(x), "b-", lw=2, label="PDF")
     ax1.fill_between(x, norm.pdf(x), alpha=0.3)
-    ax1.axvline(0, color="r", linestyle="--", label=f"均值 μ=0")
+    ax1.axvline(0, color="r", linestyle="--", label="均值 μ=0")
     ax1.set_title("正态分布 N(0, 1) - 概率密度函数")
     ax1.set_xlabel("x")
     ax1.set_ylabel("密度")

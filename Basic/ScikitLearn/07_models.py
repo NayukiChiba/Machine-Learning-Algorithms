@@ -130,7 +130,7 @@ def demo_tree_models():
     print("3. 决策树")
     print("=" * 50)
 
-    from sklearn.tree import DecisionTreeClassifier, DecisionTreeRegressor
+    from sklearn.tree import DecisionTreeClassifier
 
     iris = datasets.load_iris()
     X, y = iris.data, iris.target
@@ -217,7 +217,7 @@ def demo_svm():
     print("5. SVM (需要标准化)")
     print("=" * 50)
 
-    from sklearn.svm import SVC, SVR, LinearSVC
+    from sklearn.svm import SVC, LinearSVC
     from sklearn.datasets import make_moons
 
     iris = datasets.load_iris()
@@ -288,7 +288,7 @@ def demo_naive_bayes():
     print("6. 朴素贝叶斯")
     print("=" * 50)
 
-    from sklearn.naive_bayes import GaussianNB, MultinomialNB, BernoulliNB
+    from sklearn.naive_bayes import GaussianNB
 
     iris = datasets.load_iris()
     X, y = iris.data, iris.target
@@ -326,7 +326,7 @@ def demo_clustering():
     print("8. 聚类算法")
     print("=" * 50)
 
-    from sklearn.cluster import KMeans, DBSCAN, AgglomerativeClustering
+    from sklearn.cluster import KMeans, DBSCAN
     from sklearn.metrics import silhouette_score
 
     X, y_true = datasets.make_blobs(n_samples=300, centers=4, random_state=42)

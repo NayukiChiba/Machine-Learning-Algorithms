@@ -34,6 +34,15 @@ DATA_VIS_SCATTER_DIR = DATA_VIS_ROOT / "scatter"
 DATA_VIS_CORRELATION_DIR = DATA_VIS_ROOT / "correlation"
 DATA_VIS_FEATURE_SPACE_DIR = DATA_VIS_ROOT / "feature_space"
 
+# 模型训练输出目录
+MODEL_TRAINING_ROOT = OUTPUTS_ROOT / "model_training"
+MT_CLASSIFICATION_DIR = MODEL_TRAINING_ROOT / "classification"
+MT_REGRESSION_DIR = MODEL_TRAINING_ROOT / "regression"
+MT_CLUSTERING_DIR = MODEL_TRAINING_ROOT / "clustering"
+MT_ENSEMBLE_DIR = MODEL_TRAINING_ROOT / "ensemble"
+MT_DIMENSIONALITY_DIR = MODEL_TRAINING_ROOT / "dimensionality"
+MT_PROBABILISTIC_DIR = MODEL_TRAINING_ROOT / "probabilistic"
+
 
 def get_output_dir(module: str, create: bool = True) -> Path:
     """
@@ -61,6 +70,12 @@ def get_output_dir(module: str, create: bool = True) -> Path:
         "data_vis_scatter": DATA_VIS_SCATTER_DIR,
         "data_vis_correlation": DATA_VIS_CORRELATION_DIR,
         "data_vis_feature_space": DATA_VIS_FEATURE_SPACE_DIR,
+        "mt_classification": MT_CLASSIFICATION_DIR,
+        "mt_regression": MT_REGRESSION_DIR,
+        "mt_clustering": MT_CLUSTERING_DIR,
+        "mt_ensemble": MT_ENSEMBLE_DIR,
+        "mt_dimensionality": MT_DIMENSIONALITY_DIR,
+        "mt_probabilistic": MT_PROBABILISTIC_DIR,
     }
 
     module_lower = module.lower()
@@ -112,6 +127,13 @@ def init_output_dirs():
         DATA_VIS_SCATTER_DIR,
         DATA_VIS_CORRELATION_DIR,
         DATA_VIS_FEATURE_SPACE_DIR,
+        MODEL_TRAINING_ROOT,
+        MT_CLASSIFICATION_DIR,
+        MT_REGRESSION_DIR,
+        MT_CLUSTERING_DIR,
+        MT_ENSEMBLE_DIR,
+        MT_DIMENSIONALITY_DIR,
+        MT_PROBABILISTIC_DIR,
     ]
     for d in dirs:
         d.mkdir(parents=True, exist_ok=True)
@@ -138,6 +160,14 @@ if __name__ == "__main__":
     print(f"  散点图:        {DATA_VIS_SCATTER_DIR}")
     print(f"  相关性热力图:   {DATA_VIS_CORRELATION_DIR}")
     print(f"  特征空间:      {DATA_VIS_FEATURE_SPACE_DIR}")
+    print()
+    print("模型训练输出目录:")
+    print(f"  分类 (Classification): {MT_CLASSIFICATION_DIR}")
+    print(f"  回归 (Regression):     {MT_REGRESSION_DIR}")
+    print(f"  聚类 (Clustering):     {MT_CLUSTERING_DIR}")
+    print(f"  集成 (Ensemble):       {MT_ENSEMBLE_DIR}")
+    print(f"  降维 (Dimensionality): {MT_DIMENSIONALITY_DIR}")
+    print(f"  概率 (Probabilistic):  {MT_PROBABILISTIC_DIR}")
     print()
     print("测试 get_output_path:")
     print(

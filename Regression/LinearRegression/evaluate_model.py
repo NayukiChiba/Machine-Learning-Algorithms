@@ -2,7 +2,6 @@
 评估模型
 """
 
-import os
 import sys
 from pathlib import Path
 

@@ -142,7 +142,7 @@ def demo_image_operations():
     print()
 
     # 图像统计
-    print(f"图像统计:")
+    print("图像统计:")
     print(f"  最小值: {image.min()}")
     print(f"  最大值: {image.max()}")
     print(f"  平均值: {image.mean():.1f}")
@@ -181,7 +181,7 @@ def demo_statistics():
     # 生成正态分布数据
     data = np.random.normal(loc=100, scale=15, size=1000)
 
-    print(f"正态分布数据 (μ=100, σ=15, n=1000):")
+    print("正态分布数据 (μ=100, σ=15, n=1000):")
     print(f"  样本均值: {data.mean():.2f}")
     print(f"  样本标准差: {data.std():.2f}")
     print(f"  最小值: {data.min():.2f}")

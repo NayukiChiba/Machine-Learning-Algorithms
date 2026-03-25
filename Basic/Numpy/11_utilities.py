@@ -153,7 +153,7 @@ def demo_copy():
     # 赋值（引用）
     arr_ref = arr
     arr_ref[0] = 100
-    print(f"赋值 arr_ref = arr，修改 arr_ref[0]=100")
+    print("赋值 arr_ref = arr，修改 arr_ref[0]=100")
     print(f"原数组变化: {arr}")
     arr[0] = 1  # 恢复
     print()
@@ -161,7 +161,7 @@ def demo_copy():
     # 视图
     arr_view = arr.view()
     arr_view[1] = 200
-    print(f"视图 arr.view()，修改 view[1]=200")
+    print("视图 arr.view()，修改 view[1]=200")
     print(f"原数组变化: {arr}")
     arr[1] = 2  # 恢复
     print()
@@ -169,7 +169,7 @@ def demo_copy():
     # 副本
     arr_copy = arr.copy()
     arr_copy[2] = 300
-    print(f"副本 arr.copy()，修改 copy[2]=300")
+    print("副本 arr.copy()，修改 copy[2]=300")
     print(f"原数组不变: {arr}")
 
 

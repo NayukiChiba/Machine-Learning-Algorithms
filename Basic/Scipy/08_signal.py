@@ -26,7 +26,7 @@ def demo_filter():
     noisy_signal = clean_signal + noise
 
     print(f"信号长度: {len(t)}")
-    print(f"采样率: 1000 Hz")
+    print("采样率: 1000 Hz")
     print()
 
     # Butterworth 低通滤波器
@@ -34,8 +34,8 @@ def demo_filter():
     filtered = signal.filtfilt(b, a, noisy_signal)
 
     print("Butterworth 低通滤波器:")
-    print(f"  阶数: 4")
-    print(f"  截止频率: 10 Hz")
+    print("  阶数: 4")
+    print("  截止频率: 10 Hz")
     print(f"  噪声信号标准差: {np.std(noisy_signal):.4f}")
     print(f"  滤波后标准差: {np.std(filtered):.4f}")
 
