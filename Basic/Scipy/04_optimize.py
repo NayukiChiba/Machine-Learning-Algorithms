@@ -95,7 +95,7 @@ def demo_root_finding():
 
     # 使用 brentq (区间法)
     root = optimize.brentq(f, 0, 3)
-    print(f"f(x) = x^2 - 4")
+    print("f(x) = x^2 - 4")
     print(f"  brentq 求根 [0, 3]: x = {root:.6f}")
     print(f"  验证 f({root:.6f}) = {f(root):.10f}")
     print()
@@ -113,8 +113,8 @@ def demo_root_finding():
         return [x + y - 3, x - y - 1]
 
     solution = optimize.fsolve(equations, x0=[0, 0])
-    print(f"  x + y = 3")
-    print(f"  x - y = 1")
+    print("  x + y = 3")
+    print("  x - y = 1")
     print(f"  解: x = {solution[0]:.4f}, y = {solution[1]:.4f}")
 
     # === 可视化 ===

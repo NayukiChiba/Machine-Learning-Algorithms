@@ -10,7 +10,6 @@ Scikit-learn 数据预处理
 
 import numpy as np
 import pandas as pd
-from sklearn import datasets
 import matplotlib.pyplot as plt
 
 # 设置中文字体
@@ -256,14 +255,14 @@ def demo_encoders():
     print("5. 类别编码")
     print("=" * 50)
 
-    from sklearn.preprocessing import LabelEncoder, OrdinalEncoder, OneHotEncoder
+    from sklearn.preprocessing import LabelEncoder, OneHotEncoder
 
     colors = np.array([["红"], ["绿"], ["蓝"], ["红"], ["绿"]])
 
     # LabelEncoder - 单列
     le = LabelEncoder()
     colors_le = le.fit_transform(colors.ravel())
-    print(f"LabelEncoder:")
+    print("LabelEncoder:")
     print(f"  输入: {colors.ravel()}")
     print(f"  编码: {colors_le}")
     print(f"  类别: {le.classes_}")
@@ -271,7 +270,7 @@ def demo_encoders():
     # OneHotEncoder
     ohe = OneHotEncoder(sparse_output=False, handle_unknown="ignore")
     colors_ohe = ohe.fit_transform(colors)
-    print(f"\nOneHotEncoder:")
+    print("\nOneHotEncoder:")
     print(f"  特征名: {ohe.get_feature_names_out()}")
     print(f"  编码:\n{colors_ohe}")
 

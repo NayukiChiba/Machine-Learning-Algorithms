@@ -3,9 +3,6 @@
 对应文档: ../../docs/visualization/09-interactive.md
 """
 
-import numpy as np
-import pandas as pd
-
 
 def demo_plotly_basics():
     """演示 Plotly 基础"""

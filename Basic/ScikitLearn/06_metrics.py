@@ -395,8 +395,6 @@ def demo_display_tools():
     print("7. sklearn 可视化工具")
     print("=" * 50)
 
-    from sklearn.metrics import ConfusionMatrixDisplay, RocCurveDisplay
-
     cancer = datasets.load_breast_cancer()
     X, y = cancer.data, cancer.target
     X_train, X_test, y_train, y_test = train_test_split(
