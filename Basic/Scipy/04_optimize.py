@@ -1,6 +1,6 @@
 """
 优化算法
-对应文档: ../../docs/scipy/04-optimize.md
+对应文档: ../../docs/foundations/scipy/04-optimize.md
 """
 
 import numpy as np
@@ -297,7 +297,8 @@ def demo_linear_programming():
 
     # 约束线
     y1 = 4 - x  # x + y = 4
-    y2 = np.full_like(x, 3)  # y = 3
+    # y2 = 3
+    y2 = np.full_like(x, 3)  # noqa: F841
 
     ax.plot(x, y1, "b-", lw=2, label="$x + y = 4$")
     ax.axhline(3, color="g", lw=2, label="$y = 3$")

@@ -1,6 +1,6 @@
 """
 插值方法
-对应文档: ../../docs/scipy/05-interpolate.md
+对应文档: ../../docs/foundations/scipy/05-interpolate.md
 """
 
 import numpy as np

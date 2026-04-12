@@ -1,6 +1,6 @@
 """
 稀疏矩阵
-对应文档: ../../docs/scipy/09-sparse.md
+对应文档: ../../docs/foundations/scipy/09-sparse.md
 """
 
 import numpy as np
@@ -216,10 +216,10 @@ def demo_sparse_efficiency():
     x = np.arange(len(sizes))
     width = 0.35
 
-    bars1 = ax1.bar(
+    bars1 = ax1.bar(  # noqa: F841
         x - width / 2, dense_memory, width, label="密集矩阵", color="coral", alpha=0.7
     )
-    bars2 = ax1.bar(
+    bars2 = ax1.bar(  # noqa: F841
         x + width / 2,
         sparse_memory,
         width,

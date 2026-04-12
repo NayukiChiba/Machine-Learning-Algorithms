@@ -1,6 +1,6 @@
 """
 空间数据与距离计算
-对应文档: ../../docs/scipy/10-spatial.md
+对应文档: ../../docs/foundations/scipy/10-spatial.md
 """
 
 import numpy as np

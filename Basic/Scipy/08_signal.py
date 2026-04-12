@@ -1,6 +1,6 @@
 """
 信号处理基础
-对应文档: ../../docs/scipy/08-signal.md
+对应文档: ../../docs/foundations/scipy/08-signal.md
 """
 
 import numpy as np
@@ -295,7 +295,7 @@ def demo_peak_finding():
     # 峰值属性
     ax2 = axes[1]
     prominences = signal.peak_prominences(y, peaks)[0]
-    widths = signal.peak_widths(y, peaks, rel_height=0.5)[0]
+    widths = signal.peak_widths(y, peaks, rel_height=0.5)[0]  # noqa: F841
 
     bar_width = 0.35
     x_pos = np.arange(len(peaks))

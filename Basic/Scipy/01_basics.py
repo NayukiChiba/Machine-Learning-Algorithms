@@ -1,6 +1,6 @@
 """
 SciPy 基础入门
-对应文档: ../../docs/scipy/01-basics.md
+对应文档: ../../docs/foundations/scipy/01-basics.md
 """
 
 import numpy as np
