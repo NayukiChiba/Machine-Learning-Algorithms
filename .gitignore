@@ -214,6 +214,7 @@ Basic/outputs/
 .obsidian/
 _copilot/
 copilot/
+.kilo/
 
 .vscode/
 node_modules/
