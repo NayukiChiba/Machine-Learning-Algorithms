@@ -1,6 +1,6 @@
 """
 模型性能评估可视化
-对应文档: ../../docs/visualization/08-model-evaluation.md
+对应文档: ../../docs/foundations/visualization/08-model-evaluation.md
 """
 
 import numpy as np

@@ -1,6 +1,6 @@
 """
 数据预处理可视化
-对应文档: ../../docs/visualization/06-preprocessing-viz.md
+对应文档: ../../docs/foundations/visualization/06-preprocessing-viz.md
 """
 
 import numpy as np

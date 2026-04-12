@@ -1,6 +1,6 @@
 """
 Matplotlib 常用图表类型
-对应文档: ../../docs/visualization/02-matplotlib-charts.md
+对应文档: ../../docs/foundations/visualization/02-matplotlib-charts.md
 """
 
 import numpy as np

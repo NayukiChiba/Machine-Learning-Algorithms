@@ -1,6 +1,6 @@
 """
 Matplotlib 基础入门
-对应文档: ../../docs/visualization/01-matplotlib-basics.md
+对应文档: ../../docs/foundations/visualization/01-matplotlib-basics.md
 """
 
 import numpy as np

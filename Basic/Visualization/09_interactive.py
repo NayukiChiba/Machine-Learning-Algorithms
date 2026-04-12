@@ -1,6 +1,6 @@
 """
 交互式可视化
-对应文档: ../../docs/visualization/09-interactive.md
+对应文档: ../../docs/foundations/visualization/09-interactive.md
 """
 
 
