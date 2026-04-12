@@ -1,6 +1,6 @@
 """
 NumPy 基础入门
-对应文档: ../../docs/numpy/01-basics.md
+对应文档: ../../docs/foundations/numpy/01-basics.md
 
 使用方式：
     python 01_basics.py
@@ -69,15 +69,15 @@ def demo_performance():
     size = 1000000
 
     # Python 列表运算
-    py_list = list(range(size))
+    # py_list = list(range(size))
     start = time.time()
-    result_list = [x * 2 for x in py_list]
+    # result_list = [x * 2 for x in py_list]
     py_time = time.time() - start
 
     # NumPy 数组运算
-    np_array = np.arange(size)
+    # np_array = np.arange(size)
     start = time.time()
-    result_np = np_array * 2
+    # result_np = np_array * 2
     np_time = time.time() - start
 
     print(f"数据规模: {size:,}")

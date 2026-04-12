@@ -1,6 +1,6 @@
 """
 NumPy 文件操作
-对应文档: ../../docs/numpy/10-file-io.md
+对应文档: ../../docs/foundations/numpy/10-file-io.md
 
 使用方式：
     python 10_file_io.py

@@ -1,6 +1,6 @@
 """
 NumPy 数组运算
-对应文档: ../../docs/numpy/05-operations.md
+对应文档: ../../docs/foundations/numpy/05-operations.md
 
 使用方式：
     python 05_operations.py

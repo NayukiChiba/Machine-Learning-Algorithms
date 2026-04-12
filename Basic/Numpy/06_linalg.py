@@ -1,6 +1,6 @@
 """
 NumPy 线性代数运算
-对应文档: ../../docs/numpy/06-linalg.md
+对应文档: ../../docs/foundations/numpy/06-linalg.md
 
 使用方式：
     python 06_linalg.py
