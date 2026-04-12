@@ -1,6 +1,6 @@
 """
 探索性数据分析可视化
-对应文档: ../../docs/visualization/05-eda.md
+对应文档: ../../docs/foundations/visualization/05-eda.md
 """
 
 import numpy as np

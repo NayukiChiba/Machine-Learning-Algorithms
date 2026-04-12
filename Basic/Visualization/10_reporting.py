@@ -1,6 +1,6 @@
 """
 专业数据可视化报告
-对应文档: ../../docs/visualization/10-reporting.md
+对应文档: ../../docs/foundations/visualization/10-reporting.md
 """
 
 import numpy as np

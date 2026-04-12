@@ -1,6 +1,6 @@
 """
 Seaborn 库入门
-对应文档: ../../docs/visualization/03-seaborn.md
+对应文档: ../../docs/foundations/visualization/03-seaborn.md
 """
 
 import numpy as np

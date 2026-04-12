@@ -1,6 +1,6 @@
 """
 Pandas 数据可视化
-对应文档: ../../docs/visualization/04-pandas-viz.md
+对应文档: ../../docs/foundations/visualization/04-pandas-viz.md
 """
 
 import numpy as np

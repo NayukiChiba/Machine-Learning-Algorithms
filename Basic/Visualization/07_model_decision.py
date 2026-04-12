@@ -1,6 +1,6 @@
 """
 模型决策过程可视化
-对应文档: ../../docs/visualization/07-model-decision.md
+对应文档: ../../docs/foundations/visualization/07-model-decision.md
 """
 
 import numpy as np
