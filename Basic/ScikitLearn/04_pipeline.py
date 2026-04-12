@@ -1,6 +1,6 @@
 """
 Scikit-learn Pipeline 流水线
-对应文档: ../docs/04_pipeline.md
+对应文档: ../../docs/foundations/sklearn/04-pipeline.md
 
 使用方式：
     from code.04_pipeline import *

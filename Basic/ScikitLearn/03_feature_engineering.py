@@ -1,6 +1,6 @@
 """
 Scikit-learn 特征工程
-对应文档: ../docs/03_feature_engineering.md
+对应文档: ../../docs/foundations/sklearn/03-feature-engineering.md
 
 使用方式：
     from code.03_feature_engineering import *
@@ -110,7 +110,7 @@ def demo_polynomial_features():
 
     # 只保留交互项
     poly_inter = PolynomialFeatures(degree=2, interaction_only=True, include_bias=False)
-    X_inter = poly_inter.fit_transform(X)
+    X_inter = poly_inter.fit_transform(X)  # noqa: F841
     print("\ninteraction_only=True:")
     print(f"  特征: {poly_inter.get_feature_names_out()}")
 
@@ -175,7 +175,7 @@ def demo_rfe():
         n_features_to_select=2,
         step=1,  # 每次移除1个特征
     )
-    X_rfe = rfe.fit_transform(X, y)
+    X_rfe = rfe.fit_transform(X, y)  # noqa: F841
 
     print(f"特征排名: {rfe.ranking_}")
     print(f"选中特征: {np.array(iris.feature_names)[rfe.support_]}")
@@ -195,7 +195,7 @@ def demo_select_from_model():
 
     rf = RandomForestClassifier(n_estimators=100, random_state=42)
     sfm = SelectFromModel(rf, threshold="median")
-    X_sfm = sfm.fit_transform(X, y)
+    X_sfm = sfm.fit_transform(X, y)  # noqa: F841
 
     print(f"特征重要性: {sfm.estimator_.feature_importances_.round(3)}")
     print(f"阈值: {sfm.threshold_:.3f}")

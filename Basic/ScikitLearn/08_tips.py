@@ -1,6 +1,6 @@
 """
 Scikit-learn 实用技巧
-对应文档: ../docs/08_tips.md
+对应文档: ../../docs/foundations/sklearn/08-tips.md
 
 使用方式：
     from code.08_tips import *

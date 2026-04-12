@@ -1,6 +1,6 @@
 """
 Scikit-learn 评估指标与可视化
-对应文档: ../docs/06_metrics.md
+对应文档: ../../docs/foundations/sklearn/06-metrics.md
 
 使用方式：
     from code.06_metrics import *

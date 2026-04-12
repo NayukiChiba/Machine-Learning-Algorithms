@@ -1,6 +1,6 @@
 """
 Scikit-learn 数据预处理
-对应文档: ../docs/02_preprocessing.md
+对应文档: ../../docs/foundations/sklearn/02-preprocessing.md
 
 使用方式：
     from code.02_preprocessing import *
@@ -300,7 +300,7 @@ def demo_encoders():
     # OneHotEncoder 可视化
     ax2 = axes[1]
     onehot_data = np.array([[1, 0, 0], [0, 1, 0], [0, 0, 1]])
-    im = ax2.imshow(onehot_data, cmap="Blues", aspect="auto")
+    im = ax2.imshow(onehot_data, cmap="Blues", aspect="auto")  # noqa: F841
     ax2.set_xticks([0, 1, 2])
     ax2.set_xticklabels(["x0_红", "x0_绿", "x0_蓝"])
     ax2.set_yticks([0, 1, 2])
