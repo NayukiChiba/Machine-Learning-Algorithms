@@ -1,6 +1,6 @@
 """
 统计分布与描述统计
-对应文档: ../../docs/scipy/02-stats.md
+对应文档: ../../docs/foundations/scipy/02-stats.md
 """
 
 import numpy as np

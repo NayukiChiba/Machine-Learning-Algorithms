@@ -1,6 +1,6 @@
 """
 假设检验
-对应文档: ../../docs/scipy/03-hypothesis.md
+对应文档: ../../docs/foundations/scipy/03-hypothesis.md
 """
 
 import numpy as np

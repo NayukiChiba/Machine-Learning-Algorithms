@@ -1,6 +1,6 @@
 """
 线性代数扩展
-对应文档: ../../docs/scipy/07-linalg.md
+对应文档: ../../docs/foundations/scipy/07-linalg.md
 """
 
 import numpy as np
@@ -183,7 +183,7 @@ def demo_eig():
     # 特征向量可视化
     ax2 = axes[1]
     colors = ["blue", "red"]
-    origin = np.zeros(2)
+    origin = np.zeros(2)  # noqa: F841
 
     for i, (lam, color) in enumerate(zip(eigenvalues, colors)):
         v = eigenvectors[:, i].real

@@ -1,6 +1,6 @@
 """
 数值积分
-对应文档: ../../docs/scipy/06-integrate.md
+对应文档: ../../docs/foundations/scipy/06-integrate.md
 """
 
 import numpy as np
