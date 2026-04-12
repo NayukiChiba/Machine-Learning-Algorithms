@@ -1,6 +1,6 @@
 """
 NumPy 综合实战
-对应文档: ../../docs/numpy/12-practice.md
+对应文档: ../../docs/foundations/numpy/12-practice.md
 
 使用方式：
     python 12_practice.py
@@ -151,7 +151,7 @@ def demo_image_operations():
 
     # 图像翻转
     flipped_h = image[:, ::-1]  # 水平翻转
-    flipped_v = image[::-1, :]  # 垂直翻转
+    # flipped_v = image[::-1, :]  # 垂直翻转
     print(f"水平翻转:\n{flipped_h}")
     print()
 

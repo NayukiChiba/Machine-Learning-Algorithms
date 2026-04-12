@@ -1,6 +1,6 @@
 """
 NumPy 实用函数
-对应文档: ../../docs/numpy/11-utilities.md
+对应文档: ../../docs/foundations/numpy/11-utilities.md
 
 使用方式：
     python 11_utilities.py

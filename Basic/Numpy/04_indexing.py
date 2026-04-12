@@ -1,6 +1,6 @@
 """
 NumPy 数组索引和切片
-对应文档: ../../docs/numpy/04-indexing.md
+对应文档: ../../docs/foundations/numpy/04-indexing.md
 
 使用方式：
     python 04_indexing.py

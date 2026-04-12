@@ -1,6 +1,6 @@
 """
 NumPy 数组变形
-对应文档: ../../docs/numpy/07-reshape.md
+对应文档: ../../docs/foundations/numpy/07-reshape.md
 
 使用方式：
     python 07_reshape.py

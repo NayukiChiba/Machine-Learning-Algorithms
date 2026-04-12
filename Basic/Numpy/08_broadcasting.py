@@ -1,6 +1,6 @@
 """
 NumPy 广播机制
-对应文档: ../../docs/numpy/08-broadcasting.md
+对应文档: ../../docs/foundations/numpy/08-broadcasting.md
 
 使用方式：
     python 08_broadcasting.py

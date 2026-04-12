@@ -1,6 +1,6 @@
 """
 NumPy 数组创建
-对应文档: ../../docs/numpy/02-creation.md
+对应文档: ../../docs/foundations/numpy/02-creation.md
 
 使用方式：
     python 02_creation.py

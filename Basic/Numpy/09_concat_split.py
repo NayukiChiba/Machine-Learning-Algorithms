@@ -1,6 +1,6 @@
 """
 NumPy 数组连接和分割
-对应文档: ../../docs/numpy/09-concat-split.md
+对应文档: ../../docs/foundations/numpy/09-concat-split.md
 
 使用方式：
     python 09_concat_split.py

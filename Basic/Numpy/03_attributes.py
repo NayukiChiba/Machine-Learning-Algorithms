@@ -1,6 +1,6 @@
 """
 NumPy 数组属性
-对应文档: ../../docs/numpy/03-attributes.md
+对应文档: ../../docs/foundations/numpy/03-attributes.md
 
 使用方式：
     python 03_attributes.py
