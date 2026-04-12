@@ -1,6 +1,6 @@
 """
 Pandas 数据可视化
-对应文档: ../../docs/pandas/08-visualization.md
+对应文档: ../../docs/foundations/pandas/08-visualization.md
 """
 
 import pandas as pd

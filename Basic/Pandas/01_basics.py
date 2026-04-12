@@ -1,6 +1,6 @@
 """
 Pandas 基础入门
-对应文档: ../../docs/pandas/01-basics.md
+对应文档: ../../docs/foundations/pandas/01-basics.md
 
 使用方式：
     python 01_basics.py

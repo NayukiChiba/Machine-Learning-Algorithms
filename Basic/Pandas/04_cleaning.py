@@ -1,6 +1,6 @@
 """
 数据清洗与处理
-对应文档: ../../docs/pandas/04-cleaning.md
+对应文档: ../../docs/foundations/pandas/04-cleaning.md
 
 使用方式：
     python 04_cleaning.py

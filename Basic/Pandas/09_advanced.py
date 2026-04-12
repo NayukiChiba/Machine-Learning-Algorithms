@@ -1,6 +1,6 @@
 """
 高级操作与性能优化
-对应文档: ../../docs/pandas/09-advanced.md
+对应文档: ../../docs/foundations/pandas/09-advanced.md
 """
 
 import pandas as pd
@@ -102,7 +102,7 @@ def demo_vectorization():
 
     # 向量化方式
     start = time.time()
-    result2 = df["A"] + df["B"]
+    # result2 = df["A"] + df["B"]
     vec_time = time.time() - start
 
     print(f"循环耗时: {loop_time:.4f}秒")

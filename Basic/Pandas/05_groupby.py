@@ -1,6 +1,6 @@
 """
 数据分组与聚合
-对应文档: ../../docs/pandas/05-groupby.md
+对应文档: ../../docs/foundations/pandas/05-groupby.md
 
 使用方式：
     python 05_groupby.py
