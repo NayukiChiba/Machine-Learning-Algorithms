@@ -1,6 +1,6 @@
 """
 数据导入与导出
-对应文档: ../../docs/pandas/02-io.md
+对应文档: ../../docs/foundations/pandas/02-io.md
 
 使用方式：
     python 02_io.py

@@ -1,6 +1,6 @@
 """
 时间序列处理
-对应文档: ../../docs/pandas/07-timeseries.md
+对应文档: ../../docs/foundations/pandas/07-timeseries.md
 
 使用方式：
     python 07_timeseries.py

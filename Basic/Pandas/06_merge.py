@@ -1,6 +1,6 @@
 """
 数据合并与连接
-对应文档: ../../docs/pandas/06-merge.md
+对应文档: ../../docs/foundations/pandas/06-merge.md
 
 使用方式：
     python 06_merge.py

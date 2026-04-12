@@ -1,6 +1,6 @@
 """
 数据选择与过滤
-对应文档: ../../docs/pandas/03-selection.md
+对应文档: ../../docs/foundations/pandas/03-selection.md
 
 使用方式：
     python 03_selection.py
