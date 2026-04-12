@@ -1,6 +1,6 @@
 """
 Scikit-learn 常用模型速查
-对应文档: ../docs/07_models.md
+对应文档: ../../docs/foundations/sklearn/07-models.md
 
 使用方式：
     from code.07_models import *

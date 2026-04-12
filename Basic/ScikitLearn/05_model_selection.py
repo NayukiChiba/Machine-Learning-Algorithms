@@ -1,6 +1,6 @@
 """
 Scikit-learn 模型选择与调参
-对应文档: ../docs/05_model_selection.md
+对应文档: ../../docs/foundations/sklearn/05-model-selection.md
 
 使用方式：
     from code.05_model_selection import *

@@ -1,6 +1,6 @@
 """
 Scikit-learn 基础入门
-对应文档: ../docs/01_basics.md
+对应文档: ../../docs/foundations/sklearn/01-basics.md
 
 使用方式：
     from code.01_basics import *
@@ -137,7 +137,7 @@ def demo_generate_data():
 
     # blobs
     ax1 = axes[0, 0]
-    scatter = ax1.scatter(
+    scatter = ax1.scatter(  # noqa: F841
         X_blob[:, 0],
         X_blob[:, 1],
         c=y_blob,
@@ -279,7 +279,7 @@ def demo_train_test_split():
     ax2 = axes[1]
     x = np.arange(3)
     width = 0.35
-    bars1 = ax2.bar(
+    bars1 = ax2.bar(  # noqa: F841
         x - width / 2,
         np.bincount(y_train),
         width,
@@ -287,7 +287,7 @@ def demo_train_test_split():
         color="#4ECDC4",
         edgecolor="black",
     )
-    bars2 = ax2.bar(
+    bars2 = ax2.bar(  # noqa: F841
         x + width / 2,
         np.bincount(y_test),
         width,
