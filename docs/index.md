@@ -8,28 +8,34 @@ hero:
   actions:
     - theme: brand
       text: 开始阅读
-      link: /classification/logistic_regression
+      link: /classification/logistic_regression/
+    - theme: alt
+      text: 基础库教程
+      link: /foundations/overview
     - theme: alt
       text: GitHub
       link: https://github.com/NayukiChiba/Machine-Learning-Algorithms
 
 features:
+  - title: 基础与工具库
+    details: NumPy、Pandas、SciPy、Matplotlib、Seaborn、Scikit-learn — 与仓库 Basic 脚本对应
+    link: /foundations/overview
   - title: 📊 分类算法
-    details: KNN、逻辑回归、SVM、决策树、朴素贝叶斯 — 从距离度量到最大间隔
-    link: /classification/knn
+    details: KNN、逻辑回归、SVM、决策树、朴素贝叶斯 — 每算法多分册文档
+    link: /classification/knn/
   - title: 📈 回归算法
-    details: 线性回归、正则化、SVR、决策树回归 — 从最小二乘到核技巧
-    link: /regression/linear_regression
+    details: 线性回归、正则化、SVR、决策树回归
+    link: /regression/linear_regression/
   - title: 🌲 集成学习
-    details: Bagging、GBDT、XGBoost、LightGBM — 从自举法到二阶梯度优化
-    link: /ensemble/bagging
+    details: Bagging、GBDT、XGBoost、LightGBM
+    link: /ensemble/bagging/
   - title: 🔮 聚类算法
-    details: K-Means、DBSCAN — 从畸变函数到密度可达
-    link: /clustering/kmeans
+    details: K-Means、DBSCAN
+    link: /clustering/kmeans/
   - title: 🔬 降维算法
-    details: PCA、LDA — 从最大投影方差到 Fisher 判别
-    link: /dimensionality/pca
+    details: PCA、LDA
+    link: /dimensionality/pca/
   - title: 🎲 概率模型
-    details: EM/GMM、HMM — 从 Jensen 不等式到 Viterbi 解码
-    link: /probabilistic/em
+    details: EM/GMM、HMM
+    link: /probabilistic/em/
 ---
