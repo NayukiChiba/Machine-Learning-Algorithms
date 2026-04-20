@@ -12,7 +12,7 @@ NumPy 基础入门
 import numpy as np
 
 
-def demo_version_info():
+def version_info():
     """演示如何查看 NumPy 版本信息"""
     print("=" * 50)
     print("1. NumPy 版本信息")
@@ -29,7 +29,7 @@ def demo_version_info():
     print(f"  linewidth: {options['linewidth']}")
 
 
-def demo_numpy_vs_list():
+def numpy_vs_list():
     """演示 NumPy 数组与 Python 列表的区别"""
     print("=" * 50)
     print("2. NumPy 数组 vs Python 列表")
@@ -58,7 +58,7 @@ def demo_numpy_vs_list():
     print(f"  数组 + 6 = {np_array + 6}")  # 元素级运算
 
 
-def demo_performance():
+def performance():
     """演示 NumPy 的性能优势"""
     print("=" * 50)
     print("3. NumPy 性能优势")
@@ -86,7 +86,7 @@ def demo_performance():
     print(f"NumPy快了约 {py_time / np_time:.1f} 倍")
 
 
-def demo_ndarray_basics():
+def ndarray_basics():
     """演示 ndarray 的基本操作"""
     print("=" * 50)
     print("4. ndarray 基本操作")
@@ -113,16 +113,16 @@ def demo_ndarray_basics():
     print(f"  维度: {arr_3d.ndim}")
 
 
-def demo_all():
+def run_all():
     """运行所有演示"""
-    demo_version_info()
+    version_info()
     print()
-    demo_numpy_vs_list()
+    numpy_vs_list()
     print()
-    demo_performance()
+    performance()
     print()
-    demo_ndarray_basics()
+    ndarray_basics()
 
 
 if __name__ == "__main__":
-    demo_all()
+    run_all()
