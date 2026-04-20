@@ -165,7 +165,7 @@ def array_split():
         print(f"  第{i + 1}部分 (大小{len(part)}): {part}")
 
 
-def all():
+def run():
     """运行所有演示"""
     concatenate()
     print()
@@ -183,4 +183,4 @@ def all():
 
 
 if __name__ == "__main__":
-    all()
+    run()

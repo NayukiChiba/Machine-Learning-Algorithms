@@ -152,7 +152,7 @@ def norm():
     print(f"Frobenius 范数: {np.linalg.norm(A):.4f}")
 
 
-def all():
+def run():
     """运行所有演示"""
     matrix_multiplication()
     print()
@@ -168,4 +168,4 @@ def all():
 
 
 if __name__ == "__main__":
-    all()
+    run()

@@ -6,7 +6,7 @@
     python 03_selection.py
     或
     from Basic.Pandas.03_selection import *
-    all()
+    run()
 """
 
 import pandas as pd
@@ -148,7 +148,7 @@ def query():
     print(df.query("Age >= @min_age"))
 
 
-def all():
+def run():
     """运行所有演示"""
     column_select()
     print()
@@ -162,4 +162,4 @@ def all():
 
 
 if __name__ == "__main__":
-    all()
+    run()

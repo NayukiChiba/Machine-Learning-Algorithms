@@ -154,7 +154,7 @@ def where():
     print(f"正数标记为1，其他为-1: {result2}")
 
 
-def all():
+def run():
     """运行所有演示"""
     basic_indexing()
     print()
@@ -170,4 +170,4 @@ def all():
 
 
 if __name__ == "__main__":
-    all()
+    run()

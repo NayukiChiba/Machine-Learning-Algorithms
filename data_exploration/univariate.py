@@ -320,7 +320,7 @@ def _analyze_sequence(data: DataFrame, name: str) -> None:
     t = data["time"]
     print(f"时间步范围: {t.min()} ~ {t.max()}")
     # 检查时间步是否连续递增、无间断
-    is_continuous = (t.diff().dropna() == 1).all()
+    is_continuous = (t.diff().dropna() == 1).run()
     if is_continuous:
         print("步长一致性: 连续无间断")
     else:

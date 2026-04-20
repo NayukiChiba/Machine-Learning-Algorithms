@@ -116,7 +116,7 @@ def transform_viz(output_dir):
     print("图表已保存")
 
 
-def all():
+def run():
     """运行所有演示"""
     output_dir = get_output_dir("visualization")
 
@@ -128,4 +128,4 @@ def all():
 
 
 if __name__ == "__main__":
-    all()
+    run()

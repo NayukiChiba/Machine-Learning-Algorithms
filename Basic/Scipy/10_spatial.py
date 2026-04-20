@@ -389,7 +389,7 @@ def delaunay():
     plt.savefig("outputs/scipy/10_delaunay.png", dpi=150, bbox_inches="tight")
 
 
-def all():
+def run():
     """运行所有演示"""
     import os
 
@@ -407,4 +407,4 @@ def all():
 
 
 if __name__ == "__main__":
-    all()
+    run()

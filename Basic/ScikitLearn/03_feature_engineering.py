@@ -202,7 +202,7 @@ def select_from_model():
     print(f"选中特征: {np.array(iris.feature_names)[sfm.get_support()]}")
 
 
-def all():
+def run():
     """运行所有演示"""
     count_vectorizer()
     print()
@@ -222,4 +222,4 @@ def all():
 
 
 if __name__ == "__main__":
-    all()
+    run()

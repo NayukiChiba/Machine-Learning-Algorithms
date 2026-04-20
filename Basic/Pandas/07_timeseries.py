@@ -6,7 +6,7 @@
     python 07_timeseries.py
     或
     from Basic.Pandas.07_timeseries import *
-    all()
+    run()
 """
 
 import pandas as pd
@@ -178,7 +178,7 @@ def shift():
     print(ts.pct_change())
 
 
-def all():
+def run():
     """运行所有演示"""
     datetime_create()
     print()
@@ -194,4 +194,4 @@ def all():
 
 
 if __name__ == "__main__":
-    all()
+    run()

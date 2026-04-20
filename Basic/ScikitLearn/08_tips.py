@@ -171,7 +171,7 @@ def model_persistence():
 
     # 加载
     rf_loaded = joblib.load(path)
-    print(f"加载后预测一致: {(rf_loaded.predict(X_test) == rf.predict(X_test)).all()}")
+    print(f"加载后预测一致: {(rf_loaded.predict(X_test) == rf.predict(X_test)).run()}")
 
     # 压缩保存
     path_compressed = os.path.join(temp_dir, "model_compressed.joblib")
@@ -234,7 +234,7 @@ def all_estimators():
     print(f"分类器前5个: {[name for name, _ in classifiers[:5]]}")
 
 
-def all():
+def run():
     """运行所有演示"""
     clone()
     print()
@@ -256,4 +256,4 @@ def all():
 
 
 if __name__ == "__main__":
-    all()
+    run()

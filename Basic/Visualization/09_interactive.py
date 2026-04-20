@@ -71,7 +71,7 @@ def plotly_tips():
     print("  )")
 
 
-def all():
+def run():
     """运行所有演示"""
     plotly_basics()
     print()
@@ -81,4 +81,4 @@ def all():
 
 
 if __name__ == "__main__":
-    all()
+    run()

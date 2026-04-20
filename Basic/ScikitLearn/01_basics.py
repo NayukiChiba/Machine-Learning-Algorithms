@@ -463,7 +463,7 @@ def estimator_methods():
     print(f"  n_features_in_: {knn.n_features_in_}")
 
 
-def all():
+def run():
     """运行所有演示"""
     import os
 
@@ -481,4 +481,4 @@ def all():
 
 
 if __name__ == "__main__":
-    all()
+    run()

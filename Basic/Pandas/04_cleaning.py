@@ -6,7 +6,7 @@
     python 04_cleaning.py
     或
     from Basic.Pandas.04_cleaning import *
-    all()
+    run()
 """
 
 import pandas as pd
@@ -177,7 +177,7 @@ def replace():
     print(df["B"].replace({"yes": 1, "no": 0, "maybe": -1}))
 
 
-def all():
+def run():
     """运行所有演示"""
     missing_values()
     print()
@@ -191,4 +191,4 @@ def all():
 
 
 if __name__ == "__main__":
-    all()
+    run()

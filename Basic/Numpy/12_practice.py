@@ -202,7 +202,7 @@ def statistics():
         print(f"  [{bin_edges[i]:.1f}, {bin_edges[i + 1]:.1f}): {hist[i]}")
 
 
-def all():
+def run():
     """运行所有演示"""
     student_grades()
     print()
@@ -214,4 +214,4 @@ def all():
 
 
 if __name__ == "__main__":
-    all()
+    run()

@@ -6,7 +6,7 @@
     python 02_io.py
     或
     from Basic.Pandas.02_io import *
-    all()
+    run()
 """
 
 import pandas as pd
@@ -129,7 +129,7 @@ def export():
     print(df.to_string())
 
 
-def all():
+def run():
     """运行所有演示"""
     read_csv()
     print()
@@ -141,4 +141,4 @@ def all():
 
 
 if __name__ == "__main__":
-    all()
+    run()

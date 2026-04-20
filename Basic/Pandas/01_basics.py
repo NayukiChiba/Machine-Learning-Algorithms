@@ -6,7 +6,7 @@ Pandas 基础入门
     python 01_basics.py
     或
     from Basic.Pandas.01_basics import *
-    all()
+    run()
 """
 
 import pandas as pd
@@ -129,7 +129,7 @@ def attributes():
     print(f"dtypes:\n{df.dtypes}")
 
 
-def all():
+def run():
     """运行所有演示"""
     series()
     print()
@@ -141,4 +141,4 @@ def all():
 
 
 if __name__ == "__main__":
-    all()
+    run()

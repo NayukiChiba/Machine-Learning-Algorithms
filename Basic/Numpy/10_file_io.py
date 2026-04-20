@@ -167,7 +167,7 @@ def header_skiprows():
     print(f"加载的数组 (skiprows=1):\n{loaded}")
 
 
-def all():
+def run():
     """运行所有演示"""
     save_load_npy()
     print()
@@ -181,4 +181,4 @@ def all():
 
 
 if __name__ == "__main__":
-    all()
+    run()
