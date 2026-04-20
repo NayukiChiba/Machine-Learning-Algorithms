@@ -9,7 +9,7 @@ NumPy 数组创建
 import numpy as np
 
 
-def demo_from_list():
+def create_from_list():
     """从列表创建数组"""
     print("=" * 50)
     print("1. 从列表创建数组 (np.array)")
@@ -30,7 +30,7 @@ def demo_from_list():
     print(f"指定float64类型: {arr_float}")
 
 
-def demo_zeros_ones_eye():
+def create_zeros_ones_eye():
     """创建特殊数组：全零、全一、单位矩阵"""
     print("=" * 50)
     print("2. 特殊数组 (zeros, ones, eye, full)")
@@ -57,7 +57,7 @@ def demo_zeros_ones_eye():
     print(f"2x2填充7:\n{full}")
 
 
-def demo_arange_linspace():
+def create_arange_linspace():
     """创建序列数组"""
     print("=" * 50)
     print("3. 序列数组 (arange, linspace)")
@@ -80,7 +80,7 @@ def demo_arange_linspace():
     print(f"linspace(0, 2π, 10):\n{x}")
 
 
-def demo_random():
+def create_random():
     """创建随机数组"""
     print("=" * 50)
     print("4. 随机数组 (random)")
@@ -112,7 +112,7 @@ def demo_random():
     print(f"normal(loc=10, scale=2, size=5): {normal_arr}")
 
 
-def demo_seed():
+def create_seed():
     """随机种子的使用"""
     print("=" * 50)
     print("5. 随机种子演示")
@@ -130,18 +130,18 @@ def demo_seed():
     print(f"两个数组是否相同: {np.array_equal(arr1, arr2)}")
 
 
-def demo_all():
+def run_all():
     """运行所有演示"""
-    demo_from_list()
+    create_from_list()
     print()
-    demo_zeros_ones_eye()
+    create_zeros_ones_eye()
     print()
-    demo_arange_linspace()
+    create_arange_linspace()
     print()
-    demo_random()
+    create_random()
     print()
-    demo_seed()
+    create_seed()
 
 
 if __name__ == "__main__":
-    demo_all()
+    run_all()
