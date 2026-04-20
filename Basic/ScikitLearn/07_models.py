@@ -4,8 +4,8 @@ Scikit-learn 常用模型速查
 
 使用方式：
     from code.07_models import *
-    demo_linear_models()
-    demo_ensemble_models()
+    linear_models()
+    ensemble_models()
 """
 
 import numpy as np
@@ -20,7 +20,7 @@ plt.rcParams["font.sans-serif"] = ["SimHei", "Microsoft YaHei", "Arial Unicode M
 plt.rcParams["axes.unicode_minus"] = False
 
 
-def demo_linear_regression():
+def linear_regression():
     """线性回归模型"""
     print("=" * 50)
     print("1. 线性回归模型")
@@ -97,7 +97,7 @@ def demo_linear_regression():
     plt.close()
 
 
-def demo_logistic_regression():
+def logistic_regression():
     """逻辑回归"""
     print("=" * 50)
     print("2. 逻辑回归")
@@ -124,7 +124,7 @@ def demo_logistic_regression():
     )
 
 
-def demo_tree_models():
+def tree_models():
     """决策树"""
     print("=" * 50)
     print("3. 决策树")
@@ -152,7 +152,7 @@ def demo_tree_models():
     print(f"树深度: {dt.get_depth()}")
 
 
-def demo_ensemble_models():
+def ensemble_models():
     """集成模型"""
     print("=" * 50)
     print("4. 集成模型")
@@ -211,7 +211,7 @@ def demo_ensemble_models():
     plt.close()
 
 
-def demo_svm():
+def svm():
     """SVM"""
     print("=" * 50)
     print("5. SVM (需要标准化)")
@@ -282,7 +282,7 @@ def demo_svm():
     plt.close()
 
 
-def demo_naive_bayes():
+def naive_bayes():
     """朴素贝叶斯"""
     print("=" * 50)
     print("6. 朴素贝叶斯")
@@ -301,7 +301,7 @@ def demo_naive_bayes():
     print(f"GaussianNB: {gnb.score(X_test, y_test):.4f}")
 
 
-def demo_knn():
+def knn():
     """K近邻"""
     print("=" * 50)
     print("7. K近邻")
@@ -320,7 +320,7 @@ def demo_knn():
     print(f"KNN (k=5): {knn.score(X_test, y_test):.4f}")
 
 
-def demo_clustering():
+def clustering():
     """聚类算法"""
     print("=" * 50)
     print("8. 聚类算法")
@@ -419,7 +419,7 @@ def demo_clustering():
     plt.close()
 
 
-def demo_dimensionality_reduction():
+def dimensionality_reduction():
     """降维"""
     print("=" * 50)
     print("9. 降维")
@@ -490,30 +490,30 @@ def demo_dimensionality_reduction():
     plt.close()
 
 
-def demo_all():
+def all():
     """运行所有演示"""
     import os
 
     os.makedirs("outputs/sklearn", exist_ok=True)
 
-    demo_linear_regression()
+    linear_regression()
     print()
-    demo_logistic_regression()
+    logistic_regression()
     print()
-    demo_tree_models()
+    tree_models()
     print()
-    demo_ensemble_models()
+    ensemble_models()
     print()
-    demo_svm()
+    svm()
     print()
-    demo_naive_bayes()
+    naive_bayes()
     print()
-    demo_knn()
+    knn()
     print()
-    demo_clustering()
+    clustering()
     print()
-    demo_dimensionality_reduction()
+    dimensionality_reduction()
 
 
 if __name__ == "__main__":
-    demo_all()
+    all()

@@ -9,7 +9,7 @@ NumPy 数组连接和分割
 import numpy as np
 
 
-def demo_concatenate():
+def concatenate():
     """concatenate 连接"""
     print("=" * 50)
     print("1. concatenate 连接")
@@ -33,7 +33,7 @@ def demo_concatenate():
     print(f"  形状: {concat_1.shape}")
 
 
-def demo_vstack_hstack():
+def vstack_hstack():
     """vstack 和 hstack"""
     print("=" * 50)
     print("2. vstack 和 hstack")
@@ -59,7 +59,7 @@ def demo_vstack_hstack():
     print(f"  形状: {hstacked.shape}")
 
 
-def demo_stack():
+def stack():
     """stack 沿新轴堆叠"""
     print("=" * 50)
     print("3. stack 沿新轴堆叠")
@@ -82,7 +82,7 @@ def demo_stack():
     print(f"  结果:\n{stacked_2}")
 
 
-def demo_dstack():
+def dstack():
     """dstack 深度堆叠"""
     print("=" * 50)
     print("4. dstack 深度堆叠")
@@ -100,7 +100,7 @@ def demo_dstack():
     print(f"  结果:\n{dstacked}")
 
 
-def demo_split():
+def split():
     """split 分割"""
     print("=" * 50)
     print("5. split 分割")
@@ -124,7 +124,7 @@ def demo_split():
         print(f"  第{i + 1}部分: {part.flatten()}")
 
 
-def demo_vsplit_hsplit():
+def vsplit_hsplit():
     """vsplit 和 hsplit"""
     print("=" * 50)
     print("6. vsplit 和 hsplit")
@@ -148,7 +148,7 @@ def demo_vsplit_hsplit():
         print(f"  第{i + 1}部分: {part.flatten()}")
 
 
-def demo_array_split():
+def array_split():
     """array_split 不均匀分割"""
     print("=" * 50)
     print("7. array_split 不均匀分割")
@@ -165,22 +165,22 @@ def demo_array_split():
         print(f"  第{i + 1}部分 (大小{len(part)}): {part}")
 
 
-def demo_all():
+def all():
     """运行所有演示"""
-    demo_concatenate()
+    concatenate()
     print()
-    demo_vstack_hstack()
+    vstack_hstack()
     print()
-    demo_stack()
+    stack()
     print()
-    demo_dstack()
+    dstack()
     print()
-    demo_split()
+    split()
     print()
-    demo_vsplit_hsplit()
+    vsplit_hsplit()
     print()
-    demo_array_split()
+    array_split()
 
 
 if __name__ == "__main__":
-    demo_all()
+    all()

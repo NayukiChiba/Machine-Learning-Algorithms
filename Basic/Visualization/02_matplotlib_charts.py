@@ -13,7 +13,7 @@ sys.path.insert(0, str(Path(__file__).parent.parent.parent))
 from config import get_output_dir
 
 
-def demo_bar():
+def bar():
     """演示柱状图"""
     print("=" * 50)
     print("1. 柱状图")
@@ -39,7 +39,7 @@ def demo_bar():
     print("图表已保存")
 
 
-def demo_scatter():
+def scatter():
     """演示散点图"""
     print("=" * 50)
     print("2. 散点图")
@@ -65,7 +65,7 @@ def demo_scatter():
     print("图表已保存")
 
 
-def demo_histogram():
+def histogram():
     """演示直方图"""
     print("=" * 50)
     print("3. 直方图")
@@ -91,7 +91,7 @@ def demo_histogram():
     print("图表已保存")
 
 
-def demo_pie():
+def pie():
     """演示饼图"""
     print("=" * 50)
     print("4. 饼图")
@@ -121,7 +121,7 @@ def demo_pie():
     print("图表已保存")
 
 
-def demo_boxplot():
+def boxplot():
     """演示箱线图"""
     print("=" * 50)
     print("5. 箱线图")
@@ -148,18 +148,18 @@ def demo_boxplot():
     print("图表已保存")
 
 
-def demo_all():
+def all():
     """运行所有演示"""
-    demo_bar()
+    bar()
     print()
-    demo_scatter()
+    scatter()
     print()
-    demo_histogram()
+    histogram()
     print()
-    demo_pie()
+    pie()
     print()
-    demo_boxplot()
+    boxplot()
 
 
 if __name__ == "__main__":
-    demo_all()
+    all()

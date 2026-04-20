@@ -9,7 +9,7 @@ NumPy 实用函数
 import numpy as np
 
 
-def demo_sort():
+def sort():
     """排序函数"""
     print("=" * 50)
     print("1. 排序函数 (sort, argsort)")
@@ -38,7 +38,7 @@ def demo_sort():
     print(f"按列排序 (axis=0):\n{np.sort(arr_2d, axis=0)}")
 
 
-def demo_unique():
+def unique():
     """唯一值和计数"""
     print("=" * 50)
     print("2. 唯一值 (unique)")
@@ -62,7 +62,7 @@ def demo_unique():
     print(f"值-计数对: {list(zip(unique, counts))}")
 
 
-def demo_set_operations():
+def set_operations():
     """集合操作"""
     print("=" * 50)
     print("3. 集合操作")
@@ -91,7 +91,7 @@ def demo_set_operations():
     print(f"np.in1d(a, [2, 4]): {np.in1d(a, [2, 4])}")
 
 
-def demo_search():
+def search():
     """搜索函数"""
     print("=" * 50)
     print("4. 搜索函数")
@@ -118,7 +118,7 @@ def demo_search():
     print(f"非零元素索引: {np.nonzero(arr_with_zeros)[0]}")
 
 
-def demo_clip_round():
+def clip_round():
     """裁剪和取整"""
     print("=" * 50)
     print("5. 裁剪和取整")
@@ -140,7 +140,7 @@ def demo_clip_round():
     print(f"np.trunc 截断取整: {np.trunc(arr_float)}")
 
 
-def demo_copy():
+def copy():
     """复制操作"""
     print("=" * 50)
     print("6. 复制操作 (copy vs view)")
@@ -173,20 +173,20 @@ def demo_copy():
     print(f"原数组不变: {arr}")
 
 
-def demo_all():
+def all():
     """运行所有演示"""
-    demo_sort()
+    sort()
     print()
-    demo_unique()
+    unique()
     print()
-    demo_set_operations()
+    set_operations()
     print()
-    demo_search()
+    search()
     print()
-    demo_clip_round()
+    clip_round()
     print()
-    demo_copy()
+    copy()
 
 
 if __name__ == "__main__":
-    demo_all()
+    all()

@@ -9,7 +9,7 @@ NumPy 数组属性
 import numpy as np
 
 
-def demo_shape_ndim_size():
+def shape_ndim_size():
     """演示形状、维度、大小属性"""
     print("=" * 50)
     print("1. 形状、维度、大小属性")
@@ -31,7 +31,7 @@ def demo_shape_ndim_size():
     print(f"size (元素总数): {arr.size}")
 
 
-def demo_dtype_itemsize_nbytes():
+def dtype_itemsize_nbytes():
     """演示数据类型和内存属性"""
     print("=" * 50)
     print("2. 数据类型和内存属性")
@@ -50,7 +50,7 @@ def demo_dtype_itemsize_nbytes():
     print(f"  验证: {arr.size} * {arr.itemsize} = {arr.size * arr.itemsize}")
 
 
-def demo_dtypes():
+def dtypes():
     """演示常用数据类型"""
     print("=" * 50)
     print("3. 常用数据类型")
@@ -72,7 +72,7 @@ def demo_dtypes():
     print("  complex128: 复数 (2个float64)")
 
 
-def demo_astype():
+def astype():
     """演示数据类型转换"""
     print("=" * 50)
     print("4. 数据类型转换 (astype)")
@@ -94,7 +94,7 @@ def demo_astype():
     print(f"  dtype: {arr_str.dtype}")
 
 
-def demo_bool_array():
+def bool_array():
     """演示布尔数组"""
     print("=" * 50)
     print("5. 布尔数组")
@@ -115,18 +115,18 @@ def demo_bool_array():
     print(f"大于5的元素个数: {bool_arr.sum()}")
 
 
-def demo_all():
+def run():
     """运行所有演示"""
-    demo_shape_ndim_size()
+    shape_ndim_size()
     print()
-    demo_dtype_itemsize_nbytes()
+    dtype_itemsize_nbytes()
     print()
-    demo_dtypes()
+    dtypes()
     print()
-    demo_astype()
+    astype()
     print()
-    demo_bool_array()
+    bool_array()
 
 
 if __name__ == "__main__":
-    demo_all()
+    run()

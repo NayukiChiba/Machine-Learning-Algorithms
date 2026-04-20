@@ -6,7 +6,7 @@
     python 03_selection.py
     或
     from Basic.Pandas.03_selection import *
-    demo_all()
+    all()
 """
 
 import pandas as pd
@@ -27,7 +27,7 @@ def create_sample_df():
     )
 
 
-def demo_column_select():
+def column_select():
     """演示列选择"""
     print("=" * 50)
     print("1. 列选择")
@@ -49,7 +49,7 @@ def demo_column_select():
     print(df[["Name", "Age"]])
 
 
-def demo_row_select():
+def row_select():
     """演示行选择"""
     print("=" * 50)
     print("2. 行选择")
@@ -67,7 +67,7 @@ def demo_row_select():
     print(df.head(2))
 
 
-def demo_loc_iloc():
+def loc_iloc():
     """演示 loc 和 iloc 索引器"""
     print("=" * 50)
     print("3. loc 和 iloc 索引器")
@@ -97,7 +97,7 @@ def demo_loc_iloc():
     print(df.iloc[0:3, 0:2])
 
 
-def demo_filter():
+def filter():
     """演示条件过滤"""
     print("=" * 50)
     print("4. 条件过滤")
@@ -128,7 +128,7 @@ def demo_filter():
     print(df[df["City"].isin(["Beijing", "Shanghai"])])
 
 
-def demo_query():
+def query():
     """演示 query 方法"""
     print("=" * 50)
     print("5. query 方法")
@@ -148,18 +148,18 @@ def demo_query():
     print(df.query("Age >= @min_age"))
 
 
-def demo_all():
+def all():
     """运行所有演示"""
-    demo_column_select()
+    column_select()
     print()
-    demo_row_select()
+    row_select()
     print()
-    demo_loc_iloc()
+    loc_iloc()
     print()
-    demo_filter()
+    filter()
     print()
-    demo_query()
+    query()
 
 
 if __name__ == "__main__":
-    demo_all()
+    all()

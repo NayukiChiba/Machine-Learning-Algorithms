@@ -15,7 +15,7 @@ sys.path.insert(0, str(Path(__file__).parent.parent.parent))
 from config import get_output_dir
 
 
-def demo_distribution_analysis(output_dir):
+def distribution_analysis(output_dir):
     """演示分布分析"""
     print("=" * 50)
     print("1. 分布分析")
@@ -45,7 +45,7 @@ def demo_distribution_analysis(output_dir):
     print("图表已保存")
 
 
-def demo_correlation_analysis(output_dir):
+def correlation_analysis(output_dir):
     """演示相关性分析"""
     print("=" * 50)
     print("2. 相关性分析")
@@ -79,7 +79,7 @@ def demo_correlation_analysis(output_dir):
     print("图表已保存")
 
 
-def demo_categorical_analysis(output_dir):
+def categorical_analysis(output_dir):
     """演示分类变量分析"""
     print("=" * 50)
     print("3. 分类变量分析")
@@ -109,18 +109,18 @@ def demo_categorical_analysis(output_dir):
     print("图表已保存")
 
 
-def demo_all():
+def all():
     """运行所有演示"""
     output_dir = get_output_dir("visualization")
 
     sns.set_theme(style="whitegrid")
 
-    demo_distribution_analysis(output_dir)
+    distribution_analysis(output_dir)
     print()
-    demo_correlation_analysis(output_dir)
+    correlation_analysis(output_dir)
     print()
-    demo_categorical_analysis(output_dir)
+    categorical_analysis(output_dir)
 
 
 if __name__ == "__main__":
-    demo_all()
+    all()

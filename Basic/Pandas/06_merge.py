@@ -6,13 +6,13 @@
     python 06_merge.py
     或
     from Basic.Pandas.06_merge import *
-    demo_all()
+    all()
 """
 
 import pandas as pd
 
 
-def demo_concat():
+def concat():
     """演示 concat 合并"""
     print("=" * 50)
     print("1. Concat 合并")
@@ -43,7 +43,7 @@ def demo_concat():
     print(pd.concat([df1, df3], ignore_index=True))
 
 
-def demo_merge():
+def merge():
     """演示 merge 数据库风格连接"""
     print("=" * 50)
     print("2. Merge 连接")
@@ -89,7 +89,7 @@ def demo_merge():
     print(pd.merge(employees, departments, on="dept_id", how="outer"))
 
 
-def demo_merge_on_different_keys():
+def merge_on_different_keys():
     """演示不同列名的合并"""
     print("=" * 50)
     print("3. 不同列名合并")
@@ -111,7 +111,7 @@ def demo_merge_on_different_keys():
     print(result)
 
 
-def demo_join():
+def join():
     """演示 join 操作"""
     print("=" * 50)
     print("4. Join 操作")
@@ -137,7 +137,7 @@ def demo_join():
     print(df1.join(df2, how="outer"))
 
 
-def demo_merge_indicator():
+def merge_indicator():
     """演示合并指示器"""
     print("=" * 50)
     print("5. 合并指示器")
@@ -166,18 +166,18 @@ def demo_merge_indicator():
     print("  - both: 两表都存在")
 
 
-def demo_all():
+def all():
     """运行所有演示"""
-    demo_concat()
+    concat()
     print()
-    demo_merge()
+    merge()
     print()
-    demo_merge_on_different_keys()
+    merge_on_different_keys()
     print()
-    demo_join()
+    join()
     print()
-    demo_merge_indicator()
+    merge_indicator()
 
 
 if __name__ == "__main__":
-    demo_all()
+    all()

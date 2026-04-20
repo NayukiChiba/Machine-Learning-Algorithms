@@ -4,8 +4,8 @@ Scikit-learn 数据预处理
 
 使用方式：
     from code.02_preprocessing import *
-    demo_scalers()
-    demo_encoders()
+    scalers()
+    encoders()
 """
 
 import numpy as np
@@ -17,7 +17,7 @@ plt.rcParams["font.sans-serif"] = ["SimHei", "Microsoft YaHei", "Arial Unicode M
 plt.rcParams["axes.unicode_minus"] = False
 
 
-def demo_scalers():
+def scalers():
     """演示各种缩放器的用法和区别"""
     print("=" * 50)
     print("1. 数据缩放器对比")
@@ -121,7 +121,7 @@ MaxAbsScaler:
     plt.close()
 
 
-def demo_standard_scaler():
+def standard_scaler():
     """StandardScaler 详细用法"""
     print("=" * 50)
     print("2. StandardScaler 详解")
@@ -149,7 +149,7 @@ def demo_standard_scaler():
     print(f"\n逆变换后:\n{X_back}")
 
 
-def demo_minmax_scaler():
+def minmax_scaler():
     """MinMaxScaler 详细用法"""
     print("=" * 50)
     print("3. MinMaxScaler 详解")
@@ -170,7 +170,7 @@ def demo_minmax_scaler():
     print(f"\nfeature_range=(-1,1):\n{X_scaled2.round(3)}")
 
 
-def demo_power_transformer():
+def power_transformer():
     """PowerTransformer 幂变换"""
     print("=" * 50)
     print("4. PowerTransformer 幂变换")
@@ -249,7 +249,7 @@ def demo_power_transformer():
     plt.close()
 
 
-def demo_encoders():
+def encoders():
     """类别编码器"""
     print("=" * 50)
     print("5. 类别编码")
@@ -324,7 +324,7 @@ def demo_encoders():
     plt.close()
 
 
-def demo_imputers():
+def imputers():
     """缺失值处理"""
     print("=" * 50)
     print("6. 缺失值处理")
@@ -353,7 +353,7 @@ def demo_imputers():
     print(f"\nKNN填充:\n{imp_knn.fit_transform(X).round(2)}")
 
 
-def demo_column_transformer():
+def column_transformer():
     """ColumnTransformer 组合预处理"""
     print("=" * 50)
     print("7. ColumnTransformer 组合预处理")
@@ -402,26 +402,26 @@ def demo_column_transformer():
     print(f"特征名称: {preprocessor.get_feature_names_out()}")
 
 
-def demo_all():
+def all():
     """运行所有演示"""
     import os
 
     os.makedirs("outputs/sklearn", exist_ok=True)
 
-    demo_scalers()
+    scalers()
     print()
-    demo_standard_scaler()
+    standard_scaler()
     print()
-    demo_minmax_scaler()
+    minmax_scaler()
     print()
-    demo_power_transformer()
+    power_transformer()
     print()
-    demo_encoders()
+    encoders()
     print()
-    demo_imputers()
+    imputers()
     print()
-    demo_column_transformer()
+    column_transformer()
 
 
 if __name__ == "__main__":
-    demo_all()
+    all()

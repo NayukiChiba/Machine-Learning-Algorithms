@@ -14,7 +14,7 @@ sys.path.insert(0, str(Path(__file__).parent.parent.parent))
 from config import get_output_dir
 
 
-def demo_catplot():
+def catplot():
     """演示分类图"""
     print("=" * 50)
     print("1. 分类图")
@@ -37,7 +37,7 @@ def demo_catplot():
     print("图表已保存")
 
 
-def demo_distplot():
+def distplot():
     """演示分布图"""
     print("=" * 50)
     print("2. 分布图")
@@ -61,7 +61,7 @@ def demo_distplot():
     print("图表已保存")
 
 
-def demo_regplot():
+def regplot():
     """演示回归图"""
     print("=" * 50)
     print("3. 回归图")
@@ -80,7 +80,7 @@ def demo_regplot():
     print("图表已保存")
 
 
-def demo_heatmap():
+def heatmap():
     """演示热力图"""
     print("=" * 50)
     print("4. 热力图")
@@ -100,7 +100,7 @@ def demo_heatmap():
     print("图表已保存")
 
 
-def demo_pairplot():
+def pairplot():
     """演示配对图"""
     print("=" * 50)
     print("5. 配对图")
@@ -117,20 +117,20 @@ def demo_pairplot():
     print("图表已保存")
 
 
-def demo_all():
+def all():
     """运行所有演示"""
     sns.set_theme(style="whitegrid")
 
-    demo_catplot()
+    catplot()
     print()
-    demo_distplot()
+    distplot()
     print()
-    demo_regplot()
+    regplot()
     print()
-    demo_heatmap()
+    heatmap()
     print()
-    demo_pairplot()
+    pairplot()
 
 
 if __name__ == "__main__":
-    demo_all()
+    all()

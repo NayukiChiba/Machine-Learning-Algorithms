@@ -6,14 +6,14 @@
     python 02_io.py
     或
     from Basic.Pandas.02_io import *
-    demo_all()
+    all()
 """
 
 import pandas as pd
 import os
 
 
-def demo_read_csv():
+def read_csv():
     """演示 CSV 文件读取"""
     print("=" * 50)
     print("1. CSV 文件读取")
@@ -52,7 +52,7 @@ def demo_read_csv():
     os.remove(temp_file)
 
 
-def demo_read_excel():
+def read_excel():
     """演示 Excel 文件读写（概念演示）"""
     print("=" * 50)
     print("2. Excel 文件读写")
@@ -71,7 +71,7 @@ def demo_read_excel():
     print("  - engine: 解析引擎 ('openpyxl', 'xlrd')")
 
 
-def demo_read_json():
+def read_json():
     """演示 JSON 文件读写"""
     print("=" * 50)
     print("3. JSON 文件读写")
@@ -106,7 +106,7 @@ def demo_read_json():
     os.remove(temp_file)
 
 
-def demo_export():
+def export():
     """演示数据导出的各种格式"""
     print("=" * 50)
     print("4. 数据导出方法")
@@ -129,16 +129,16 @@ def demo_export():
     print(df.to_string())
 
 
-def demo_all():
+def all():
     """运行所有演示"""
-    demo_read_csv()
+    read_csv()
     print()
-    demo_read_excel()
+    read_excel()
     print()
-    demo_read_json()
+    read_json()
     print()
-    demo_export()
+    export()
 
 
 if __name__ == "__main__":
-    demo_all()
+    all()

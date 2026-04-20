@@ -6,14 +6,14 @@
     python 07_timeseries.py
     或
     from Basic.Pandas.07_timeseries import *
-    demo_all()
+    all()
 """
 
 import pandas as pd
 import numpy as np
 
 
-def demo_datetime_create():
+def datetime_create():
     """演示时间序列创建"""
     print("=" * 50)
     print("1. 时间序列创建")
@@ -47,7 +47,7 @@ def demo_datetime_create():
     )
 
 
-def demo_time_index():
+def time_index():
     """演示时间序列索引"""
     print("=" * 50)
     print("2. 时间序列索引")
@@ -68,7 +68,7 @@ def demo_time_index():
     print(f"  dayofweek: {ts.index.dayofweek.tolist()}")
 
 
-def demo_time_slice():
+def time_slice():
     """演示时间序列切片"""
     print("=" * 50)
     print("3. 时间序列切片")
@@ -91,7 +91,7 @@ def demo_time_slice():
     print(ts["2023-01-15":"2023-01-20"])
 
 
-def demo_resample():
+def resample():
     """演示时间重采样"""
     print("=" * 50)
     print("4. 时间重采样")
@@ -121,7 +121,7 @@ def demo_resample():
     print(df["value"].resample("W").agg(["sum", "mean", "max"]))
 
 
-def demo_rolling():
+def rolling():
     """演示滚动窗口操作"""
     print("=" * 50)
     print("5. 滚动窗口操作")
@@ -150,7 +150,7 @@ def demo_rolling():
     print(ts.ewm(span=3).mean())
 
 
-def demo_shift():
+def shift():
     """演示时间偏移操作"""
     print("=" * 50)
     print("6. 时间偏移操作")
@@ -178,20 +178,20 @@ def demo_shift():
     print(ts.pct_change())
 
 
-def demo_all():
+def all():
     """运行所有演示"""
-    demo_datetime_create()
+    datetime_create()
     print()
-    demo_time_index()
+    time_index()
     print()
-    demo_time_slice()
+    time_slice()
     print()
-    demo_resample()
+    resample()
     print()
-    demo_rolling()
+    rolling()
     print()
-    demo_shift()
+    shift()
 
 
 if __name__ == "__main__":
-    demo_all()
+    all()

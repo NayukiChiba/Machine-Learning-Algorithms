@@ -7,7 +7,7 @@ import pandas as pd
 import numpy as np
 
 
-def demo_pivot_table():
+def pivot_table():
     """演示透视表"""
     print("=" * 50)
     print("1. 透视表")
@@ -32,7 +32,7 @@ def demo_pivot_table():
     print(pivot)
 
 
-def demo_crosstab():
+def crosstab():
     """演示交叉表"""
     print("=" * 50)
     print("2. 交叉表")
@@ -60,7 +60,7 @@ def demo_crosstab():
     print(ct)
 
 
-def demo_multi_index():
+def multi_index():
     """演示多级索引"""
     print("=" * 50)
     print("3. 多级索引")
@@ -82,7 +82,7 @@ def demo_multi_index():
     print(df.loc[("A", 1)])
 
 
-def demo_vectorization():
+def vectorization():
     """演示向量化操作"""
     print("=" * 50)
     print("4. 向量化操作")
@@ -110,7 +110,7 @@ def demo_vectorization():
     print(f"向量化快了约 {loop_time / vec_time:.1f} 倍")
 
 
-def demo_memory_optimization():
+def memory_optimization():
     """演示内存优化"""
     print("=" * 50)
     print("5. 内存优化")
@@ -139,18 +139,18 @@ def demo_memory_optimization():
     print(df.memory_usage(deep=True))
 
 
-def demo_all():
+def all():
     """运行所有演示"""
-    demo_pivot_table()
+    pivot_table()
     print()
-    demo_crosstab()
+    crosstab()
     print()
-    demo_multi_index()
+    multi_index()
     print()
-    demo_vectorization()
+    vectorization()
     print()
-    demo_memory_optimization()
+    memory_optimization()
 
 
 if __name__ == "__main__":
-    demo_all()
+    all()

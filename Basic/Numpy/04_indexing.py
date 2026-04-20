@@ -9,7 +9,7 @@ NumPy 数组索引和切片
 import numpy as np
 
 
-def demo_basic_indexing():
+def basic_indexing():
     """基本索引操作"""
     print("=" * 50)
     print("1. 基本索引")
@@ -30,7 +30,7 @@ def demo_basic_indexing():
     print(f"  arr[-1, -1] = {arr_2d[-1, -1]}")
 
 
-def demo_slicing():
+def slicing():
     """切片操作"""
     print("=" * 50)
     print("2. 切片操作 [start:stop:step]")
@@ -56,7 +56,7 @@ def demo_slicing():
     print(f"arr[::-2] = {arr[::-2]}")
 
 
-def demo_2d_slicing():
+def _2d_slicing():
     """二维数组切片"""
     print("=" * 50)
     print("3. 二维数组切片")
@@ -79,7 +79,7 @@ def demo_2d_slicing():
     print(f"每隔一行每隔一列 arr[::2, ::2]:\n{arr[::2, ::2]}")
 
 
-def demo_boolean_indexing():
+def boolean_indexing():
     """布尔索引"""
     print("=" * 50)
     print("4. 布尔索引")
@@ -103,7 +103,7 @@ def demo_boolean_indexing():
     print(f"~(arr > 5): {arr[~(arr > 5)]}")
 
 
-def demo_fancy_indexing():
+def fancy_indexing():
     """花式索引"""
     print("=" * 50)
     print("5. 花式索引")
@@ -130,7 +130,7 @@ def demo_fancy_indexing():
     print(f"选择对角线元素 (0,0),(1,1),(2,2): {arr_2d[rows, cols]}")
 
 
-def demo_where():
+def where():
     """np.where 条件索引"""
     print("=" * 50)
     print("6. np.where 条件索引")
@@ -154,20 +154,20 @@ def demo_where():
     print(f"正数标记为1，其他为-1: {result2}")
 
 
-def demo_all():
+def all():
     """运行所有演示"""
-    demo_basic_indexing()
+    basic_indexing()
     print()
-    demo_slicing()
+    slicing()
     print()
-    demo_2d_slicing()
+    _2d_slicing()
     print()
-    demo_boolean_indexing()
+    boolean_indexing()
     print()
-    demo_fancy_indexing()
+    fancy_indexing()
     print()
-    demo_where()
+    where()
 
 
 if __name__ == "__main__":
-    demo_all()
+    all()

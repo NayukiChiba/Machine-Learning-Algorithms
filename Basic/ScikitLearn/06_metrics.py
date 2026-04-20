@@ -4,8 +4,8 @@ Scikit-learn 评估指标与可视化
 
 使用方式：
     from code.06_metrics import *
-    demo_classification_metrics()
-    demo_confusion_matrix()
+    classification_metrics()
+    confusion_matrix()
 """
 
 import numpy as np
@@ -19,7 +19,7 @@ plt.rcParams["font.sans-serif"] = ["SimHei", "Microsoft YaHei", "Arial Unicode M
 plt.rcParams["axes.unicode_minus"] = False
 
 
-def demo_classification_metrics():
+def classification_metrics():
     """分类指标基础"""
     print("=" * 50)
     print("1. 分类指标基础")
@@ -84,7 +84,7 @@ def demo_classification_metrics():
     plt.close()
 
 
-def demo_confusion_matrix():
+def confusion_matrix():
     """混淆矩阵"""
     print("=" * 50)
     print("2. 混淆矩阵")
@@ -182,7 +182,7 @@ def demo_confusion_matrix():
     plt.close()
 
 
-def demo_roc_auc():
+def roc_auc():
     """ROC AUC"""
     print("=" * 50)
     print("3. ROC AUC")
@@ -248,7 +248,7 @@ def demo_roc_auc():
     plt.close()
 
 
-def demo_multiclass_metrics():
+def multiclass_metrics():
     """多分类指标"""
     print("=" * 50)
     print("4. 多分类指标 (average 参数)")
@@ -278,7 +278,7 @@ def demo_multiclass_metrics():
         print(f"  {strategy}: {auc:.4f}")
 
 
-def demo_regression_metrics():
+def regression_metrics():
     """回归指标"""
     print("=" * 50)
     print("5. 回归指标")
@@ -363,7 +363,7 @@ def demo_regression_metrics():
     plt.close()
 
 
-def demo_custom_scorer():
+def custom_scorer():
     """自定义评分函数"""
     print("=" * 50)
     print("6. 自定义评分函数 (make_scorer)")
@@ -389,7 +389,7 @@ def demo_custom_scorer():
     print(f"平均: {scores.mean():.4f}")
 
 
-def demo_display_tools():
+def display_tools():
     """sklearn 可视化工具"""
     print("=" * 50)
     print("7. sklearn 可视化工具")
@@ -413,26 +413,26 @@ def demo_display_tools():
     print("  - DecisionBoundaryDisplay.from_estimator(model, X)")
 
 
-def demo_all():
+def all():
     """运行所有演示"""
     import os
 
     os.makedirs("outputs/sklearn", exist_ok=True)
 
-    demo_classification_metrics()
+    classification_metrics()
     print()
-    demo_confusion_matrix()
+    confusion_matrix()
     print()
-    demo_roc_auc()
+    roc_auc()
     print()
-    demo_multiclass_metrics()
+    multiclass_metrics()
     print()
-    demo_regression_metrics()
+    regression_metrics()
     print()
-    demo_custom_scorer()
+    custom_scorer()
     print()
-    demo_display_tools()
+    display_tools()
 
 
 if __name__ == "__main__":
-    demo_all()
+    all()

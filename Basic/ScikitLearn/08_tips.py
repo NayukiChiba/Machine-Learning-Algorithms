@@ -4,8 +4,8 @@ Scikit-learn 实用技巧
 
 使用方式：
     from code.08_tips import *
-    demo_clone()
-    demo_class_weight()
+    clone()
+    class_weight()
 """
 
 import numpy as np
@@ -13,7 +13,7 @@ from sklearn import datasets
 from sklearn.model_selection import train_test_split
 
 
-def demo_clone():
+def clone():
     """clone() 克隆模型"""
     print("=" * 50)
     print("1. clone() 克隆模型")
@@ -41,7 +41,7 @@ def demo_clone():
     )
 
 
-def demo_get_set_params():
+def get_set_params():
     """get_params() / set_params()"""
     print("=" * 50)
     print("2. get_params() / set_params()")
@@ -62,7 +62,7 @@ def demo_get_set_params():
     print(f"  max_depth: {rf.get_params()['max_depth']}")
 
 
-def demo_class_weight():
+def class_weight():
     """class_weight 处理类别不平衡"""
     print("=" * 50)
     print("3. class_weight 处理类别不平衡")
@@ -95,7 +95,7 @@ def demo_class_weight():
     )
 
 
-def demo_compute_class_weight():
+def compute_class_weight():
     """compute_class_weight()"""
     print("=" * 50)
     print("4. compute_class_weight()")
@@ -115,7 +115,7 @@ def demo_compute_class_weight():
     print(f"样本权重 (唯一值): {np.unique(sample_weights).round(3)}")
 
 
-def demo_custom_transformer():
+def custom_transformer():
     """自定义转换器"""
     print("=" * 50)
     print("5. 自定义转换器")
@@ -142,7 +142,7 @@ def demo_custom_transformer():
     print(f"变换后: {log_trans.fit_transform(X).round(3).tolist()}")
 
 
-def demo_model_persistence():
+def model_persistence():
     """模型持久化 (joblib)"""
     print("=" * 50)
     print("6. 模型持久化 (joblib)")
@@ -179,7 +179,7 @@ def demo_model_persistence():
     print(f"压缩后大小: {os.path.getsize(path_compressed) / 1024:.1f} KB")
 
 
-def demo_sklearn_config():
+def sklearn_config():
     """sklearn 全局配置"""
     print("=" * 50)
     print("7. sklearn 全局配置")
@@ -198,7 +198,7 @@ def demo_sklearn_config():
     print("恢复 transform_output='default'")
 
 
-def demo_version_check():
+def version_check():
     """版本检查"""
     print("=" * 50)
     print("8. 版本检查")
@@ -216,7 +216,7 @@ def demo_version_check():
         print("✓ 版本 >= 1.2, 支持 set_output API")
 
 
-def demo_all_estimators():
+def all_estimators():
     """查看所有可用估计器"""
     print("=" * 50)
     print("9. 查看可用估计器")
@@ -234,26 +234,26 @@ def demo_all_estimators():
     print(f"分类器前5个: {[name for name, _ in classifiers[:5]]}")
 
 
-def demo_all():
+def all():
     """运行所有演示"""
-    demo_clone()
+    clone()
     print()
-    demo_get_set_params()
+    get_set_params()
     print()
-    demo_class_weight()
+    class_weight()
     print()
-    demo_compute_class_weight()
+    compute_class_weight()
     print()
-    demo_custom_transformer()
+    custom_transformer()
     print()
-    demo_model_persistence()
+    model_persistence()
     print()
-    demo_sklearn_config()
+    sklearn_config()
     print()
-    demo_version_check()
+    version_check()
     print()
-    demo_all_estimators()
+    all_estimators()
 
 
 if __name__ == "__main__":
-    demo_all()
+    all()

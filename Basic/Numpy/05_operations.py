@@ -9,7 +9,7 @@ NumPy 数组运算
 import numpy as np
 
 
-def demo_arithmetic():
+def arithmetic():
     """算术运算"""
     print("=" * 50)
     print("1. 算术运算 (元素级运算)")
@@ -33,7 +33,7 @@ def demo_arithmetic():
     print(f"a % 2 = {a % 2}")
 
 
-def demo_comparison():
+def comparison():
     """比较运算"""
     print("=" * 50)
     print("2. 比较运算")
@@ -58,7 +58,7 @@ def demo_comparison():
     print(f"np.all(a != b): {np.all(a != b)}")
 
 
-def demo_statistics():
+def statistics():
     """统计运算"""
     print("=" * 50)
     print("3. 统计运算")
@@ -88,7 +88,7 @@ def demo_statistics():
     print(f"cumprod (累积积，前5个): {arr[:5].cumprod()}")
 
 
-def demo_axis_operations():
+def axis_operations():
     """沿轴运算"""
     print("=" * 50)
     print("4. 沿轴运算 (axis 参数)")
@@ -110,7 +110,7 @@ def demo_axis_operations():
     print(f"mean(axis=1) 按行求均值: {arr.mean(axis=1)}")
 
 
-def demo_math_functions():
+def math_functions():
     """数学函数"""
     print("=" * 50)
     print("5. 数学函数")
@@ -142,7 +142,7 @@ def demo_math_functions():
     print(f"abs (绝对值): {np.abs(arr3)}")
 
 
-def demo_logical_operations():
+def logical_operations():
     """逻辑运算"""
     print("=" * 50)
     print("6. 逻辑运算")
@@ -160,20 +160,20 @@ def demo_logical_operations():
     print(f"np.logical_xor(a, b): {np.logical_xor(a, b)}")
 
 
-def demo_all():
+def all():
     """运行所有演示"""
-    demo_arithmetic()
+    arithmetic()
     print()
-    demo_comparison()
+    comparison()
     print()
-    demo_statistics()
+    statistics()
     print()
-    demo_axis_operations()
+    axis_operations()
     print()
-    demo_math_functions()
+    math_functions()
     print()
-    demo_logical_operations()
+    logical_operations()
 
 
 if __name__ == "__main__":
-    demo_all()
+    all()

@@ -4,8 +4,8 @@ Scikit-learn Pipeline 流水线
 
 使用方式：
     from code.04_pipeline import *
-    demo_basic_pipeline()
-    demo_column_transformer()
+    basic_pipeline()
+    column_transformer()
 """
 
 import numpy as np
@@ -14,7 +14,7 @@ from sklearn import datasets
 from sklearn.model_selection import train_test_split
 
 
-def demo_basic_pipeline():
+def basic_pipeline():
     """Pipeline 基础用法"""
     print("=" * 50)
     print("1. Pipeline 基础")
@@ -45,7 +45,7 @@ def demo_basic_pipeline():
     print(f"自动命名: {[name for name, _ in pipe_auto.steps]}")
 
 
-def demo_access_steps():
+def access_steps():
     """访问 Pipeline 步骤"""
     print("=" * 50)
     print("2. 访问 Pipeline 步骤")
@@ -67,7 +67,7 @@ def demo_access_steps():
     print(f"pipe[-1]: {pipe[-1]}")
 
 
-def demo_set_params():
+def set_params():
     """Pipeline 参数设置"""
     print("=" * 50)
     print("3. Pipeline 参数设置")
@@ -98,7 +98,7 @@ def demo_set_params():
     )
 
 
-def demo_pipeline_gridsearch():
+def pipeline_gridsearch():
     """Pipeline + GridSearchCV"""
     print("=" * 50)
     print("4. Pipeline + GridSearchCV")
@@ -123,7 +123,7 @@ def demo_pipeline_gridsearch():
     print(f"最佳得分: {grid.best_score_:.4f}")
 
 
-def demo_skip_step():
+def skip_step():
     """跳过 Pipeline 步骤"""
     print("=" * 50)
     print("5. 跳过 Pipeline 步骤")
@@ -152,7 +152,7 @@ def demo_skip_step():
     print(f"当前 pca 步骤: {pipe.named_steps['pca']}")
 
 
-def demo_column_transformer():
+def column_transformer():
     """ColumnTransformer 混合类型处理"""
     print("=" * 50)
     print("6. ColumnTransformer 混合类型处理")
@@ -222,7 +222,7 @@ def demo_column_transformer():
     print(f"\n特征名: {full_pipe.named_steps['preprocessor'].get_feature_names_out()}")
 
 
-def demo_transformed_target():
+def transformed_target():
     """TransformedTargetRegressor 目标变量变换"""
     print("=" * 50)
     print("7. TransformedTargetRegressor")
@@ -252,22 +252,22 @@ def demo_transformed_target():
     print(f"目标变量对数变换后 R²: {ttr.score(X_test, y_test):.4f}")
 
 
-def demo_all():
+def all():
     """运行所有演示"""
-    demo_basic_pipeline()
+    basic_pipeline()
     print()
-    demo_access_steps()
+    access_steps()
     print()
-    demo_set_params()
+    set_params()
     print()
-    demo_pipeline_gridsearch()
+    pipeline_gridsearch()
     print()
-    demo_skip_step()
+    skip_step()
     print()
-    demo_column_transformer()
+    column_transformer()
     print()
-    demo_transformed_target()
+    transformed_target()
 
 
 if __name__ == "__main__":
-    demo_all()
+    all()

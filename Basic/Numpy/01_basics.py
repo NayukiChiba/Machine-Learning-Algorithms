@@ -6,7 +6,7 @@ NumPy 基础入门
     python 01_basics.py
     或
     from Basic.Numpy.01_basics import *
-    demo_all()
+    all()
 """
 
 import numpy as np

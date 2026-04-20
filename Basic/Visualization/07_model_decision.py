@@ -16,7 +16,7 @@ sys.path.insert(0, str(Path(__file__).parent.parent.parent))
 from config import get_output_dir
 
 
-def demo_decision_boundary(output_dir):
+def decision_boundary(output_dir):
     """演示决策边界可视化"""
     print("=" * 50)
     print("1. 决策边界")
@@ -55,7 +55,7 @@ def demo_decision_boundary(output_dir):
     print("图表已保存")
 
 
-def demo_tree_viz(output_dir):
+def tree_viz(output_dir):
     """演示决策树可视化"""
     print("=" * 50)
     print("2. 决策树可视化")
@@ -84,7 +84,7 @@ def demo_tree_viz(output_dir):
     print("图表已保存")
 
 
-def demo_feature_importance(output_dir):
+def feature_importance(output_dir):
     """演示特征重要性"""
     print("=" * 50)
     print("3. 特征重要性")
@@ -116,16 +116,16 @@ def demo_feature_importance(output_dir):
     print("图表已保存")
 
 
-def demo_all():
+def all():
     """运行所有演示"""
     output_dir = get_output_dir("visualization")
 
-    demo_decision_boundary(output_dir)
+    decision_boundary(output_dir)
     print()
-    demo_tree_viz(output_dir)
+    tree_viz(output_dir)
     print()
-    demo_feature_importance(output_dir)
+    feature_importance(output_dir)
 
 
 if __name__ == "__main__":
-    demo_all()
+    all()

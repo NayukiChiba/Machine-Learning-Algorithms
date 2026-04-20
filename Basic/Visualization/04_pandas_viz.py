@@ -14,7 +14,7 @@ sys.path.insert(0, str(Path(__file__).parent.parent.parent))
 from config import get_output_dir
 
 
-def demo_df_plot(output_dir):
+def df_plot(output_dir):
     """演示 DataFrame 绑图"""
     print("=" * 50)
     print("1. DataFrame.plot()")
@@ -53,7 +53,7 @@ def demo_df_plot(output_dir):
     print("图表已保存")
 
 
-def demo_series_plot(output_dir):
+def series_plot(output_dir):
     """演示 Series 绑图"""
     print("=" * 50)
     print("2. Series.plot()")
@@ -72,7 +72,7 @@ def demo_series_plot(output_dir):
     print("图表已保存")
 
 
-def demo_groupby_plot(output_dir):
+def groupby_plot(output_dir):
     """演示分组绘图"""
     print("=" * 50)
     print("3. GroupBy 绘图")
@@ -95,16 +95,16 @@ def demo_groupby_plot(output_dir):
     print("图表已保存")
 
 
-def demo_all():
+def all():
     """运行所有演示"""
     output_dir = get_output_dir("visualization")
 
-    demo_df_plot(output_dir)
+    df_plot(output_dir)
     print()
-    demo_series_plot(output_dir)
+    series_plot(output_dir)
     print()
-    demo_groupby_plot(output_dir)
+    groupby_plot(output_dir)
 
 
 if __name__ == "__main__":
-    demo_all()
+    all()
