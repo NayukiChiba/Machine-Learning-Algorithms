@@ -64,7 +64,7 @@ python -m pipelines.probabilistic.hmm
 - [库生态总览](/foundations/overview)
 - [NumPy 基础与数组概念](/foundations/numpy/01-basics)
 - [术语表](/appendix/glossary)
-- [概率模型总览](/probabilistic/em)
+- [概率模型总览](/probabilistic/em/)
 
 ## 小结
 
