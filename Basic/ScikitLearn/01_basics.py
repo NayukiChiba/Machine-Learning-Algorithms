@@ -4,8 +4,8 @@ Scikit-learn 基础入门
 
 使用方式：
     from code.01_basics import *
-    demo_load_datasets()
-    demo_first_model()
+    load_datasets()
+    first_model()
 """
 
 import numpy as np
@@ -17,7 +17,7 @@ plt.rcParams["font.sans-serif"] = ["SimHei", "Microsoft YaHei", "Arial Unicode M
 plt.rcParams["axes.unicode_minus"] = False
 
 
-def demo_load_datasets():
+def load_datasets():
     """演示如何加载和使用 sklearn 内置数据集"""
     print("=" * 50)
     print("1. 加载内置数据集")
@@ -89,7 +89,7 @@ def demo_load_datasets():
     return iris
 
 
-def demo_generate_data():
+def generate_data():
     """演示如何生成人工数据集"""
     print("=" * 50)
     print("2. 生成人工数据集")
@@ -221,7 +221,7 @@ def demo_generate_data():
     return X_clf, y_clf
 
 
-def demo_train_test_split():
+def train_test_split():
     """演示数据划分"""
     print("=" * 50)
     print("3. 数据划分 (train_test_split)")
@@ -310,7 +310,7 @@ def demo_train_test_split():
     return X_train, X_test, y_train, y_test
 
 
-def demo_first_model():
+def first_model():
     """演示第一个机器学习模型完整流程"""
     print("=" * 50)
     print("4. 第一个模型 (KNN)")
@@ -418,7 +418,7 @@ def demo_first_model():
     return knn
 
 
-def demo_estimator_methods():
+def estimator_methods():
     """演示估计器通用方法"""
     print("=" * 50)
     print("5. 估计器通用方法")
@@ -463,22 +463,22 @@ def demo_estimator_methods():
     print(f"  n_features_in_: {knn.n_features_in_}")
 
 
-def demo_all():
+def all():
     """运行所有演示"""
     import os
 
     os.makedirs("outputs/sklearn", exist_ok=True)
 
-    demo_load_datasets()
+    load_datasets()
     print()
-    demo_generate_data()
+    generate_data()
     print()
-    demo_train_test_split()
+    train_test_split()
     print()
-    demo_first_model()
+    first_model()
     print()
-    demo_estimator_methods()
+    estimator_methods()
 
 
 if __name__ == "__main__":
-    demo_all()
+    all()

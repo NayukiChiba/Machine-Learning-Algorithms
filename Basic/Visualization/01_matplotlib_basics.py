@@ -13,7 +13,7 @@ sys.path.insert(0, str(Path(__file__).parent.parent.parent))
 from config import get_output_dir
 
 
-def demo_figure_axes():
+def figure_axes():
     """演示 Figure 和 Axes"""
     print("=" * 50)
     print("1. Figure 和 Axes")
@@ -45,7 +45,7 @@ def demo_figure_axes():
     print("图表已保存到 outputs/visualization/viz_01_basic.png")
 
 
-def demo_line_styles():
+def line_styles():
     """演示线条样式"""
     print("=" * 50)
     print("2. 线条样式")
@@ -76,7 +76,7 @@ def demo_line_styles():
     print("  '-.' : 点划线")
 
 
-def demo_markers():
+def markers():
     """演示标记符号"""
     print("=" * 50)
     print("3. 标记符号")
@@ -100,7 +100,7 @@ def demo_markers():
     print("图表已保存")
 
 
-def demo_colors():
+def colors():
     """演示颜色设置"""
     print("=" * 50)
     print("4. 颜色设置")
@@ -114,7 +114,7 @@ def demo_colors():
     print("  Colormap: plt.cm.viridis")
 
 
-def demo_subplots():
+def subplots():
     """演示子图布局"""
     print("=" * 50)
     print("5. 子图布局")
@@ -143,18 +143,18 @@ def demo_subplots():
     print("图表已保存")
 
 
-def demo_all():
+def all():
     """运行所有演示"""
-    demo_figure_axes()
+    figure_axes()
     print()
-    demo_line_styles()
+    line_styles()
     print()
-    demo_markers()
+    markers()
     print()
-    demo_colors()
+    colors()
     print()
-    demo_subplots()
+    subplots()
 
 
 if __name__ == "__main__":
-    demo_all()
+    all()

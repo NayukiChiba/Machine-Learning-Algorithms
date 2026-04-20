@@ -6,7 +6,7 @@ SciPy 基础入门
 import numpy as np
 
 
-def demo_scipy_modules():
+def scipy_modules():
     """演示 SciPy 模块结构"""
     print("=" * 50)
     print("1. SciPy 模块结构")
@@ -25,7 +25,7 @@ def demo_scipy_modules():
     print("  scipy.spatial    - 空间数据")
 
 
-def demo_constants():
+def constants():
     """演示物理常数"""
     print("=" * 50)
     print("2. 物理常数")
@@ -48,7 +48,7 @@ def demo_constants():
     print(f"  1 磅 = {constants.pound} 千克")
 
 
-def demo_special_functions():
+def special_functions():
     """演示特殊函数"""
     print("=" * 50)
     print("3. 特殊函数")
@@ -75,7 +75,7 @@ def demo_special_functions():
     print(f"  J_1(1) = {special.jv(1, 1):.6f}")
 
 
-def demo_version():
+def version():
     """演示版本信息"""
     print("=" * 50)
     print("4. 版本信息")
@@ -87,16 +87,16 @@ def demo_version():
     print(f"NumPy 版本: {np.__version__}")
 
 
-def demo_all():
+def all():
     """运行所有演示"""
-    demo_scipy_modules()
+    scipy_modules()
     print()
-    demo_constants()
+    constants()
     print()
-    demo_special_functions()
+    special_functions()
     print()
-    demo_version()
+    version()
 
 
 if __name__ == "__main__":
-    demo_all()
+    all()

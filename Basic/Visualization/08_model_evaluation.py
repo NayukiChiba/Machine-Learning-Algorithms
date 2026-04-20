@@ -17,7 +17,7 @@ sys.path.insert(0, str(Path(__file__).parent.parent.parent))
 from config import get_output_dir
 
 
-def demo_confusion_matrix(output_dir):
+def _confusion_matrix(output_dir):
     """演示混淆矩阵"""
     print("=" * 50)
     print("1. 混淆矩阵")
@@ -44,7 +44,7 @@ def demo_confusion_matrix(output_dir):
     print("图表已保存")
 
 
-def demo_roc_curve(output_dir):
+def _roc_curve(output_dir):
     """演示 ROC 曲线"""
     print("=" * 50)
     print("2. ROC 曲线")
@@ -77,7 +77,7 @@ def demo_roc_curve(output_dir):
     print("图表已保存")
 
 
-def demo_learning_curve(output_dir):
+def _learning_curve(output_dir):
     """演示学习曲线"""
     print("=" * 50)
     print("3. 学习曲线")
@@ -116,16 +116,16 @@ def demo_learning_curve(output_dir):
     print("图表已保存")
 
 
-def demo_all():
+def all():
     """运行所有演示"""
     output_dir = get_output_dir("visualization")
 
-    demo_confusion_matrix(output_dir)
+    _confusion_matrix(output_dir)
     print()
-    demo_roc_curve(output_dir)
+    _roc_curve(output_dir)
     print()
-    demo_learning_curve(output_dir)
+    _learning_curve(output_dir)
 
 
 if __name__ == "__main__":
-    demo_all()
+    all()

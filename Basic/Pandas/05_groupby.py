@@ -6,7 +6,7 @@
     python 05_groupby.py
     或
     from Basic.Pandas.05_groupby import *
-    demo_all()
+    all()
 """
 
 import pandas as pd
@@ -27,7 +27,7 @@ def create_sample_df():
     )
 
 
-def demo_groupby():
+def groupby():
     """演示 groupby 基本操作"""
     print("=" * 50)
     print("1. GroupBy 基本操作")
@@ -51,7 +51,7 @@ def demo_groupby():
         print(group)
 
 
-def demo_agg():
+def agg():
     """演示聚合函数"""
     print("=" * 50)
     print("2. 聚合函数")
@@ -78,7 +78,7 @@ def demo_agg():
     print(grouped["Salary"].agg(["sum", "mean", "max"]))
 
 
-def demo_multi_column_agg():
+def multi_column_agg():
     """演示多列分组聚合"""
     print("=" * 50)
     print("3. 多列聚合")
@@ -101,7 +101,7 @@ def demo_multi_column_agg():
     print(result)
 
 
-def demo_transform():
+def transform():
     """演示 transform 方法"""
     print("=" * 50)
     print("4. Transform 方法")
@@ -126,7 +126,7 @@ def demo_transform():
     print(df[["Department", "Employee", "Salary", "Salary_Zscore"]])
 
 
-def demo_apply():
+def apply():
     """演示 apply 方法"""
     print("=" * 50)
     print("5. Apply 方法")
@@ -157,18 +157,18 @@ def demo_apply():
     print(grouped.apply(summary, include_groups=False))
 
 
-def demo_all():
+def all():
     """运行所有演示"""
-    demo_groupby()
+    groupby()
     print()
-    demo_agg()
+    agg()
     print()
-    demo_multi_column_agg()
+    multi_column_agg()
     print()
-    demo_transform()
+    transform()
     print()
-    demo_apply()
+    apply()
 
 
 if __name__ == "__main__":
-    demo_all()
+    all()

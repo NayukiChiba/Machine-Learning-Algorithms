@@ -6,14 +6,14 @@
     python 04_cleaning.py
     或
     from Basic.Pandas.04_cleaning import *
-    demo_all()
+    all()
 """
 
 import pandas as pd
 import numpy as np
 
 
-def demo_missing_values():
+def missing_values():
     """演示缺失值检测和处理"""
     print("=" * 50)
     print("1. 缺失值处理")
@@ -55,7 +55,7 @@ def demo_missing_values():
     print(df.fillna(method="ffill"))
 
 
-def demo_duplicates():
+def duplicates():
     """演示重复值处理"""
     print("=" * 50)
     print("2. 重复值处理")
@@ -81,7 +81,7 @@ def demo_duplicates():
     print(df.drop_duplicates(subset=["A"]))
 
 
-def demo_type_conversion():
+def type_conversion():
     """演示数据类型转换"""
     print("=" * 50)
     print("3. 数据类型转换")
@@ -114,7 +114,7 @@ def demo_type_conversion():
     print(f"C列类型: {df['C'].dtype}")
 
 
-def demo_string_ops():
+def string_ops():
     """演示字符串操作"""
     print("=" * 50)
     print("4. 字符串操作")
@@ -156,7 +156,7 @@ def demo_string_ops():
     print(df["Email"].str.split("@"))
 
 
-def demo_replace():
+def replace():
     """演示值替换"""
     print("=" * 50)
     print("5. 值替换")
@@ -177,18 +177,18 @@ def demo_replace():
     print(df["B"].replace({"yes": 1, "no": 0, "maybe": -1}))
 
 
-def demo_all():
+def all():
     """运行所有演示"""
-    demo_missing_values()
+    missing_values()
     print()
-    demo_duplicates()
+    duplicates()
     print()
-    demo_type_conversion()
+    type_conversion()
     print()
-    demo_string_ops()
+    string_ops()
     print()
-    demo_replace()
+    replace()
 
 
 if __name__ == "__main__":
-    demo_all()
+    all()

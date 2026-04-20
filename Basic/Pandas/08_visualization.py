@@ -14,7 +14,7 @@ sys.path.insert(0, str(Path(__file__).parent.parent.parent))
 from config import get_output_dir
 
 
-def demo_line_plot():
+def line_plot():
     """演示折线图"""
     print("=" * 50)
     print("1. 折线图")
@@ -41,7 +41,7 @@ def demo_line_plot():
     print("折线图已保存")
 
 
-def demo_bar_plot():
+def bar_plot():
     """演示柱状图"""
     print("=" * 50)
     print("2. 柱状图")
@@ -60,7 +60,7 @@ def demo_bar_plot():
     print("柱状图已保存")
 
 
-def demo_histogram():
+def histogram():
     """演示直方图"""
     print("=" * 50)
     print("3. 直方图")
@@ -76,7 +76,7 @@ def demo_histogram():
     print("直方图已保存")
 
 
-def demo_scatter():
+def scatter():
     """演示散点图"""
     print("=" * 50)
     print("4. 散点图")
@@ -92,7 +92,7 @@ def demo_scatter():
     print("散点图已保存")
 
 
-def demo_boxplot():
+def boxplot():
     """演示箱线图"""
     print("=" * 50)
     print("5. 箱线图")
@@ -110,7 +110,7 @@ def demo_boxplot():
     print("箱线图已保存")
 
 
-def demo_pie():
+def pie():
     """演示饼图"""
     print("=" * 50)
     print("6. 饼图")
@@ -127,15 +127,15 @@ def demo_pie():
     print("饼图已保存")
 
 
-def demo_all():
+def all():
     """运行所有演示"""
-    demo_line_plot()
-    demo_bar_plot()
-    demo_histogram()
-    demo_scatter()
-    demo_boxplot()
-    demo_pie()
+    line_plot()
+    bar_plot()
+    histogram()
+    scatter()
+    boxplot()
+    pie()
 
 
 if __name__ == "__main__":
-    demo_all()
+    all()

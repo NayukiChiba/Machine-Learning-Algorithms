@@ -9,7 +9,7 @@ NumPy 数组变形
 import numpy as np
 
 
-def demo_reshape():
+def reshape():
     """reshape 变形操作"""
     print("=" * 50)
     print("1. reshape 变形")
@@ -35,7 +35,7 @@ def demo_reshape():
     print(f"reshape(-1, 6):\n{arr_auto2}")
 
 
-def demo_flatten_ravel():
+def flatten_ravel():
     """flatten 和 ravel 展平"""
     print("=" * 50)
     print("2. flatten 和 ravel 展平")
@@ -67,7 +67,7 @@ def demo_flatten_ravel():
     print(f"修改 ravel[1]=888 后，原数组:\n{arr_test}")
 
 
-def demo_transpose():
+def transpose():
     """转置操作"""
     print("=" * 50)
     print("3. 转置操作")
@@ -89,7 +89,7 @@ def demo_transpose():
     print(f"transpose(axes=(1,0,2)) 形状: {transposed.shape}")
 
 
-def demo_squeeze_expand():
+def squeeze_expand():
     """squeeze 和 expand_dims"""
     print("=" * 50)
     print("4. squeeze 和 expand_dims")
@@ -115,7 +115,7 @@ def demo_squeeze_expand():
     print(f"  {expanded_1.T[0]}")
 
 
-def demo_resize():
+def resize():
     """resize 调整大小"""
     print("=" * 50)
     print("5. resize 调整大小")
@@ -133,7 +133,7 @@ def demo_resize():
     print(f"np.resize(arr, (3, 3)):\n{resized2}")
 
 
-def demo_newaxis():
+def newaxis():
     """newaxis 增加维度"""
     print("=" * 50)
     print("6. np.newaxis 增加维度")
@@ -154,20 +154,20 @@ def demo_newaxis():
     print(f"  {col.T[0]}")
 
 
-def demo_all():
+def all():
     """运行所有演示"""
-    demo_reshape()
+    reshape()
     print()
-    demo_flatten_ravel()
+    flatten_ravel()
     print()
-    demo_transpose()
+    transpose()
     print()
-    demo_squeeze_expand()
+    squeeze_expand()
     print()
-    demo_resize()
+    resize()
     print()
-    demo_newaxis()
+    newaxis()
 
 
 if __name__ == "__main__":
-    demo_all()
+    all()

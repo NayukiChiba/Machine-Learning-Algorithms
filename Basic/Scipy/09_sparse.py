@@ -18,7 +18,7 @@ plt.rcParams["font.sans-serif"] = ["SimHei", "Microsoft YaHei", "Arial Unicode M
 plt.rcParams["axes.unicode_minus"] = False
 
 
-def demo_sparse_create():
+def sparse_create():
     """演示稀疏矩阵创建"""
     print("=" * 50)
     print("1. 稀疏矩阵创建")
@@ -73,7 +73,7 @@ def demo_sparse_create():
     plt.savefig("outputs/scipy/09_create.png", dpi=150, bbox_inches="tight")
 
 
-def demo_sparse_operations():
+def sparse_operations():
     """演示稀疏矩阵操作"""
     print("=" * 50)
     print("2. 稀疏矩阵操作")
@@ -121,7 +121,7 @@ def demo_sparse_operations():
     plt.savefig("outputs/scipy/09_ops.png", dpi=150, bbox_inches="tight")
 
 
-def demo_sparse_linalg():
+def sparse_linalg():
     """演示稀疏线性代数"""
     print("=" * 50)
     print("3. 稀疏线性代数")
@@ -174,7 +174,7 @@ def demo_sparse_linalg():
     plt.savefig("outputs/scipy/09_linalg.png", dpi=150, bbox_inches="tight")
 
 
-def demo_sparse_efficiency():
+def sparse_efficiency():
     """演示稀疏矩阵效率"""
     print("=" * 50)
     print("4. 稀疏矩阵效率")
@@ -255,20 +255,20 @@ def demo_sparse_efficiency():
     plt.savefig("outputs/scipy/09_efficiency.png", dpi=150, bbox_inches="tight")
 
 
-def demo_all():
+def all():
     """运行所有演示"""
     import os
 
     os.makedirs("outputs/scipy", exist_ok=True)
 
-    demo_sparse_create()
+    sparse_create()
     print()
-    demo_sparse_operations()
+    sparse_operations()
     print()
-    demo_sparse_linalg()
+    sparse_linalg()
     print()
-    demo_sparse_efficiency()
+    sparse_efficiency()
 
 
 if __name__ == "__main__":
-    demo_all()
+    all()

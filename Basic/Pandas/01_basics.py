@@ -6,14 +6,14 @@ Pandas 基础入门
     python 01_basics.py
     或
     from Basic.Pandas.01_basics import *
-    demo_all()
+    all()
 """
 
 import pandas as pd
 import numpy as np
 
 
-def demo_series():
+def series():
     """演示 Pandas Series 的创建和基本操作"""
     print("=" * 50)
     print("1. Series 数据结构")
@@ -41,7 +41,7 @@ def demo_series():
     print(s3)
 
 
-def demo_dataframe():
+def dataframe():
     """演示 Pandas DataFrame 的创建和基本操作"""
     print("=" * 50)
     print("2. DataFrame 数据结构")
@@ -65,7 +65,7 @@ def demo_dataframe():
     print(f"数据类型:\n{df.dtypes}")
 
 
-def demo_basic_view():
+def basic_view():
     """演示数据查看的基本方法"""
     print("=" * 50)
     print("3. 基本数据查看方法")
@@ -112,7 +112,7 @@ def demo_basic_view():
     print(df.describe())
 
 
-def demo_attributes():
+def attributes():
     """演示 DataFrame 的常用属性"""
     print("=" * 50)
     print("4. DataFrame 属性")
@@ -129,16 +129,16 @@ def demo_attributes():
     print(f"dtypes:\n{df.dtypes}")
 
 
-def demo_all():
+def all():
     """运行所有演示"""
-    demo_series()
+    series()
     print()
-    demo_dataframe()
+    dataframe()
     print()
-    demo_basic_view()
+    basic_view()
     print()
-    demo_attributes()
+    attributes()
 
 
 if __name__ == "__main__":
-    demo_all()
+    all()

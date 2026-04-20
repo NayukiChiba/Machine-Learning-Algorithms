@@ -9,7 +9,7 @@ NumPy 综合实战
 import numpy as np
 
 
-def demo_student_grades():
+def student_grades():
     """学生成绩分析"""
     print("=" * 50)
     print("1. 学生成绩分析")
@@ -69,7 +69,7 @@ def demo_student_grades():
         print(f"  第{rank}名: {students[idx]} - 总分{total_scores[idx]}")
 
 
-def demo_linear_regression():
+def linear_regression():
     """简单线性回归实现"""
     print("=" * 50)
     print("2. 线性回归实现")
@@ -128,7 +128,7 @@ def demo_linear_regression():
         print(f"  x={xi}: 预测y={new_y[i]:.2f}, 真实y={true_y:.2f}")
 
 
-def demo_image_operations():
+def image_operations():
     """模拟图像操作"""
     print("=" * 50)
     print("3. 图像操作模拟")
@@ -170,7 +170,7 @@ def demo_image_operations():
     print(f"归一化到[0,1]:\n{normalized.round(2)}")
 
 
-def demo_statistics():
+def statistics():
     """统计分析"""
     print("=" * 50)
     print("4. 统计分析")
@@ -202,16 +202,16 @@ def demo_statistics():
         print(f"  [{bin_edges[i]:.1f}, {bin_edges[i + 1]:.1f}): {hist[i]}")
 
 
-def demo_all():
+def all():
     """运行所有演示"""
-    demo_student_grades()
+    student_grades()
     print()
-    demo_linear_regression()
+    linear_regression()
     print()
-    demo_image_operations()
+    image_operations()
     print()
-    demo_statistics()
+    statistics()
 
 
 if __name__ == "__main__":
-    demo_all()
+    all()

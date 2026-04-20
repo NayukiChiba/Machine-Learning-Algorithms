@@ -12,7 +12,7 @@ plt.rcParams["font.sans-serif"] = ["SimHei", "Microsoft YaHei", "Arial Unicode M
 plt.rcParams["axes.unicode_minus"] = False
 
 
-def demo_ttest():
+def ttest():
     """演示 t 检验"""
     print("=" * 50)
     print("1. t 检验")
@@ -164,7 +164,7 @@ def demo_ttest():
     plt.savefig("outputs/scipy/03_ttest.png", dpi=150, bbox_inches="tight")
 
 
-def demo_chi2():
+def chi2():
     """演示卡方检验"""
     print("=" * 50)
     print("2. 卡方检验")
@@ -252,7 +252,7 @@ def demo_chi2():
     plt.savefig("outputs/scipy/03_chi2.png", dpi=150, bbox_inches="tight")
 
 
-def demo_anova():
+def anova():
     """演示方差分析"""
     print("=" * 50)
     print("3. 方差分析 (ANOVA)")
@@ -341,7 +341,7 @@ def demo_anova():
     plt.savefig("outputs/scipy/03_anova.png", dpi=150, bbox_inches="tight")
 
 
-def demo_nonparametric():
+def nonparametric():
     """演示非参数检验"""
     print("=" * 50)
     print("4. 非参数检验")
@@ -398,20 +398,20 @@ def demo_nonparametric():
     plt.savefig("outputs/scipy/03_nonparam.png", dpi=150, bbox_inches="tight")
 
 
-def demo_all():
+def all():
     """运行所有演示"""
     import os
 
     os.makedirs("outputs/scipy", exist_ok=True)
 
-    demo_ttest()
+    ttest()
     print()
-    demo_chi2()
+    chi2()
     print()
-    demo_anova()
+    anova()
     print()
-    demo_nonparametric()
+    nonparametric()
 
 
 if __name__ == "__main__":
-    demo_all()
+    all()

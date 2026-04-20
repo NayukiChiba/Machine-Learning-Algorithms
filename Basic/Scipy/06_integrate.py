@@ -12,7 +12,7 @@ plt.rcParams["font.sans-serif"] = ["SimHei", "Microsoft YaHei", "Arial Unicode M
 plt.rcParams["axes.unicode_minus"] = False
 
 
-def demo_quad():
+def quad():
     """演示定积分"""
     print("=" * 50)
     print("1. 定积分")
@@ -83,7 +83,7 @@ def demo_quad():
     plt.savefig("outputs/scipy/06_quad.png", dpi=150, bbox_inches="tight")
 
 
-def demo_dblquad():
+def dblquad():
     """演示二重积分"""
     print("=" * 50)
     print("2. 二重积分")
@@ -149,7 +149,7 @@ def demo_dblquad():
     plt.savefig("outputs/scipy/06_dblquad.png", dpi=150, bbox_inches="tight")
 
 
-def demo_odeint():
+def odeint():
     """演示常微分方程求解"""
     print("=" * 50)
     print("3. 常微分方程 (ODE)")
@@ -213,7 +213,7 @@ def demo_odeint():
     plt.savefig("outputs/scipy/06_ode.png", dpi=150, bbox_inches="tight")
 
 
-def demo_ode_system():
+def ode_system():
     """演示ODE方程组"""
     print("=" * 50)
     print("4. ODE 方程组")
@@ -278,20 +278,20 @@ def demo_ode_system():
     plt.savefig("outputs/scipy/06_lotka.png", dpi=150, bbox_inches="tight")
 
 
-def demo_all():
+def all():
     """运行所有演示"""
     import os
 
     os.makedirs("outputs/scipy", exist_ok=True)
 
-    demo_quad()
+    quad()
     print()
-    demo_dblquad()
+    dblquad()
     print()
-    demo_odeint()
+    odeint()
     print()
-    demo_ode_system()
+    ode_system()
 
 
 if __name__ == "__main__":
-    demo_all()
+    all()

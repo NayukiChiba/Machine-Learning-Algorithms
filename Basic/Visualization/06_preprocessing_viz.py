@@ -15,7 +15,7 @@ sys.path.insert(0, str(Path(__file__).parent.parent.parent))
 from config import get_output_dir
 
 
-def demo_missing_viz(output_dir):
+def missing_viz(output_dir):
     """演示缺失值可视化"""
     print("=" * 50)
     print("1. 缺失值可视化")
@@ -47,7 +47,7 @@ def demo_missing_viz(output_dir):
     print("图表已保存")
 
 
-def demo_outlier_viz(output_dir):
+def outlier_viz(output_dir):
     """演示异常值可视化"""
     print("=" * 50)
     print("2. 异常值可视化")
@@ -80,7 +80,7 @@ def demo_outlier_viz(output_dir):
     print("图表已保存")
 
 
-def demo_transform_viz(output_dir):
+def transform_viz(output_dir):
     """演示特征变换可视化"""
     print("=" * 50)
     print("3. 特征变换可视化")
@@ -116,16 +116,16 @@ def demo_transform_viz(output_dir):
     print("图表已保存")
 
 
-def demo_all():
+def all():
     """运行所有演示"""
     output_dir = get_output_dir("visualization")
 
-    demo_missing_viz(output_dir)
+    missing_viz(output_dir)
     print()
-    demo_outlier_viz(output_dir)
+    outlier_viz(output_dir)
     print()
-    demo_transform_viz(output_dir)
+    transform_viz(output_dir)
 
 
 if __name__ == "__main__":
-    demo_all()
+    all()

@@ -12,7 +12,7 @@ plt.rcParams["font.sans-serif"] = ["SimHei", "Microsoft YaHei", "Arial Unicode M
 plt.rcParams["axes.unicode_minus"] = False
 
 
-def demo_lu():
+def lu():
     """演示 LU 分解"""
     print("=" * 50)
     print("1. LU 分解")
@@ -60,7 +60,7 @@ def demo_lu():
     plt.savefig("outputs/scipy/07_lu.png", dpi=150, bbox_inches="tight")
 
 
-def demo_qr():
+def qr():
     """演示 QR 分解"""
     print("=" * 50)
     print("2. QR 分解")
@@ -76,7 +76,7 @@ def demo_qr():
     print(f"\n验证 Q @ R:\n{np.round(Q @ R, 4)}")
 
 
-def demo_svd():
+def svd():
     """演示奇异值分解"""
     print("=" * 50)
     print("3. SVD 分解")
@@ -137,7 +137,7 @@ def demo_svd():
     plt.savefig("outputs/scipy/07_svd.png", dpi=150, bbox_inches="tight")
 
 
-def demo_eig():
+def eig():
     """演示特征值分解"""
     print("=" * 50)
     print("4. 特征值与特征向量")
@@ -233,7 +233,7 @@ def demo_eig():
     plt.savefig("outputs/scipy/07_eig.png", dpi=150, bbox_inches="tight")
 
 
-def demo_solve():
+def solve():
     """演示线性方程组求解"""
     print("=" * 50)
     print("5. 线性方程组求解")
@@ -252,22 +252,22 @@ def demo_solve():
     print(f"验证 A @ x = {A @ x}")
 
 
-def demo_all():
+def all():
     """运行所有演示"""
     import os
 
     os.makedirs("outputs/scipy", exist_ok=True)
 
-    demo_lu()
+    lu()
     print()
-    demo_qr()
+    qr()
     print()
-    demo_svd()
+    svd()
     print()
-    demo_eig()
+    eig()
     print()
-    demo_solve()
+    solve()
 
 
 if __name__ == "__main__":
-    demo_all()
+    all()

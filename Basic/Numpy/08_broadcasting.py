@@ -9,7 +9,7 @@ NumPy 广播机制
 import numpy as np
 
 
-def demo_scalar_broadcast():
+def scalar_broadcast():
     """标量与数组的广播"""
     print("=" * 50)
     print("1. 标量与数组的广播")
@@ -26,7 +26,7 @@ def demo_scalar_broadcast():
     print(f"arr * 2:\n{arr * 2}")
 
 
-def demo_1d_2d_broadcast():
+def _1d_2d_broadcast():
     """一维与二维数组的广播"""
     print("=" * 50)
     print("2. 一维与二维数组的广播")
@@ -44,7 +44,7 @@ def demo_1d_2d_broadcast():
     print(f"arr_2d + arr_1d:\n{result}")
 
 
-def demo_column_broadcast():
+def column_broadcast():
     """列向量的广播"""
     print("=" * 50)
     print("3. 列向量的广播")
@@ -62,7 +62,7 @@ def demo_column_broadcast():
     print(f"arr_2d + col:\n{result}")
 
 
-def demo_broadcast_rules():
+def broadcast_rules():
     """广播规则说明"""
     print("=" * 50)
     print("4. 广播规则")
@@ -95,7 +95,7 @@ def demo_broadcast_rules():
     print(f"A (3, 1) + B (1, 4) = {(A + B).shape}")
 
 
-def demo_outer_product():
+def outer_product():
     """利用广播实现外积"""
     print("=" * 50)
     print("5. 利用广播实现外积")
@@ -118,7 +118,7 @@ def demo_outer_product():
     print(f"np.outer(a, b):\n{outer2}")
 
 
-def demo_practical_example():
+def practical_example():
     """广播的实际应用"""
     print("=" * 50)
     print("6. 广播的实际应用")
@@ -147,20 +147,20 @@ def demo_practical_example():
     print(f"标准化后标准差: {normalized.std(axis=0).round(2)}")
 
 
-def demo_all():
+def all():
     """运行所有演示"""
-    demo_scalar_broadcast()
+    scalar_broadcast()
     print()
-    demo_1d_2d_broadcast()
+    _1d_2d_broadcast()
     print()
-    demo_column_broadcast()
+    column_broadcast()
     print()
-    demo_broadcast_rules()
+    broadcast_rules()
     print()
-    demo_outer_product()
+    outer_product()
     print()
-    demo_practical_example()
+    practical_example()
 
 
 if __name__ == "__main__":
-    demo_all()
+    all()

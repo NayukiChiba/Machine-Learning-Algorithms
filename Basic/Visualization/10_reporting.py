@@ -13,7 +13,7 @@ sys.path.insert(0, str(Path(__file__).parent.parent.parent))
 from config import get_output_dir
 
 
-def demo_professional_style(output_dir):
+def professional_style(output_dir):
     """演示专业样式"""
     print("=" * 50)
     print("1. 专业样式设置")
@@ -39,7 +39,7 @@ def demo_professional_style(output_dir):
     print("图表已保存")
 
 
-def demo_multi_panel(output_dir):
+def multi_panel(output_dir):
     """演示多面板布局"""
     print("=" * 50)
     print("2. 多面板布局")
@@ -81,7 +81,7 @@ def demo_multi_panel(output_dir):
     print("图表已保存")
 
 
-def demo_export():
+def export():
     """演示导出选项"""
     print("=" * 50)
     print("3. 导出选项")
@@ -101,7 +101,7 @@ def demo_export():
     print("  facecolor='white'    # 背景颜色")
 
 
-def demo_color_palettes():
+def color_palettes():
     """演示配色方案"""
     print("=" * 50)
     print("4. 配色方案")
@@ -118,18 +118,18 @@ def demo_color_palettes():
     print("  colors = plt.cm.Set1(np.linspace(0, 1, 10))")
 
 
-def demo_all():
+def all():
     """运行所有演示"""
     output_dir = get_output_dir("visualization")
 
-    demo_professional_style(output_dir)
+    professional_style(output_dir)
     print()
-    demo_multi_panel(output_dir)
+    multi_panel(output_dir)
     print()
-    demo_export()
+    export()
     print()
-    demo_color_palettes()
+    color_palettes()
 
 
 if __name__ == "__main__":
-    demo_all()
+    all()

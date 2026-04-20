@@ -12,7 +12,7 @@ plt.rcParams["font.sans-serif"] = ["SimHei", "Microsoft YaHei", "Arial Unicode M
 plt.rcParams["axes.unicode_minus"] = False
 
 
-def demo_curve_fit():
+def curve_fit():
     """演示曲线拟合"""
     print("=" * 50)
     print("1. 曲线拟合")
@@ -83,7 +83,7 @@ def demo_curve_fit():
     plt.savefig("outputs/scipy/04_curve_fit.png", dpi=150, bbox_inches="tight")
 
 
-def demo_root_finding():
+def root_finding():
     """演示求根算法"""
     print("=" * 50)
     print("2. 求根算法")
@@ -172,7 +172,7 @@ def demo_root_finding():
     plt.savefig("outputs/scipy/04_roots.png", dpi=150, bbox_inches="tight")
 
 
-def demo_minimize():
+def minimize():
     """演示最小化"""
     print("=" * 50)
     print("3. 最小化")
@@ -267,7 +267,7 @@ def demo_minimize():
     plt.savefig("outputs/scipy/04_minimize.png", dpi=150, bbox_inches="tight")
 
 
-def demo_linear_programming():
+def linear_programming():
     """演示线性规划"""
     print("=" * 50)
     print("4. 线性规划")
@@ -359,20 +359,20 @@ def demo_linear_programming():
     plt.savefig("outputs/scipy/04_linprog.png", dpi=150, bbox_inches="tight")
 
 
-def demo_all():
+def all():
     """运行所有演示"""
     import os
 
     os.makedirs("outputs/scipy", exist_ok=True)
 
-    demo_curve_fit()
+    curve_fit()
     print()
-    demo_root_finding()
+    root_finding()
     print()
-    demo_minimize()
+    minimize()
     print()
-    demo_linear_programming()
+    linear_programming()
 
 
 if __name__ == "__main__":
-    demo_all()
+    all()

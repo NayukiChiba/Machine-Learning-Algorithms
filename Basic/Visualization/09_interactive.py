@@ -4,7 +4,7 @@
 """
 
 
-def demo_plotly_basics():
+def plotly_basics():
     """演示 Plotly 基础"""
     print("=" * 50)
     print("1. Plotly 基础")
@@ -26,7 +26,7 @@ def demo_plotly_basics():
     print("  fig.show()")
 
 
-def demo_interactive_chart():
+def interactive_chart():
     """演示交互式图表"""
     print("=" * 50)
     print("2. 交互式图表示例")
@@ -48,7 +48,7 @@ def demo_interactive_chart():
     print("  fig = px.scatter_3d(df, x='x', y='y', z='z', color='label')")
 
 
-def demo_plotly_tips():
+def plotly_tips():
     """演示 Plotly 技巧"""
     print("=" * 50)
     print("3. Plotly 实用技巧")
@@ -71,14 +71,14 @@ def demo_plotly_tips():
     print("  )")
 
 
-def demo_all():
+def all():
     """运行所有演示"""
-    demo_plotly_basics()
+    plotly_basics()
     print()
-    demo_interactive_chart()
+    interactive_chart()
     print()
-    demo_plotly_tips()
+    plotly_tips()
 
 
 if __name__ == "__main__":
-    demo_all()
+    all()

@@ -12,7 +12,7 @@ plt.rcParams["font.sans-serif"] = ["SimHei", "Microsoft YaHei", "Arial Unicode M
 plt.rcParams["axes.unicode_minus"] = False
 
 
-def demo_distance():
+def distance():
     """演示距离计算"""
     print("=" * 50)
     print("1. 距离计算")
@@ -94,7 +94,7 @@ def demo_distance():
     plt.savefig("outputs/scipy/10_distance.png", dpi=150, bbox_inches="tight")
 
 
-def demo_kdtree():
+def kdtree():
     """演示 KD 树"""
     print("=" * 50)
     print("2. KD 树")
@@ -208,7 +208,7 @@ def demo_kdtree():
     plt.savefig("outputs/scipy/10_kdtree.png", dpi=150, bbox_inches="tight")
 
 
-def demo_convex_hull():
+def convex_hull():
     """演示凸包"""
     print("=" * 50)
     print("3. 凸包")
@@ -263,7 +263,7 @@ def demo_convex_hull():
     plt.savefig("outputs/scipy/10_hull.png", dpi=150, bbox_inches="tight")
 
 
-def demo_voronoi():
+def voronoi():
     """演示 Voronoi 图"""
     print("=" * 50)
     print("4. Voronoi 图")
@@ -313,7 +313,7 @@ def demo_voronoi():
     plt.savefig("outputs/scipy/10_voronoi.png", dpi=150, bbox_inches="tight")
 
 
-def demo_delaunay():
+def delaunay():
     """演示 Delaunay 三角剖分"""
     print("=" * 50)
     print("5. Delaunay 三角剖分")
@@ -389,22 +389,22 @@ def demo_delaunay():
     plt.savefig("outputs/scipy/10_delaunay.png", dpi=150, bbox_inches="tight")
 
 
-def demo_all():
+def all():
     """运行所有演示"""
     import os
 
     os.makedirs("outputs/scipy", exist_ok=True)
 
-    demo_distance()
+    distance()
     print()
-    demo_kdtree()
+    kdtree()
     print()
-    demo_convex_hull()
+    convex_hull()
     print()
-    demo_voronoi()
+    voronoi()
     print()
-    demo_delaunay()
+    delaunay()
 
 
 if __name__ == "__main__":
-    demo_all()
+    all()

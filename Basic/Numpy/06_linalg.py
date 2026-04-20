@@ -9,7 +9,7 @@ NumPy 线性代数运算
 import numpy as np
 
 
-def demo_matrix_multiplication():
+def matrix_multiplication():
     """矩阵乘法"""
     print("=" * 50)
     print("1. 矩阵乘法 (dot, @)")
@@ -33,7 +33,7 @@ def demo_matrix_multiplication():
     print(f"np.dot(A, B):\n{np.dot(A, B)}")
 
 
-def demo_transpose():
+def transpose():
     """矩阵转置"""
     print("=" * 50)
     print("2. 矩阵转置")
@@ -45,7 +45,7 @@ def demo_transpose():
     print(f"np.transpose(A):\n{np.transpose(A)}")
 
 
-def demo_determinant_inverse():
+def determinant_inverse():
     """行列式和逆矩阵"""
     print("=" * 50)
     print("3. 行列式和逆矩阵")
@@ -71,7 +71,7 @@ def demo_determinant_inverse():
     print(f"是否为单位矩阵: {np.allclose(result, np.eye(2))}")
 
 
-def demo_eigenvalues():
+def eigenvalues():
     """特征值和特征向量"""
     print("=" * 50)
     print("4. 特征值和特征向量")
@@ -99,7 +99,7 @@ def demo_eigenvalues():
         print(f"  相等: {np.allclose(left, right)}")
 
 
-def demo_solve_linear():
+def solve_linear():
     """解线性方程组"""
     print("=" * 50)
     print("5. 解线性方程组 Ax = b")
@@ -129,7 +129,7 @@ def demo_solve_linear():
     print(f"是否等于 b: {np.allclose(result, b)}")
 
 
-def demo_norm():
+def norm():
     """向量和矩阵范数"""
     print("=" * 50)
     print("6. 向量和矩阵范数")
@@ -152,20 +152,20 @@ def demo_norm():
     print(f"Frobenius 范数: {np.linalg.norm(A):.4f}")
 
 
-def demo_all():
+def all():
     """运行所有演示"""
-    demo_matrix_multiplication()
+    matrix_multiplication()
     print()
-    demo_transpose()
+    transpose()
     print()
-    demo_determinant_inverse()
+    determinant_inverse()
     print()
-    demo_eigenvalues()
+    eigenvalues()
     print()
-    demo_solve_linear()
+    solve_linear()
     print()
-    demo_norm()
+    norm()
 
 
 if __name__ == "__main__":
-    demo_all()
+    all()

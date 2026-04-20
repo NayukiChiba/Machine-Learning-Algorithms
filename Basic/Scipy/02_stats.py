@@ -12,7 +12,7 @@ plt.rcParams["font.sans-serif"] = ["SimHei", "Microsoft YaHei", "Arial Unicode M
 plt.rcParams["axes.unicode_minus"] = False
 
 
-def demo_distributions():
+def distributions():
     """演示概率分布"""
     print("=" * 50)
     print("1. 概率分布")
@@ -104,7 +104,7 @@ def demo_distributions():
     plt.savefig("outputs/scipy/02_distributions.png", dpi=150, bbox_inches="tight")
 
 
-def demo_descriptive_stats():
+def descriptive_stats():
     """演示描述性统计"""
     print("=" * 50)
     print("2. 描述性统计")
@@ -211,7 +211,7 @@ def demo_descriptive_stats():
     plt.savefig("outputs/scipy/02_descriptive.png", dpi=150, bbox_inches="tight")
 
 
-def demo_percentiles():
+def percentiles():
     """演示百分位数"""
     print("=" * 50)
     print("3. 百分位数")
@@ -264,18 +264,18 @@ def demo_percentiles():
     plt.savefig("outputs/scipy/02_percentiles.png", dpi=150, bbox_inches="tight")
 
 
-def demo_all():
+def all():
     """运行所有演示"""
     import os
 
     os.makedirs("outputs/scipy", exist_ok=True)
 
-    demo_distributions()
+    distributions()
     print()
-    demo_descriptive_stats()
+    descriptive_stats()
     print()
-    demo_percentiles()
+    percentiles()
 
 
 if __name__ == "__main__":
-    demo_all()
+    all()

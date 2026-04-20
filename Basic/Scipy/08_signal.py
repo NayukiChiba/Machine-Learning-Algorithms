@@ -12,7 +12,7 @@ plt.rcParams["font.sans-serif"] = ["SimHei", "Microsoft YaHei", "Arial Unicode M
 plt.rcParams["axes.unicode_minus"] = False
 
 
-def demo_filter():
+def filter():
     """演示滤波器"""
     print("=" * 50)
     print("1. 滤波器设计")
@@ -113,7 +113,7 @@ def demo_filter():
     plt.savefig("outputs/scipy/08_filter.png", dpi=150, bbox_inches="tight")
 
 
-def demo_convolution():
+def convolution():
     """演示卷积"""
     print("=" * 50)
     print("2. 卷积运算")
@@ -159,7 +159,7 @@ def demo_convolution():
     plt.savefig("outputs/scipy/08_conv.png", dpi=150, bbox_inches="tight")
 
 
-def demo_fft():
+def fft():
     """演示傅里叶变换"""
     print("=" * 50)
     print("3. 傅里叶变换")
@@ -248,7 +248,7 @@ def demo_fft():
     plt.savefig("outputs/scipy/08_fft.png", dpi=150, bbox_inches="tight")
 
 
-def demo_peak_finding():
+def peak_finding():
     """演示峰值检测"""
     print("=" * 50)
     print("4. 峰值检测")
@@ -328,20 +328,20 @@ def demo_peak_finding():
     plt.savefig("outputs/scipy/08_peaks.png", dpi=150, bbox_inches="tight")
 
 
-def demo_all():
+def all():
     """运行所有演示"""
     import os
 
     os.makedirs("outputs/scipy", exist_ok=True)
 
-    demo_filter()
+    filter()
     print()
-    demo_convolution()
+    convolution()
     print()
-    demo_fft()
+    fft()
     print()
-    demo_peak_finding()
+    peak_finding()
 
 
 if __name__ == "__main__":
-    demo_all()
+    all()

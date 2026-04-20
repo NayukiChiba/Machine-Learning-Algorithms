@@ -4,15 +4,15 @@ Scikit-learn 特征工程
 
 使用方式：
     from code.03_feature_engineering import *
-    demo_text_vectorizer()
-    demo_feature_selection()
+    text_vectorizer()
+    feature_selection()
 """
 
 import numpy as np
 from sklearn import datasets
 
 
-def demo_count_vectorizer():
+def count_vectorizer():
     """CountVectorizer 词频统计"""
     print("=" * 50)
     print("1. CountVectorizer 词频统计")
@@ -34,7 +34,7 @@ def demo_count_vectorizer():
     print(f"稀疏矩阵类型: {type(X)}")
 
 
-def demo_tfidf_vectorizer():
+def tfidf_vectorizer():
     """TfidfVectorizer 详解"""
     print("=" * 50)
     print("2. TfidfVectorizer")
@@ -66,7 +66,7 @@ def demo_tfidf_vectorizer():
     print(f"词汇表: {tfidf_adv.get_feature_names_out()}")
 
 
-def demo_dict_vectorizer():
+def dict_vectorizer():
     """DictVectorizer 字典特征提取"""
     print("=" * 50)
     print("3. DictVectorizer")
@@ -91,7 +91,7 @@ def demo_dict_vectorizer():
     print(f"\n逆变换: {data_back[0]}")
 
 
-def demo_polynomial_features():
+def polynomial_features():
     """PolynomialFeatures 多项式特征"""
     print("=" * 50)
     print("4. PolynomialFeatures")
@@ -115,7 +115,7 @@ def demo_polynomial_features():
     print(f"  特征: {poly_inter.get_feature_names_out()}")
 
 
-def demo_variance_threshold():
+def variance_threshold():
     """VarianceThreshold 方差过滤"""
     print("=" * 50)
     print("5. VarianceThreshold 方差过滤")
@@ -134,7 +134,7 @@ def demo_variance_threshold():
     print(f"过滤后形状: {X_filtered.shape}")
 
 
-def demo_select_k_best():
+def select_k_best():
     """SelectKBest 特征选择"""
     print("=" * 50)
     print("6. SelectKBest 特征选择")
@@ -158,7 +158,7 @@ def demo_select_k_best():
     print(f"选中的特征: {np.array(iris.feature_names)[selector.get_support()]}")
 
 
-def demo_rfe():
+def rfe():
     """RFE 递归特征消除"""
     print("=" * 50)
     print("7. RFE 递归特征消除")
@@ -181,7 +181,7 @@ def demo_rfe():
     print(f"选中特征: {np.array(iris.feature_names)[rfe.support_]}")
 
 
-def demo_select_from_model():
+def select_from_model():
     """SelectFromModel 基于模型的特征选择"""
     print("=" * 50)
     print("8. SelectFromModel")
@@ -202,24 +202,24 @@ def demo_select_from_model():
     print(f"选中特征: {np.array(iris.feature_names)[sfm.get_support()]}")
 
 
-def demo_all():
+def all():
     """运行所有演示"""
-    demo_count_vectorizer()
+    count_vectorizer()
     print()
-    demo_tfidf_vectorizer()
+    tfidf_vectorizer()
     print()
-    demo_dict_vectorizer()
+    dict_vectorizer()
     print()
-    demo_polynomial_features()
+    polynomial_features()
     print()
-    demo_variance_threshold()
+    variance_threshold()
     print()
-    demo_select_k_best()
+    select_k_best()
     print()
-    demo_rfe()
+    rfe()
     print()
-    demo_select_from_model()
+    select_from_model()
 
 
 if __name__ == "__main__":
-    demo_all()
+    all()

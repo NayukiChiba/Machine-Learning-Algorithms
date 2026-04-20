@@ -12,7 +12,7 @@ plt.rcParams["font.sans-serif"] = ["SimHei", "Microsoft YaHei", "Arial Unicode M
 plt.rcParams["axes.unicode_minus"] = False
 
 
-def demo_interp1d():
+def interp1d():
     """演示一维插值"""
     print("=" * 50)
     print("1. 一维插值")
@@ -83,7 +83,7 @@ def demo_interp1d():
     plt.savefig("outputs/scipy/05_interp1d.png", dpi=150, bbox_inches="tight")
 
 
-def demo_spline():
+def spline():
     """演示样条插值"""
     print("=" * 50)
     print("2. 样条插值")
@@ -152,7 +152,7 @@ def demo_spline():
     plt.savefig("outputs/scipy/05_spline.png", dpi=150, bbox_inches="tight")
 
 
-def demo_interp2d():
+def interp2d():
     """演示二维插值"""
     print("=" * 50)
     print("3. 二维插值")
@@ -240,7 +240,7 @@ def demo_interp2d():
     plt.savefig("outputs/scipy/05_interp2d.png", dpi=150, bbox_inches="tight")
 
 
-def demo_rbf():
+def rbf():
     """演示径向基函数插值"""
     print("=" * 50)
     print("4. 径向基函数 (RBF) 插值")
@@ -308,20 +308,20 @@ def demo_rbf():
     plt.savefig("outputs/scipy/05_rbf.png", dpi=150, bbox_inches="tight")
 
 
-def demo_all():
+def all():
     """运行所有演示"""
     import os
 
     os.makedirs("outputs/scipy", exist_ok=True)
 
-    demo_interp1d()
+    interp1d()
     print()
-    demo_spline()
+    spline()
     print()
-    demo_interp2d()
+    interp2d()
     print()
-    demo_rbf()
+    rbf()
 
 
 if __name__ == "__main__":
-    demo_all()
+    all()

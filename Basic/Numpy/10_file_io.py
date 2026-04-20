@@ -15,7 +15,7 @@ sys.path.insert(0, str(Path(__file__).parent.parent.parent))
 from config import get_output_dir
 
 
-def demo_save_load_npy():
+def save_load_npy():
     """save 和 load (.npy 格式)"""
     print("=" * 50)
     print("1. save 和 load (.npy 二进制格式)")
@@ -43,7 +43,7 @@ def demo_save_load_npy():
     print(f"是否相同: {np.array_equal(arr, loaded)}")
 
 
-def demo_savez():
+def savez():
     """savez 保存多个数组"""
     print("=" * 50)
     print("2. savez 保存多个数组 (.npz)")
@@ -70,7 +70,7 @@ def demo_savez():
     print(f"data['c']: {data['c']}")
 
 
-def demo_savetxt_loadtxt():
+def savetxt_loadtxt():
     """savetxt 和 loadtxt (文本格式)"""
     print("=" * 50)
     print("3. savetxt 和 loadtxt (文本格式)")
@@ -113,7 +113,7 @@ def demo_savetxt_loadtxt():
     print(f"是否接近: {np.allclose(arr, loaded)}")
 
 
-def demo_format_options():
+def format_options():
     """不同格式选项"""
     print("=" * 50)
     print("4. 格式选项 (fmt)")
@@ -144,7 +144,7 @@ def demo_format_options():
             print(f"{desc} ({fmt}): 错误 - {e}")
 
 
-def demo_header_skiprows():
+def header_skiprows():
     """带表头的文件处理"""
     print("=" * 50)
     print("5. 带表头的文件处理")
@@ -167,18 +167,18 @@ def demo_header_skiprows():
     print(f"加载的数组 (skiprows=1):\n{loaded}")
 
 
-def demo_all():
+def all():
     """运行所有演示"""
-    demo_save_load_npy()
+    save_load_npy()
     print()
-    demo_savez()
+    savez()
     print()
-    demo_savetxt_loadtxt()
+    savetxt_loadtxt()
     print()
-    demo_format_options()
+    format_options()
     print()
-    demo_header_skiprows()
+    header_skiprows()
 
 
 if __name__ == "__main__":
-    demo_all()
+    all()

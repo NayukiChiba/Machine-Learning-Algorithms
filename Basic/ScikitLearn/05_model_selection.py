@@ -4,8 +4,8 @@ Scikit-learn 模型选择与调参
 
 使用方式：
     from code.05_model_selection import *
-    demo_cross_validation()
-    demo_grid_search()
+    cross_validation()
+    grid_search()
 """
 
 import numpy as np
@@ -20,7 +20,7 @@ plt.rcParams["font.sans-serif"] = ["SimHei", "Microsoft YaHei", "Arial Unicode M
 plt.rcParams["axes.unicode_minus"] = False
 
 
-def demo_cross_val_score():
+def cross_val_score():
     """cross_val_score 基础交叉验证"""
     print("=" * 50)
     print("1. cross_val_score")
@@ -82,7 +82,7 @@ def demo_cross_val_score():
     plt.close()
 
 
-def demo_cross_validate():
+def cross_validate():
     """cross_validate 详细交叉验证"""
     print("=" * 50)
     print("2. cross_validate (多指标)")
@@ -104,7 +104,7 @@ def demo_cross_validate():
     print(f"测试F1: {cv_results['test_f1_macro'].mean():.4f}")
 
 
-def demo_cv_splitters():
+def cv_splitters():
     """各种划分策略"""
     print("=" * 50)
     print("3. 划分策略对比")
@@ -139,7 +139,7 @@ def demo_cv_splitters():
         print(f"  Fold {i + 1}: train={tr.tolist()}, test={te.tolist()}")
 
 
-def demo_grid_search():
+def grid_search():
     """GridSearchCV 网格搜索"""
     print("=" * 50)
     print("4. GridSearchCV")
@@ -164,7 +164,7 @@ def demo_grid_search():
     print(f"最佳模型: {grid.best_estimator_}")
 
 
-def demo_random_search():
+def random_search():
     """RandomizedSearchCV 随机搜索"""
     print("=" * 50)
     print("5. RandomizedSearchCV")
@@ -199,7 +199,7 @@ def demo_random_search():
     print(f"最佳得分: {random_search.best_score_:.4f}")
 
 
-def demo_learning_curve():
+def learning_curve():
     """learning_curve 学习曲线"""
     print("=" * 50)
     print("6. learning_curve 学习曲线")
@@ -264,7 +264,7 @@ def demo_learning_curve():
     plt.close()
 
 
-def demo_validation_curve():
+def validation_curve():
     """validation_curve 验证曲线"""
     print("=" * 50)
     print("7. validation_curve 验证曲线")
@@ -326,26 +326,26 @@ def demo_validation_curve():
     plt.close()
 
 
-def demo_all():
+def all():
     """运行所有演示"""
     import os
 
     os.makedirs("outputs/sklearn", exist_ok=True)
 
-    demo_cross_val_score()
+    cross_val_score()
     print()
-    demo_cross_validate()
+    cross_validate()
     print()
-    demo_cv_splitters()
+    cv_splitters()
     print()
-    demo_grid_search()
+    grid_search()
     print()
-    demo_random_search()
+    random_search()
     print()
-    demo_learning_curve()
+    learning_curve()
     print()
-    demo_validation_curve()
+    validation_curve()
 
 
 if __name__ == "__main__":
-    demo_all()
+    all()
