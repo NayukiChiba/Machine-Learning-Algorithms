@@ -148,7 +148,7 @@ def boxplot():
     print("图表已保存")
 
 
-def all():
+def run():
     """运行所有演示"""
     bar()
     print()
@@ -162,4 +162,4 @@ def all():
 
 
 if __name__ == "__main__":
-    all()
+    run()

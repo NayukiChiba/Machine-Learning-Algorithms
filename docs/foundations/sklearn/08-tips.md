@@ -379,7 +379,7 @@ joblib.dump(rf, path)
 rf_loaded = joblib.load(path)
 joblib.dump(rf, path_compressed, compress=3)
 
-print((rf_loaded.predict(X_test) == rf.predict(X_test)).all())
+print((rf_loaded.predict(X_test) == rf.predict(X_test)).run())
 ```
 
 ### 结果输出（示例）

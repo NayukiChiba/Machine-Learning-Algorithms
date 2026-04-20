@@ -6,7 +6,7 @@
     python 06_merge.py
     或
     from Basic.Pandas.06_merge import *
-    all()
+    run()
 """
 
 import pandas as pd
@@ -166,7 +166,7 @@ def merge_indicator():
     print("  - both: 两表都存在")
 
 
-def all():
+def run():
     """运行所有演示"""
     concat()
     print()
@@ -180,4 +180,4 @@ def all():
 
 
 if __name__ == "__main__":
-    all()
+    run()

@@ -173,7 +173,7 @@ def copy():
     print(f"原数组不变: {arr}")
 
 
-def all():
+def run():
     """运行所有演示"""
     sort()
     print()
@@ -189,4 +189,4 @@ def all():
 
 
 if __name__ == "__main__":
-    all()
+    run()

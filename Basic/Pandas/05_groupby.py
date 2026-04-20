@@ -6,7 +6,7 @@
     python 05_groupby.py
     或
     from Basic.Pandas.05_groupby import *
-    all()
+    run()
 """
 
 import pandas as pd
@@ -157,7 +157,7 @@ def apply():
     print(grouped.apply(summary, include_groups=False))
 
 
-def all():
+def run():
     """运行所有演示"""
     groupby()
     print()
@@ -171,4 +171,4 @@ def all():
 
 
 if __name__ == "__main__":
-    all()
+    run()

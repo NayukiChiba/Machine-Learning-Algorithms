@@ -130,7 +130,7 @@ def create_seed():
     print(f"两个数组是否相同: {np.array_equal(arr1, arr2)}")
 
 
-def run_all():
+def run():
     """运行所有演示"""
     create_from_list()
     print()
@@ -144,4 +144,4 @@ def run_all():
 
 
 if __name__ == "__main__":
-    run_all()
+    run()

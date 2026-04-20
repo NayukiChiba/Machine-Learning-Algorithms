@@ -147,7 +147,7 @@ def practical_example():
     print(f"标准化后标准差: {normalized.std(axis=0).round(2)}")
 
 
-def all():
+def run():
     """运行所有演示"""
     scalar_broadcast()
     print()
@@ -163,4 +163,4 @@ def all():
 
 
 if __name__ == "__main__":
-    all()
+    run()

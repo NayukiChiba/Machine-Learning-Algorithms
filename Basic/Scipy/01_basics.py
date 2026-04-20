@@ -87,7 +87,7 @@ def version():
     print(f"NumPy 版本: {np.__version__}")
 
 
-def all():
+def run():
     """运行所有演示"""
     scipy_modules()
     print()
@@ -99,4 +99,4 @@ def all():
 
 
 if __name__ == "__main__":
-    all()
+    run()

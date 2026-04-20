@@ -160,7 +160,7 @@ def logical_operations():
     print(f"np.logical_xor(a, b): {np.logical_xor(a, b)}")
 
 
-def all():
+def run():
     """运行所有演示"""
     arithmetic()
     print()
@@ -176,4 +176,4 @@ def all():
 
 
 if __name__ == "__main__":
-    all()
+    run()

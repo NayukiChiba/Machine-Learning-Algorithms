@@ -6,7 +6,7 @@ NumPy 基础入门
     python 01_basics.py
     或
     from Basic.Numpy.01_basics import *
-    all()
+    run()
 """
 
 import numpy as np
@@ -113,7 +113,7 @@ def ndarray_basics():
     print(f"  维度: {arr_3d.ndim}")
 
 
-def run_all():
+def run():
     """运行所有演示"""
     version_info()
     print()
@@ -125,4 +125,4 @@ def run_all():
 
 
 if __name__ == "__main__":
-    run_all()
+    run()

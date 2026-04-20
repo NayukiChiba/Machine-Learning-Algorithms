@@ -252,7 +252,7 @@ def transformed_target():
     print(f"目标变量对数变换后 R²: {ttr.score(X_test, y_test):.4f}")
 
 
-def all():
+def run():
     """运行所有演示"""
     basic_pipeline()
     print()
@@ -270,4 +270,4 @@ def all():
 
 
 if __name__ == "__main__":
-    all()
+    run()

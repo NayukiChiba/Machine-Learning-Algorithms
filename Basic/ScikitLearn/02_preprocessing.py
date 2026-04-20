@@ -402,7 +402,7 @@ def column_transformer():
     print(f"特征名称: {preprocessor.get_feature_names_out()}")
 
 
-def all():
+def run():
     """运行所有演示"""
     import os
 
@@ -424,4 +424,4 @@ def all():
 
 
 if __name__ == "__main__":
-    all()
+    run()
