@@ -253,6 +253,30 @@ def _print_sequence_transition(data: DataFrame) -> None:
             print(f"    观测 {o}: {cnt} 次 ({ratio * 100:.1f}%)")
 
 
+def explore_classification_bivariate(
+    data: DataFrame,
+    dataset_name: str,
+    target_col: str = "label",
+) -> None:
+    """
+    对单个分类数据集执行双变量分析
+
+    Args:
+        data: 分类数据集
+        dataset_name: 数据集名称
+        target_col: 标签列名
+    """
+    feature_cols = [column for column in data.columns if column != target_col]
+
+    print("=" * 60)
+    print(f"{dataset_name}：双变量数据探索")
+    print("=" * 60)
+    print("--- 特征间相关性 ---")
+    _print_correlation_matrix(data, feature_cols)
+    print("--- 各类别下的特征均值差异 ---")
+    _print_class_feature_diff(data, feature_cols, target_col)
+
+
 # --- 按数据集类型的分析函数 ---
 
 

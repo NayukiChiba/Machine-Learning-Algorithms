@@ -64,15 +64,20 @@ def _print_corr_summary(data: DataFrame, columns: list[str]) -> None:
     print(f"最大绝对相关系数: {max_abs_corr:.3f}")
     print(f"最小绝对相关系数: {min_abs_corr:.3f}")
 
-    # 最强正相关
-    pairs_sorted_pos = sorted(pairs, key=lambda x: x[2], reverse=True)
-    top_pos = pairs_sorted_pos[0]
-    print(f"最强正相关: {top_pos[0]} <-> {top_pos[1]} (r = {top_pos[2]:.3f})")
+    positive_pairs = [pair for pair in pairs if pair[2] > 0]
+    negative_pairs = [pair for pair in pairs if pair[2] < 0]
 
-    # 最强负相关
-    pairs_sorted_neg = sorted(pairs, key=lambda x: x[2])
-    top_neg = pairs_sorted_neg[0]
-    print(f"最强负相关: {top_neg[0]} <-> {top_neg[1]} (r = {top_neg[2]:.3f})")
+    if positive_pairs:
+        top_pos = max(positive_pairs, key=lambda x: x[2])
+        print(f"最强正相关: {top_pos[0]} <-> {top_pos[1]} (r = {top_pos[2]:.3f})")
+    else:
+        print("最强正相关: 无")
+
+    if negative_pairs:
+        top_neg = min(negative_pairs, key=lambda x: x[2])
+        print(f"最强负相关: {top_neg[0]} <-> {top_neg[1]} (r = {top_neg[2]:.3f})")
+    else:
+        print("最强负相关: 无")
 
     # 高度相关特征组 (|r| >= 0.7)，可能存在冗余
     highly_correlated = [(a, b, r) for a, b, r in pairs if abs(r) >= 0.7]
@@ -291,6 +296,39 @@ def _print_fisher_ratio(
         print(f"  Fisher比: {fisher:.3f} ({level})")
         print(f"  类间方差: {b_var:.3f}")
         print(f"  类内方差: {w_var:.3f}")
+
+
+def explore_classification_multivariate(
+    data: DataFrame,
+    dataset_name: str,
+    target_col: str = "label",
+) -> None:
+    """
+    对单个分类数据集执行多变量分析
+
+    Args:
+        data: 分类数据集
+        dataset_name: 数据集名称
+        target_col: 标签列名
+    """
+    feature_cols = [column for column in data.columns if column != target_col]
+
+    print("=" * 60)
+    print(f"{dataset_name}：多变量数据探索")
+    print("=" * 60)
+    print("--- 相关性矩阵全局统计 ---")
+    _print_corr_summary(data, feature_cols)
+
+    if len(feature_cols) >= 2:
+        print("--- 多重共线性检测 (VIF) ---")
+        _print_vif(data, feature_cols)
+
+    if len(feature_cols) >= 3:
+        print("--- 主成分方差分析 ---")
+        _print_pca_variance(data, feature_cols)
+
+    print("--- Fisher 判别比 ---")
+    _print_fisher_ratio(data, feature_cols, target_col)
 
 
 # --- 按数据集类型的分析函数 ---
