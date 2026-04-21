@@ -10,6 +10,17 @@ import numpy as np
 
 from config import get_model_output_dir
 
+DISCRETE_COLORS = [
+    "#D81B60",  # 洋红
+    "#1E88E5",  # 蓝
+    "#FFC107",  # 黄
+    "#004D40",  # 深青
+    "#E64A19",  # 橙红
+    "#6A1B9A",  # 紫
+    "#2E7D32",  # 绿
+    "#5D4037",  # 棕
+]
+
 
 def plot_classification_result(
     X_test,
@@ -45,7 +56,7 @@ def plot_classification_result(
     fig.suptitle(title, fontsize=14, fontweight="bold")
 
     unique_classes = np.unique(np.concatenate([y_true, y_pred]))
-    colors = plt.cm.tab10.colors
+    colors = DISCRETE_COLORS
 
     # 左图：真实标签
     for index, cls in enumerate(unique_classes):
