@@ -90,7 +90,7 @@ def vectorization():
 
     import time
 
-    n = 100000
+    n = 1000000
     df = pd.DataFrame({"A": np.random.randn(n), "B": np.random.randn(n)})
 
     # 循环方式
@@ -102,7 +102,7 @@ def vectorization():
 
     # 向量化方式
     start = time.time()
-    # result2 = df["A"] + df["B"]
+    _ = df["A"] + df["B"]
     vec_time = time.time() - start
 
     print(f"循环耗时: {loop_time:.4f}秒")

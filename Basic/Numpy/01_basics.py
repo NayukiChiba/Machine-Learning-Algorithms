@@ -69,15 +69,15 @@ def performance():
     size = 1000000
 
     # Python 列表运算
-    # py_list = list(range(size))
+    py_list = list(range(size))
     start = time.time()
-    # result_list = [x * 2 for x in py_list]
+    _ = [x * 2 for x in py_list]
     py_time = time.time() - start
 
     # NumPy 数组运算
-    # np_array = np.arange(size)
+    np_array = np.arange(size)
     start = time.time()
-    # result_np = np_array * 2
+    _ = np_array * 2
     np_time = time.time() - start
 
     print(f"数据规模: {size:,}")

@@ -111,7 +111,6 @@ MaxAbsScaler:
         0.5,
         formula_text,
         fontsize=12,
-        family="monospace",
         verticalalignment="center",
         bbox=dict(boxstyle="round", facecolor="wheat", alpha=0.5),
     )
