@@ -14,6 +14,34 @@ import matplotlib.pyplot as plt
 
 from config import get_model_output_dir
 
+DISCRETE_COLORS = [
+    "#D81B60",  # 洋红
+    "#1E88E5",  # 蓝
+    "#FFC107",  # 黄
+    "#004D40",  # 深青
+    "#E64A19",  # 橙红
+    "#6A1B9A",  # 紫
+    "#2E7D32",  # 绿
+    "#5D4037",  # 棕
+]
+
+
+def _get_label_color_map(labels) -> dict[int, str]:
+    """
+    为离散标签构造高对比度颜色映射
+
+    Args:
+        labels: 标签数组
+
+    Returns:
+        dict[int, str]: 标签到颜色的映射
+    """
+    unique_labels = sorted(set(labels) - {-1})
+    color_map = {}
+    for index, label in enumerate(unique_labels):
+        color_map[label] = DISCRETE_COLORS[index % len(DISCRETE_COLORS)]
+    return color_map
+
 
 def plot_clusters(
     X,
@@ -57,9 +85,35 @@ def plot_clusters(
 
     # 预测标签图
     ax = axes[0]
-    ax.scatter(
-        X[:, 0], X[:, 1], c=labels_pred, cmap="tab10", edgecolors="k", s=30, alpha=0.7
-    )
+    # DBSCAN 等算法中，-1 通常表示噪声点。
+    # 这里把噪声点单独高亮，避免它们和正常簇混在一起不易识别。
+    normal_mask = labels_pred != -1
+    noise_mask = labels_pred == -1
+    color_map_pred = _get_label_color_map(labels_pred)
+
+    if normal_mask.any():
+        for label, color in color_map_pred.items():
+            label_mask = labels_pred == label
+            ax.scatter(
+                X[label_mask, 0],
+                X[label_mask, 1],
+                c=color,
+                edgecolors="k",
+                s=30,
+                alpha=0.8,
+                label=f"预测簇 {label}",
+            )
+    if noise_mask.any():
+        ax.scatter(
+            X[noise_mask, 0],
+            X[noise_mask, 1],
+            c="#6E6E6E",
+            marker="x",
+            s=60,
+            linewidths=1.2,
+            alpha=0.9,
+            label="噪声点",
+        )
     if centers is not None:
         ax.scatter(
             centers[:, 0],
@@ -71,6 +125,7 @@ def plot_clusters(
             linewidths=1.5,
             label="中心",
         )
+    if centers is not None or noise_mask.any():
         ax.legend()
     ax.set_xlabel(feature_names[0])
     ax.set_ylabel(feature_names[1])
@@ -79,18 +134,22 @@ def plot_clusters(
     # 真实标签图
     if has_true:
         ax2 = axes[1]
-        ax2.scatter(
-            X[:, 0],
-            X[:, 1],
-            c=labels_true,
-            cmap="tab10",
-            edgecolors="k",
-            s=30,
-            alpha=0.7,
-        )
+        color_map_true = _get_label_color_map(labels_true)
+        for label, color in color_map_true.items():
+            label_mask = np.asarray(labels_true) == label
+            ax2.scatter(
+                X[label_mask, 0],
+                X[label_mask, 1],
+                c=color,
+                edgecolors="k",
+                s=30,
+                alpha=0.8,
+                label=f"真实簇 {label}",
+            )
         ax2.set_xlabel(feature_names[0])
         ax2.set_ylabel(feature_names[1])
         ax2.set_title(f"{title} — 真实标签")
+        ax2.legend(loc="best")
 
     plt.tight_layout()
     save_dir = get_model_output_dir(model_name)
