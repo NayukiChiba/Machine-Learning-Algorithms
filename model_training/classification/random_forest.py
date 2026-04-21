@@ -26,7 +26,7 @@ def train_model(
     min_samples_split: int = 2,
     min_samples_leaf: int = 1,
     random_state: int = 42,
-    n_jobs: int = -1,
+    n_jobs: int = 1,
 ):
     """
     训练随机森林分类模型
@@ -40,7 +40,7 @@ def train_model(
         min_samples_split: 内部节点再划分所需最小样本数
         min_samples_leaf: 叶子节点最小样本数
         random_state: 随机种子
-        n_jobs: 并行数
+        n_jobs: 并行数，默认 1 以避免当前 Windows 环境下的权限问题
     returns:
         model: 训练好的模型
     """

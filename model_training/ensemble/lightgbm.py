@@ -62,6 +62,7 @@ def train_model(
         colsample_bytree=colsample_bytree,
         random_state=random_state,
         n_jobs=-1,
+        verbosity=-1,
     )
 
     with timer(name="模型训练耗时"):
