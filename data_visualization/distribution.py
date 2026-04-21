@@ -32,27 +32,24 @@ plt.rcParams["axes.unicode_minus"] = False
 # --- 通用绘图工具 ---
 
 
-def _save_fig(fig: plt.Figure, filename: str, dataset_name: str) -> None:
+def _save_fig(fig: plt.Figure, filename: str, output_name: str) -> None:
     """
-    保存图表到对应数据集的子目录
+    保存图表到当前模块目录
 
     args:
         fig(Figure): matplotlib 图表对象
         filename(str): 文件名 (不含路径)
-        dataset_name(str): 数据集名称 (用于创建子目录)
+        output_name(str): 输出名称前缀
     """
-    # 每个数据集一个子目录
-    save_dir = OUTPUT_DIR / dataset_name
-    save_dir.mkdir(parents=True, exist_ok=True)
-
-    filepath = save_dir / filename
+    OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
+    filepath = OUTPUT_DIR / f"{output_name}_{filename}"
     fig.savefig(filepath, dpi=200, bbox_inches="tight")
     plt.close(fig)
     print(f"  保存: {filepath}")
 
 
 def _plot_histograms(
-    data: DataFrame, feature_cols: list[str], dataset_name: str
+    data: DataFrame, feature_cols: list[str], output_name: str
 ) -> None:
     """
     为所有连续特征绘制直方图 + KDE 密度曲线
@@ -64,7 +61,7 @@ def _plot_histograms(
     args:
         data(DataFrame): 数据
         feature_cols(list[str]): 特征列名列表
-        dataset_name(str): 数据集名称
+        output_name(str): 输出名称前缀
     """
     n = len(feature_cols)
     if n == 0:
@@ -76,7 +73,7 @@ def _plot_histograms(
 
     fig, axes = plt.subplots(rows, cols, figsize=(cols * 4, rows * 3))
     fig.suptitle(
-        f"{dataset_name} — 特征分布 (直方图 + KDE)", fontsize=13, fontweight="bold"
+        f"{output_name} — 特征分布 (直方图 + KDE)", fontsize=13, fontweight="bold"
     )
 
     # 确保 axes 总是二维数组
@@ -112,10 +109,10 @@ def _plot_histograms(
         axes[row_idx][col_idx].axis("off")
 
     fig.tight_layout()
-    _save_fig(fig, "01_histogram_kde.png", dataset_name)
+    _save_fig(fig, "01_histogram_kde.png", output_name)
 
 
-def _plot_boxplots(data: DataFrame, feature_cols: list[str], dataset_name: str) -> None:
+def _plot_boxplots(data: DataFrame, feature_cols: list[str], output_name: str) -> None:
     """
     为所有连续特征绘制箱线图
 
@@ -127,13 +124,13 @@ def _plot_boxplots(data: DataFrame, feature_cols: list[str], dataset_name: str) 
     args:
         data(DataFrame): 数据
         feature_cols(list[str]): 特征列名列表
-        dataset_name(str): 数据集名称
+        output_name(str): 输出名称前缀
     """
     if len(feature_cols) == 0:
         return
 
     fig, ax = plt.subplots(figsize=(max(6, len(feature_cols) * 0.8), 5))
-    fig.suptitle(f"{dataset_name} — 箱线图", fontsize=13, fontweight="bold")
+    fig.suptitle(f"{output_name} — 箱线图", fontsize=13, fontweight="bold")
 
     # 数据可能量纲差异大，用标准化后的数据画箱线图
     plot_data = data[feature_cols]
@@ -156,11 +153,11 @@ def _plot_boxplots(data: DataFrame, feature_cols: list[str], dataset_name: str) 
         ax.tick_params(axis="x", rotation=45)
 
     fig.tight_layout()
-    _save_fig(fig, "02_boxplot.png", dataset_name)
+    _save_fig(fig, "02_boxplot.png", output_name)
 
 
 def _plot_target_distribution(
-    data: DataFrame, target_col: str, dataset_name: str, is_classification: bool = True
+    data: DataFrame, target_col: str, output_name: str, is_classification: bool = True
 ) -> None:
     """
     绘制目标变量分布图
@@ -171,7 +168,7 @@ def _plot_target_distribution(
     args:
         data(DataFrame): 数据
         target_col(str): 目标变量列名
-        dataset_name(str): 数据集名称
+        output_name(str): 输出名称前缀
         is_classification(bool): 是否为分类任务
     """
     fig, ax = plt.subplots(figsize=(6, 4))
@@ -183,7 +180,7 @@ def _plot_target_distribution(
         ax.bar(counts.index.astype(str), counts.values, color=colors)
         ax.set_xlabel("类别")
         ax.set_ylabel("样本数")
-        fig.suptitle(f"{dataset_name} — 类别分布", fontsize=13, fontweight="bold")
+        fig.suptitle(f"{output_name} — 类别分布", fontsize=13, fontweight="bold")
 
         # 在柱子上方显示数量
         for i, (idx, val) in enumerate(counts.items()):
@@ -201,11 +198,11 @@ def _plot_target_distribution(
         data[target_col].plot.kde(ax=ax, color="coral", linewidth=1.5)
         ax.set_xlabel(target_col)
         ax.set_ylabel("密度")
-        fig.suptitle(f"{dataset_name} — 目标变量分布", fontsize=13, fontweight="bold")
+        fig.suptitle(f"{output_name} — 目标变量分布", fontsize=13, fontweight="bold")
 
     ax.grid(True, alpha=0.2)
     fig.tight_layout()
-    _save_fig(fig, "03_target_distribution.png", dataset_name)
+    _save_fig(fig, "03_target_distribution.png", output_name)
 
 
 # --- 按数据集类型的绘图函数 ---
@@ -282,8 +279,6 @@ def _plot_sequence_dist(data: DataFrame, name: str, short_name: str) -> None:
         name(str): 显示名称
         short_name(str): 目录名 (简短英文)
     """
-    save_dir = OUTPUT_DIR / short_name
-    save_dir.mkdir(parents=True, exist_ok=True)
     print(f"数据集: {name}")
 
     fig, axes = plt.subplots(1, 2, figsize=(10, 4))
@@ -316,7 +311,7 @@ def plot_distributions() -> None:
     """
     为所有 20 个数据集生成分布图
 
-    每个数据集输出到 outputs/data_visualization/distribution/<dataset_name>/
+    所有图片直接输出到 outputs/data_visualization/distribution/
     """
     from data_generation import (
         logistic_regression_data,
