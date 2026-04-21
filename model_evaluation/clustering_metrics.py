@@ -77,6 +77,7 @@ def evaluate_clustering_with_ground_truth(
     X,
     labels_pred,
     labels_true,
+    inertia: float | None = None,
     print_report: bool = True,
 ) -> dict:
     """
@@ -114,6 +115,9 @@ def evaluate_clustering_with_ground_truth(
         "v_measure": v_measure_score(labels_true, labels_pred),
     }
 
+    if inertia is not None:
+        metrics["inertia"] = inertia
+
     if n_clusters >= 2:
         mask = labels_pred != -1
         if mask.sum() > n_clusters:
@@ -135,6 +139,8 @@ def evaluate_clustering_with_ground_truth(
         print(f"Homogeneity: {metrics['homogeneity']:.4f}")
         print(f"Completeness: {metrics['completeness']:.4f}")
         print(f"V-measure: {metrics['v_measure']:.4f}")
+        if "inertia" in metrics:
+            print(f"Inertia: {metrics['inertia']:.4f}")
         if "silhouette" in metrics:
             print(f"Silhouette: {metrics['silhouette']:.4f}")
             print(f"Davies-Bouldin: {metrics['davies_bouldin']:.4f}")
