@@ -2,21 +2,12 @@
 data_visualization/distribution.py
 分布图模块
 
-为每个数据集生成分布相关的可视化图表:
-  - 直方图 (Histogram): 展示各特征的值域分布
-  - 箱线图 (Box Plot): 展示四分位数和异常值
-  - 密度图 (KDE): 展示概率密度估计
-  - 类别分布柱状图: 展示目标变量各类别的样本数量
-
-输出目录: outputs/data_visualization/distribution/
-
-使用方式:
-    from data_visualization.distribution import plot_distributions
-    plot_distributions()
-
-或直接运行:
-    python -m data_visualization.distribution
+提供可复用的单数据集分布可视化函数。
+当前模块不再负责“批量生成所有数据集的图片”，
+而是只提供给 pipeline 或其它调用方按需复用。
 """
+
+from pathlib import Path
 
 import matplotlib.pyplot as plt
 import seaborn as sns
@@ -46,6 +37,26 @@ def _save_fig(fig: plt.Figure, filename: str, output_name: str) -> None:
     fig.savefig(filepath, dpi=200, bbox_inches="tight")
     plt.close(fig)
     print(f"  保存: {filepath}")
+
+
+def _save_single_dataset_fig(fig: plt.Figure, save_dir: Path, filename: str) -> None:
+    """
+    保存单数据集展示图到指定目录
+
+    这套保存逻辑服务于 pipeline 场景。
+    和当前文件里那组“批量生成所有数据集图”的逻辑不同，
+    这里不再使用统一的 data_visualization 输出目录，而是由调用方显式传入保存目录。
+
+    Args:
+        fig: matplotlib 图表对象
+        save_dir: 保存目录
+        filename: 文件名
+    """
+    save_dir.mkdir(parents=True, exist_ok=True)
+    filepath = save_dir / filename
+    fig.savefig(filepath, dpi=200, bbox_inches="tight")
+    plt.close(fig)
+    print(f"数据展示图已保存至: {filepath}")
 
 
 def _plot_histograms(
@@ -205,209 +216,41 @@ def _plot_target_distribution(
     _save_fig(fig, "03_target_distribution.png", output_name)
 
 
-# --- 按数据集类型的绘图函数 ---
-
-
-def _plot_classification_dist(
-    data: DataFrame, name: str, short_name: str, target_col: str = "label"
+def plot_class_distribution(
+    data: DataFrame,
+    target_col: str,
+    save_dir: Path,
+    title: str = "类别分布",
+    filename: str = "data_class_distribution.png",
 ) -> None:
     """
-    分类数据集的分布图
+    为单个数据集绘制类别分布图
 
-    args:
-        data(DataFrame): 分类数据集
-        name(str): 显示名称
-        short_name(str): 目录名 (简短英文)
-        target_col(str): 目标变量列名
+    这是给 pipeline 直接调用的公共函数。
+    它和 `_plot_target_distribution(...)` 的区别在于：
+    1. 它只处理“当前一个数据集”；
+    2. 输出目录由调用方控制；
+    3. 文件名不再带数据集前缀，便于直接放到 outputs/<model_name>/ 中。
+
+    Args:
+        data: 数据集
+        target_col: 标签列名
+        save_dir: 保存目录
+        title: 图标题
+        filename: 保存文件名
     """
-    feature_cols = [c for c in data.columns if c != target_col]
-    print(f"数据集: {name}")
+    counts = data[target_col].value_counts().sort_index()
 
-    _plot_histograms(data, feature_cols, short_name)
-    _plot_boxplots(data, feature_cols, short_name)
-    _plot_target_distribution(data, target_col, short_name, is_classification=True)
+    fig, ax = plt.subplots(figsize=(7, 4))
+    colors = sns.color_palette("Set2", len(counts))
+    ax.bar(counts.index.astype(str), counts.values, color=colors)
+    ax.set_title(title)
+    ax.set_xlabel("类别")
+    ax.set_ylabel("样本数")
+    ax.grid(True, axis="y", alpha=0.25)
 
-
-def _plot_regression_dist(
-    data: DataFrame, name: str, short_name: str, target_col: str = "price"
-) -> None:
-    """
-    回归数据集的分布图
-
-    args:
-        data(DataFrame): 回归数据集
-        name(str): 显示名称
-        short_name(str): 目录名 (简短英文)
-        target_col(str): 目标变量列名
-    """
-    feature_cols = [c for c in data.columns if c != target_col]
-    print(f"数据集: {name}")
-
-    _plot_histograms(data, feature_cols, short_name)
-    _plot_boxplots(data, feature_cols, short_name)
-    _plot_target_distribution(data, target_col, short_name, is_classification=False)
-
-
-def _plot_clustering_dist(
-    data: DataFrame, name: str, short_name: str, label_col: str = "true_label"
-) -> None:
-    """
-    聚类数据集的分布图
-
-    args:
-        data(DataFrame): 聚类数据集
-        name(str): 显示名称
-        short_name(str): 目录名 (简短英文)
-        label_col(str): 真实标签列名
-    """
-    feature_cols = [c for c in data.columns if c != label_col]
-    print(f"数据集: {name}")
-
-    _plot_histograms(data, feature_cols, short_name)
-    _plot_boxplots(data, feature_cols, short_name)
-    _plot_target_distribution(data, label_col, short_name, is_classification=True)
-
-
-def _plot_sequence_dist(data: DataFrame, name: str, short_name: str) -> None:
-    """
-    序列数据集(HMM)的分布图
-
-    绘制观测符号和隐状态的频率分布柱状图
-
-    args:
-        data(DataFrame): HMM 序列数据
-        name(str): 显示名称
-        short_name(str): 目录名 (简短英文)
-    """
-    print(f"数据集: {name}")
-
-    fig, axes = plt.subplots(1, 2, figsize=(10, 4))
-    fig.suptitle(f"{short_name} — 观测/隐状态分布", fontsize=13, fontweight="bold")
-
-    # 观测符号分布
-    obs_counts = data["obs"].value_counts().sort_index()
-    axes[0].bar(obs_counts.index.astype(str), obs_counts.values, color="steelblue")
-    axes[0].set_title("观测符号分布")
-    axes[0].set_xlabel("观测符号")
-    axes[0].set_ylabel("频次")
-    axes[0].grid(True, alpha=0.2)
-
-    # 隐状态分布
-    state_counts = data["state_true"].value_counts().sort_index()
-    axes[1].bar(state_counts.index.astype(str), state_counts.values, color="coral")
-    axes[1].set_title("隐状态分布")
-    axes[1].set_xlabel("隐状态")
-    axes[1].set_ylabel("频次")
-    axes[1].grid(True, alpha=0.2)
+    for idx, value in enumerate(counts.values):
+        ax.text(idx, value + max(counts.values) * 0.02, str(value), ha="center")
 
     fig.tight_layout()
-    _save_fig(fig, "01_obs_state_distribution.png", short_name)
-
-
-# --- 主入口 ---
-
-
-def plot_distributions() -> None:
-    """
-    为所有 20 个数据集生成分布图
-
-    所有图片直接输出到 outputs/data_visualization/distribution/
-    """
-    from data_generation import (
-        logistic_regression_data,
-        decision_tree_classification_data,
-        svc_data,
-        naive_bayes_data,
-        knn_data,
-        random_forest_data,
-        linear_regression_data,
-        svr_data,
-        decision_tree_regression_data,
-        regularization_data,
-        kmeans_data,
-        dbscan_data,
-        em_data,
-        hmm_data,
-        bagging_data,
-        gbdt_data,
-        xgboost_data,
-        lightgbm_data,
-        pca_data,
-        lda_data,
-    )
-
-    print("=" * 50)
-    print("生成分布图 (直方图 + 箱线图 + 目标变量分布)")
-    print("=" * 50)
-
-    # --- 分类 (6) ---
-
-    _plot_classification_dist(
-        logistic_regression_data,
-        "LogisticRegression — 线性可分高维二分类",
-        "logistic_regression",
-    )
-    _plot_classification_dist(
-        decision_tree_classification_data,
-        "DecisionTree — blob 多分类",
-        "decision_tree_clf",
-    )
-    _plot_classification_dist(svc_data, "SVC — 同心圆二分类", "svc")
-    _plot_classification_dist(naive_bayes_data, "NaiveBayes — Iris", "naive_bayes")
-    _plot_classification_dist(knn_data, "KNN — 双月牙二分类", "knn")
-    _plot_classification_dist(
-        random_forest_data,
-        "RandomForest — 高维多噪声三分类",
-        "random_forest",
-    )
-
-    # --- 回归 (4) ---
-
-    _plot_regression_dist(
-        linear_regression_data,
-        "LinearRegression — 手动合成线性房价",
-        "linear_regression",
-    )
-    _plot_regression_dist(svr_data, "SVR — Friedman1 非线性回归", "svr")
-    _plot_regression_dist(
-        decision_tree_regression_data,
-        "DecisionTree(回归) — California Housing",
-        "decision_tree_reg",
-    )
-    _plot_regression_dist(
-        regularization_data,
-        "Regularization — 糖尿病+共线性+噪声",
-        "regularization",
-    )
-
-    # --- 聚类 (2) ---
-
-    _plot_clustering_dist(kmeans_data, "KMeans — 球形多簇", "kmeans")
-    _plot_clustering_dist(dbscan_data, "DBSCAN — 双月牙非线性", "dbscan")
-
-    # --- 集成 (4) ---
-
-    _plot_classification_dist(bagging_data, "Bagging — 高噪声双月牙", "bagging")
-    _plot_classification_dist(gbdt_data, "GBDT — 多类别中等难度", "gbdt")
-    _plot_regression_dist(xgboost_data, "XGBoost — California Housing", "xgboost")
-    _plot_classification_dist(lightgbm_data, "LightGBM — 高维四分类", "lightgbm")
-
-    # --- 降维 (2) ---
-
-    _plot_classification_dist(pca_data, "PCA — 高维低秩合成", "pca")
-    _plot_classification_dist(lda_data, "LDA — Wine 数据集", "lda")
-
-    # --- 概率 (2) ---
-
-    _plot_clustering_dist(em_data, "EM(GMM) — 高斯混合模型", "em")
-    _plot_sequence_dist(hmm_data, "HMM — 离散隐马尔可夫序列", "hmm")
-
-    print("=" * 50)
-    print("分布图生成完成, 共 20 个数据集")
-    print("=" * 50)
-
-
-# --- 直接运行 ---
-
-if __name__ == "__main__":
-    plot_distributions()
+    _save_single_dataset_fig(fig, save_dir, filename)

@@ -2,19 +2,11 @@
 data_visualization/correlation.py
 相关性热力图模块
 
-为每个数据集生成相关性热力图:
-  - 特征间皮尔逊相关系数热力图
-  - 含目标变量的完整相关系数热力图
-
-输出目录: outputs/data_visualization/correlation/
-
-使用方式:
-    from data_visualization.correlation import plot_correlations
-    plot_correlations()
-
-或直接运行:
-    python -m data_visualization.correlation
+提供可复用的单数据集相关性热力图函数。
+当前模块不再负责“批量生成所有数据集的图片”。
 """
+
+from pathlib import Path
 
 import matplotlib.pyplot as plt
 import seaborn as sns
@@ -44,6 +36,22 @@ def _save_fig(fig: plt.Figure, filename: str, output_name: str) -> None:
     fig.savefig(filepath, dpi=200, bbox_inches="tight")
     plt.close(fig)
     print(f"  保存: {filepath}")
+
+
+def _save_single_dataset_fig(fig: plt.Figure, save_dir: Path, filename: str) -> None:
+    """
+    保存单数据集展示图到指定目录
+
+    Args:
+        fig: matplotlib 图表对象
+        save_dir: 保存目录
+        filename: 文件名
+    """
+    save_dir.mkdir(parents=True, exist_ok=True)
+    filepath = save_dir / filename
+    fig.savefig(filepath, dpi=200, bbox_inches="tight")
+    plt.close(fig)
+    print(f"数据展示图已保存至: {filepath}")
 
 
 def _plot_heatmap(
@@ -108,138 +116,49 @@ def _plot_heatmap(
     _save_fig(fig, filename, output_name)
 
 
-# --- 按数据集类型的绘图函数 ---
-
-
-def _corr_with_target(
+def plot_correlation_heatmap(
     data: DataFrame,
-    name: str,
-    short_name: str,
-    target_col: str,
+    columns: list[str],
+    save_dir: Path,
+    title: str = "相关性热力图",
+    filename: str = "data_correlation.png",
+    annot: bool = True,
 ) -> None:
     """
-    绘制包含目标变量的完整相关性热力图
+    为单个数据集绘制相关性热力图
 
-    args:
-        data(DataFrame): 数据
-        name(str): 显示名称
-        short_name(str): 目录名
-        target_col(str): 目标变量列名
+    Args:
+        data: 数据集
+        columns: 参与相关系数计算的列名列表
+        save_dir: 保存目录
+        title: 图标题
+        filename: 保存文件名
+        annot: 是否显示数值标注
     """
-    all_cols = [c for c in data.columns if c != target_col] + [target_col]
-    print(f"数据集: {name}")
+    corr = data[columns].corr(method="pearson")
+    n = len(columns)
+    size = max(6, n * 0.6)
+    show_annot = annot and n <= 15
+    fmt = ".2f" if show_annot else ""
 
-    # 完整热力图 (含目标变量)
-    _plot_heatmap(
-        data,
-        all_cols,
-        short_name,
-        f"{short_name} — 相关性热力图",
-        "01_correlation_heatmap.png",
+    fig, ax = plt.subplots(figsize=(size, size * 0.85))
+    sns.heatmap(
+        corr,
+        annot=show_annot,
+        fmt=fmt,
+        cmap="coolwarm",
+        center=0,
+        square=True,
+        ax=ax,
+        linewidths=0.5,
+        linecolor="white",
+        cbar_kws={"shrink": 0.8},
+        vmin=-1,
+        vmax=1,
     )
+    ax.set_title(title)
+    ax.tick_params(axis="x", rotation=45)
+    ax.tick_params(axis="y", rotation=0)
 
-    # 特征数 >= 3 时还画一个纯特征间的热力图
-    feature_cols = [c for c in data.columns if c != target_col]
-    if len(feature_cols) >= 3:
-        _plot_heatmap(
-            data,
-            feature_cols,
-            short_name,
-            f"{short_name} — 特征间相关性",
-            "02_feature_correlation.png",
-        )
-
-
-# --- 主入口 ---
-
-
-def plot_correlations() -> None:
-    """
-    为所有 20 个数据集生成相关性热力图
-    """
-    from data_generation import (
-        logistic_regression_data,
-        decision_tree_classification_data,
-        svc_data,
-        naive_bayes_data,
-        knn_data,
-        random_forest_data,
-        linear_regression_data,
-        svr_data,
-        decision_tree_regression_data,
-        regularization_data,
-        kmeans_data,
-        dbscan_data,
-        em_data,
-        hmm_data,
-        bagging_data,
-        gbdt_data,
-        xgboost_data,
-        lightgbm_data,
-        pca_data,
-        lda_data,
-    )
-
-    print("=" * 50)
-    print("生成相关性热力图")
-    print("=" * 50)
-
-    # --- 分类 (6) ---
-
-    _corr_with_target(
-        logistic_regression_data, "LogisticRegression", "logistic_regression", "label"
-    )
-    _corr_with_target(
-        decision_tree_classification_data, "DecisionTree", "decision_tree_clf", "label"
-    )
-    _corr_with_target(svc_data, "SVC", "svc", "label")
-    _corr_with_target(naive_bayes_data, "NaiveBayes", "naive_bayes", "label")
-    _corr_with_target(knn_data, "KNN", "knn", "label")
-    _corr_with_target(random_forest_data, "RandomForest", "random_forest", "label")
-
-    # --- 回归 (4) ---
-
-    _corr_with_target(
-        linear_regression_data, "LinearRegression", "linear_regression", "price"
-    )
-    _corr_with_target(svr_data, "SVR", "svr", "price")
-    _corr_with_target(
-        decision_tree_regression_data,
-        "DecisionTree(回归)",
-        "decision_tree_reg",
-        "price",
-    )
-    _corr_with_target(regularization_data, "Regularization", "regularization", "price")
-
-    # --- 聚类 (2) ---
-
-    _corr_with_target(kmeans_data, "KMeans", "kmeans", "true_label")
-    _corr_with_target(dbscan_data, "DBSCAN", "dbscan", "true_label")
-
-    # --- 集成 (4) ---
-
-    _corr_with_target(bagging_data, "Bagging", "bagging", "label")
-    _corr_with_target(gbdt_data, "GBDT", "gbdt", "label")
-    _corr_with_target(xgboost_data, "XGBoost", "xgboost", "price")
-    _corr_with_target(lightgbm_data, "LightGBM", "lightgbm", "label")
-
-    # --- 降维 (2) ---
-
-    _corr_with_target(pca_data, "PCA", "pca", "label")
-    _corr_with_target(lda_data, "LDA", "lda", "label")
-
-    # --- 概率 (2) ---
-
-    _corr_with_target(em_data, "EM(GMM)", "em", "true_label")
-    # HMM 是离散序列，相关性热力图意义不大，但仍生成
-    _corr_with_target(hmm_data, "HMM", "hmm", "state_true")
-
-    print("=" * 50)
-    print("相关性热力图生成完成, 共 20 个数据集")
-    print("=" * 50)
-
-
-# --- 直接运行 ---
-
-if __name__ == "__main__":
-    plot_correlations()
+    fig.tight_layout()
+    _save_single_dataset_fig(fig, save_dir, filename)
