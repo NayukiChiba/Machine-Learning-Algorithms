@@ -6,7 +6,7 @@ outline: deep
 # 预处理可视化
 
 > 对应脚本：`Basic/Visualization/06_preprocessing_viz.py`
-> 运行方式：`python Basic/Visualization/06_preprocessing_viz.py`（仓库根目录）
+> 运行方式：`python -m Basic.Visualization.06_preprocessing_viz`（仓库根目录）
 
 ## 导航
 

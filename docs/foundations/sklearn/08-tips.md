@@ -6,7 +6,7 @@ outline: deep
 # 技巧
 
 > 对应脚本：`Basic/ScikitLearn/08_tips.py`
-> 运行方式：`python Basic/ScikitLearn/08_tips.py`（仓库根目录）
+> 运行方式：`python -m Basic.ScikitLearn.08_tips`（仓库根目录）
 
 ## 本章目标
 

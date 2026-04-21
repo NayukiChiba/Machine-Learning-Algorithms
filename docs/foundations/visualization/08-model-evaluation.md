@@ -6,7 +6,7 @@ outline: deep
 # 评估图
 
 > 对应脚本：`Basic/Visualization/08_model_evaluation.py`
-> 运行方式：`python Basic/Visualization/08_model_evaluation.py`（仓库根目录）
+> 运行方式：`python -m Basic.Visualization.08_model_evaluation`（仓库根目录）
 
 ## 导航
 

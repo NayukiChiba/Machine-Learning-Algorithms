@@ -6,7 +6,7 @@ outline: deep
 # 决策可视化
 
 > 对应脚本：`Basic/Visualization/07_model_decision.py`
-> 运行方式：`python Basic/Visualization/07_model_decision.py`（仓库根目录）
+> 运行方式：`python -m Basic.Visualization.07_model_decision`（仓库根目录）
 
 ## 导航
 

@@ -6,7 +6,7 @@ outline: deep
 # 图表
 
 > 对应脚本：`Basic/Visualization/02_matplotlib_charts.py`
-> 运行方式：`python Basic/Visualization/02_matplotlib_charts.py`（仓库根目录）
+> 运行方式：`python -m Basic.Visualization.02_matplotlib_charts`（仓库根目录）
 
 ## 导航
 
