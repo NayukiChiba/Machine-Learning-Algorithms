@@ -12,7 +12,7 @@ result_visualization/cluster_plot.py
 import numpy as np
 import matplotlib.pyplot as plt
 
-from config import RV_CLUSTER_PLOT_DIR
+from config import get_model_output_dir
 
 
 def plot_clusters(
@@ -22,7 +22,6 @@ def plot_clusters(
     centers=None,
     feature_names: list[str] | None = None,
     title: str = "聚类分布",
-    dataset_name: str = "default",
     model_name: str = "model",
     figsize: tuple = (12, 5),
 ):
@@ -36,7 +35,6 @@ def plot_clusters(
         centers: 聚类中心坐标（可选，如 KMeans 的 .cluster_centers_）
         feature_names: 两个特征的名称
         title: 图标题
-        dataset_name: 数据集名称
         model_name: 模型名称
         figsize: 图像尺寸
     """
@@ -95,9 +93,9 @@ def plot_clusters(
         ax2.set_title(f"{title} — 真实标签")
 
     plt.tight_layout()
-    save_dir = RV_CLUSTER_PLOT_DIR / dataset_name
+    save_dir = get_model_output_dir(model_name)
     save_dir.mkdir(parents=True, exist_ok=True)
-    filepath = save_dir / f"{model_name}_cluster.png"
+    filepath = save_dir / "cluster_plot.png"
     fig.savefig(filepath, dpi=150, bbox_inches="tight")
     print(f"聚类分布图已保存至: {filepath}")
     plt.close(fig)
@@ -116,6 +114,5 @@ if __name__ == "__main__":
         labels_true=y_true,
         centers=model.cluster_centers_,
         title="KMeans 聚类",
-        dataset_name="test_kmeans",
         model_name="kmeans",
     )

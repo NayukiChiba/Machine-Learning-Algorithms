@@ -11,7 +11,7 @@ result_visualization/feature_importance.py
 import numpy as np
 import matplotlib.pyplot as plt
 
-from config import RV_FEATURE_IMPORTANCE_DIR
+from config import get_model_output_dir
 
 
 def plot_feature_importance(
@@ -19,7 +19,6 @@ def plot_feature_importance(
     feature_names: list[str] | None = None,
     top_n: int | None = None,
     title: str = "特征重要性",
-    dataset_name: str = "default",
     model_name: str = "model",
     figsize: tuple = (10, 7),
 ):
@@ -31,7 +30,6 @@ def plot_feature_importance(
         feature_names: 特征名称列表
         top_n: 只展示前 N 个最重要的特征（None 则展示全部）
         title: 图标题
-        dataset_name: 数据集名称
         model_name: 模型名称
         figsize: 图像尺寸
     """
@@ -69,9 +67,9 @@ def plot_feature_importance(
     ax.set_title(title)
 
     plt.tight_layout()
-    save_dir = RV_FEATURE_IMPORTANCE_DIR / dataset_name
+    save_dir = get_model_output_dir(model_name)
     save_dir.mkdir(parents=True, exist_ok=True)
-    filepath = save_dir / f"{model_name}_feature_importance.png"
+    filepath = save_dir / "feature_importance.png"
     fig.savefig(filepath, dpi=150, bbox_inches="tight")
     print(f"特征重要性图已保存至: {filepath}")
     plt.close(fig)
@@ -90,6 +88,5 @@ if __name__ == "__main__":
         feature_names=feature_names,
         top_n=8,
         title="随机森林 特征重要性",
-        dataset_name="test_rf",
         model_name="random_forest",
     )

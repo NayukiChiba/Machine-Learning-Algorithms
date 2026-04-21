@@ -12,14 +12,13 @@ result_visualization/residual_plot.py
 import numpy as np
 import matplotlib.pyplot as plt
 
-from config import RV_RESIDUAL_PLOT_DIR
+from config import get_model_output_dir
 
 
 def plot_residuals(
     y_true,
     y_pred,
     title: str = "残差分析",
-    dataset_name: str = "default",
     model_name: str = "model",
     figsize: tuple = (14, 5),
 ):
@@ -30,7 +29,6 @@ def plot_residuals(
         y_true: 真实值数组
         y_pred: 预测值数组
         title: 图标题
-        dataset_name: 数据集名称
         model_name: 模型名称
         figsize: 图像尺寸
     """
@@ -60,9 +58,9 @@ def plot_residuals(
     ax2.set_title(f"{title} — 残差分布")
 
     plt.tight_layout()
-    save_dir = RV_RESIDUAL_PLOT_DIR / dataset_name
+    save_dir = get_model_output_dir(model_name)
     save_dir.mkdir(parents=True, exist_ok=True)
-    filepath = save_dir / f"{model_name}_residual.png"
+    filepath = save_dir / "residual_plot.png"
     fig.savefig(filepath, dpi=150, bbox_inches="tight")
     print(f"残差图已保存至: {filepath}")
     plt.close(fig)
@@ -84,6 +82,5 @@ if __name__ == "__main__":
         y_test,
         y_pred,
         title="线性回归残差",
-        dataset_name="test_lr",
         model_name="linear_regression",
     )

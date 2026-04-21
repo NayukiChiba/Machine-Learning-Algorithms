@@ -14,7 +14,7 @@ import matplotlib.pyplot as plt
 from sklearn.metrics import roc_curve as sk_roc_curve, auc
 from sklearn.preprocessing import label_binarize
 
-from config import RV_ROC_CURVE_DIR
+from config import get_model_output_dir
 
 
 def plot_roc_curve(
@@ -22,7 +22,6 @@ def plot_roc_curve(
     y_scores,
     class_names: list[str] | None = None,
     title: str = "ROC 曲线",
-    dataset_name: str = "default",
     model_name: str = "model",
     figsize: tuple = (8, 7),
 ):
@@ -34,7 +33,6 @@ def plot_roc_curve(
         y_scores: 预测概率（二分类时为正类概率，多分类时为各类概率矩阵）
         class_names: 类别名称
         title: 图标题
-        dataset_name: 数据集名称
         model_name: 模型名称
         figsize: 图像尺寸
     """
@@ -81,9 +79,9 @@ def plot_roc_curve(
     ax.set_ylim([0, 1.05])
 
     plt.tight_layout()
-    save_dir = RV_ROC_CURVE_DIR / dataset_name
+    save_dir = get_model_output_dir(model_name)
     save_dir.mkdir(parents=True, exist_ok=True)
-    filepath = save_dir / f"{model_name}_roc.png"
+    filepath = save_dir / "roc_curve.png"
     fig.savefig(filepath, dpi=150, bbox_inches="tight")
     print(f"ROC 曲线已保存至: {filepath}")
     plt.close(fig)
@@ -106,6 +104,5 @@ if __name__ == "__main__":
         y_scores,
         class_names=["负类", "正类"],
         title="逻辑回归 ROC 曲线",
-        dataset_name="test_lr",
         model_name="logistic_regression",
     )

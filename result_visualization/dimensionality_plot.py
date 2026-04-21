@@ -11,7 +11,7 @@ result_visualization/dimensionality_plot.py
 
 import matplotlib.pyplot as plt
 
-from config import RV_DIMENSIONALITY_PLOT_DIR
+from config import get_model_output_dir
 
 
 def plot_dimensionality(
@@ -20,7 +20,6 @@ def plot_dimensionality(
     explained_variance_ratio=None,
     class_names: list[str] | None = None,
     title: str = "降维可视化",
-    dataset_name: str = "default",
     model_name: str = "model",
     figsize: tuple = (10, 8),
     mode: str = "2d",
@@ -34,7 +33,6 @@ def plot_dimensionality(
         explained_variance_ratio: 各主成分的解释方差比（可选，用于标注轴）
         class_names: 类别名称列表
         title: 图标题
-        dataset_name: 数据集名称
         model_name: 模型名称
         figsize: 图像尺寸
         mode: "2d" 或 "3d"
@@ -91,9 +89,9 @@ def plot_dimensionality(
                     text.set_text(class_names[i])
 
     plt.tight_layout()
-    save_dir = RV_DIMENSIONALITY_PLOT_DIR / dataset_name
+    save_dir = get_model_output_dir(model_name)
     save_dir.mkdir(parents=True, exist_ok=True)
-    filepath = save_dir / f"{model_name}_dim_{mode}.png"
+    filepath = save_dir / f"dimensionality_{mode}.png"
     fig.savefig(filepath, dpi=150, bbox_inches="tight")
     print(f"降维可视化已保存至: {filepath}")
     plt.close(fig)
@@ -117,7 +115,6 @@ if __name__ == "__main__":
         y=y,
         explained_variance_ratio=pca.explained_variance_ratio_,
         title="PCA 降维 (2D)",
-        dataset_name="test_pca",
         model_name="pca",
         mode="2d",
     )
