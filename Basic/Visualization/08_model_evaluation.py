@@ -9,12 +9,13 @@ from sklearn.datasets import make_classification
 from sklearn.model_selection import train_test_split, learning_curve
 from sklearn.linear_model import LogisticRegression
 from sklearn.metrics import confusion_matrix, roc_curve, auc, ConfusionMatrixDisplay
-import sys
-from pathlib import Path
 
-# 添加项目根目录到搜索路径
-sys.path.insert(0, str(Path(__file__).parent.parent.parent))
-from config import get_output_dir
+from . import output_dir as get_output_dir
+
+
+# 设置中文字体
+plt.rcParams["font.sans-serif"] = ["SimHei", "Microsoft YaHei", "Arial Unicode MS"]
+plt.rcParams["axes.unicode_minus"] = False
 
 
 def _confusion_matrix(output_dir):
@@ -39,7 +40,7 @@ def _confusion_matrix(output_dir):
     ax.set_title("Confusion Matrix")
 
     plt.tight_layout()
-    plt.savefig(output_dir / "viz_08_confusion.png", dpi=100)
+    plt.savefig(output_dir / "08_confusion.png", dpi=100)
     plt.close()
     print("图表已保存")
 
@@ -72,7 +73,7 @@ def _roc_curve(output_dir):
     ax.grid(True, alpha=0.3)
 
     plt.tight_layout()
-    plt.savefig(output_dir / "viz_08_roc.png", dpi=100)
+    plt.savefig(output_dir / "08_roc.png", dpi=100)
     plt.close()
     print("图表已保存")
 
@@ -111,14 +112,14 @@ def _learning_curve(output_dir):
     ax.grid(True, alpha=0.3)
 
     plt.tight_layout()
-    plt.savefig(output_dir / "viz_08_learning.png", dpi=100)
+    plt.savefig(output_dir / "08_learning.png", dpi=100)
     plt.close()
     print("图表已保存")
 
 
 def run():
     """运行所有演示"""
-    output_dir = get_output_dir("visualization")
+    output_dir = get_output_dir()
 
     _confusion_matrix(output_dir)
     print()

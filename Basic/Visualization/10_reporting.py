@@ -5,12 +5,19 @@
 
 import numpy as np
 import matplotlib.pyplot as plt
-import sys
-from pathlib import Path
 
-# 添加项目根目录到搜索路径
-sys.path.insert(0, str(Path(__file__).parent.parent.parent))
-from config import get_output_dir
+from . import output_dir as get_output_dir
+
+
+# 设置中文字体
+plt.rcParams["font.sans-serif"] = ["SimHei", "Microsoft YaHei", "Arial Unicode MS"]
+plt.rcParams["axes.unicode_minus"] = False
+
+
+def _apply_plot_fonts():
+    """重新应用中文字体设置，避免被样式配置覆盖。"""
+    plt.rcParams["font.sans-serif"] = ["SimHei", "Microsoft YaHei", "Arial Unicode MS"]
+    plt.rcParams["axes.unicode_minus"] = False
 
 
 def professional_style(output_dir):
@@ -21,6 +28,7 @@ def professional_style(output_dir):
 
     # 设置专业样式
     plt.style.use("seaborn-v0_8-whitegrid")
+    _apply_plot_fonts()
 
     fig, ax = plt.subplots(figsize=(10, 6))
 
@@ -34,7 +42,7 @@ def professional_style(output_dir):
     ax.legend(frameon=True, fancybox=True, shadow=True)
 
     plt.tight_layout()
-    plt.savefig(output_dir / "viz_10_professional.png", dpi=150)
+    plt.savefig(output_dir / "10_professional.png", dpi=150)
     plt.close()
     print("图表已保存")
 
@@ -76,7 +84,7 @@ def multi_panel(output_dir):
     ax5.pie([30, 40, 30], labels=["X", "Y", "Z"], autopct="%1.0f%%")
     ax5.set_title("Pie")
 
-    plt.savefig(output_dir / "viz_10_multipanel.png", dpi=150)
+    plt.savefig(output_dir / "10_multipanel.png", dpi=150)
     plt.close()
     print("图表已保存")
 
@@ -120,7 +128,7 @@ def color_palettes():
 
 def run():
     """运行所有演示"""
-    output_dir = get_output_dir("visualization")
+    output_dir = get_output_dir()
 
     professional_style(output_dir)
     print()

@@ -5,12 +5,13 @@ Matplotlib 基础入门
 
 import numpy as np
 import matplotlib.pyplot as plt
-import sys
-from pathlib import Path
 
-# 添加项目根目录到搜索路径
-sys.path.insert(0, str(Path(__file__).parent.parent.parent))
-from config import get_output_dir
+from . import output_dir as get_output_dir
+
+
+# 设置中文字体
+plt.rcParams["font.sans-serif"] = ["SimHei", "Microsoft YaHei", "Arial Unicode MS"]
+plt.rcParams["axes.unicode_minus"] = False
 
 
 def figure_axes():
@@ -38,11 +39,11 @@ def figure_axes():
     ax.legend()
     ax.grid(True)
 
-    output_dir = get_output_dir("visualization")
+    output_dir = get_output_dir()
     plt.tight_layout()
-    plt.savefig(output_dir / "viz_01_basic.png", dpi=100)
+    plt.savefig(output_dir / "01_basic.png", dpi=100)
     plt.close()
-    print("图表已保存到 outputs/visualization/viz_01_basic.png")
+    print("图表已保存到 outputs/visualization/01_basic.png")
 
 
 def line_styles():
@@ -63,9 +64,9 @@ def line_styles():
     ax.legend()
     ax.set_title("Line Styles")
 
-    output_dir = get_output_dir("visualization")
+    output_dir = get_output_dir()
     plt.tight_layout()
-    plt.savefig(output_dir / "viz_01_line_styles.png", dpi=100)
+    plt.savefig(output_dir / "01_line_styles.png", dpi=100)
     plt.close()
     print("图表已保存")
 
@@ -93,9 +94,9 @@ def markers():
     ax.legend(ncol=4)
     ax.set_title("Marker Types")
 
-    output_dir = get_output_dir("visualization")
+    output_dir = get_output_dir()
     plt.tight_layout()
-    plt.savefig(output_dir / "viz_01_markers.png", dpi=100)
+    plt.savefig(output_dir / "01_markers.png", dpi=100)
     plt.close()
     print("图表已保存")
 
@@ -134,11 +135,11 @@ def subplots():
     axes[1, 0].set_title("Damped sine")
 
     axes[1, 1].plot(x, x**2)
-    axes[1, 1].set_title("x²")
+    axes[1, 1].set_title("x^2")
 
-    output_dir = get_output_dir("visualization")
+    output_dir = get_output_dir()
     plt.tight_layout()
-    plt.savefig(output_dir / "viz_01_subplots.png", dpi=100)
+    plt.savefig(output_dir / "01_subplots.png", dpi=100)
     plt.close()
     print("图表已保存")
 
