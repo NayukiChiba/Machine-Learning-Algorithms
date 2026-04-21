@@ -27,6 +27,7 @@ def train_model(
     bootstrap: bool = True,
     oob_score: bool = True,
     random_state: int = 42,
+    n_jobs: int = 1,
 ):
     """
     训练 Bagging 分类模型
@@ -40,6 +41,7 @@ def train_model(
         bootstrap: 是否有放回采样
         oob_score: 是否启用 OOB 估计
         random_state: 随机种子
+        n_jobs: 并行数，默认 1 以避免当前 Windows 环境下的权限问题
     returns:
         model: 训练好的模型
     """
@@ -60,7 +62,7 @@ def train_model(
             bootstrap=bootstrap,
             oob_score=oob_score,
             random_state=random_state,
-            n_jobs=-1,
+            n_jobs=n_jobs,
         )
     except TypeError:
         model = BaggingClassifier(
@@ -71,7 +73,7 @@ def train_model(
             bootstrap=bootstrap,
             oob_score=oob_score,
             random_state=random_state,
-            n_jobs=-1,
+            n_jobs=n_jobs,
         )
 
     with timer(name="模型训练耗时"):
