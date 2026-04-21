@@ -2,19 +2,11 @@
 data_visualization/scatter.py
 散点图模块
 
-为每个数据集生成散点图相关的可视化:
-  - 二维散点图: 按类别/簇着色
-  - 散点矩阵 (Pairplot): 多特征间的两两关系
-
-输出目录: outputs/data_visualization/scatter/
-
-使用方式:
-    from data_visualization.scatter import plot_scatters
-    plot_scatters()
-
-或直接运行:
-    python -m data_visualization.scatter
+提供可复用的单数据集散点图函数。
+当前模块不再负责“批量生成所有数据集的图片”。
 """
+
+from pathlib import Path
 
 import matplotlib.pyplot as plt
 import seaborn as sns
@@ -44,6 +36,22 @@ def _save_fig(fig: plt.Figure, filename: str, output_name: str) -> None:
     fig.savefig(filepath, dpi=200, bbox_inches="tight")
     plt.close(fig)
     print(f"  保存: {filepath}")
+
+
+def _save_single_dataset_fig(fig: plt.Figure, save_dir: Path, filename: str) -> None:
+    """
+    保存单数据集展示图到指定目录
+
+    Args:
+        fig: matplotlib 图表对象
+        save_dir: 保存目录
+        filename: 文件名
+    """
+    save_dir.mkdir(parents=True, exist_ok=True)
+    filepath = save_dir / filename
+    fig.savefig(filepath, dpi=200, bbox_inches="tight")
+    plt.close(fig)
+    print(f"数据展示图已保存至: {filepath}")
 
 
 def _plot_2d_scatter(
@@ -232,161 +240,49 @@ def _plot_sequence_plot(data: DataFrame, output_name: str) -> None:
     _save_fig(fig, "01_time_series.png", output_name)
 
 
-# --- 按数据集类型的绘图函数 ---
-
-
-def _scatter_classification(
-    data: DataFrame, name: str, short_name: str, target_col: str = "label"
+def plot_labeled_2d_scatter(
+    data: DataFrame,
+    x_col: str,
+    y_col: str,
+    label_col: str,
+    save_dir: Path,
+    title: str = "原始散点图",
+    filename: str = "data_scatter.png",
 ) -> None:
-    """分类数据集的散点图"""
-    feature_cols = [c for c in data.columns if c != target_col]
-    print(f"数据集: {name}")
+    """
+    为单个数据集绘制二维带标签散点图
 
-    # 只有 2 个特征时直接画散点图
-    if len(feature_cols) == 2:
-        _plot_2d_scatter(
-            data,
-            feature_cols[0],
-            feature_cols[1],
-            target_col,
-            short_name,
-            f"{short_name} — 散点图",
-            "01_scatter.png",
-        )
+    Args:
+        data: 数据集
+        x_col: 横轴特征列
+        y_col: 纵轴特征列
+        label_col: 标签列
+        save_dir: 保存目录
+        title: 图标题
+        filename: 保存文件名
+    """
+    classes = sorted(data[label_col].unique())
+    colors = sns.color_palette("Set2", len(classes))
 
-    # 散点矩阵
-    if len(feature_cols) >= 2:
-        _plot_pairplot(data, feature_cols, target_col, short_name)
-
-
-def _scatter_regression(
-    data: DataFrame, name: str, short_name: str, target_col: str = "price"
-) -> None:
-    """回归数据集的散点图"""
-    feature_cols = [c for c in data.columns if c != target_col]
-    print(f"数据集: {name}")
-
-    # 特征 vs 目标
-    _plot_regression_scatter(data, feature_cols, target_col, short_name)
-
-
-def _scatter_clustering(
-    data: DataFrame, name: str, short_name: str, label_col: str = "true_label"
-) -> None:
-    """聚类数据集的散点图"""
-    feature_cols = [c for c in data.columns if c != label_col]
-    print(f"数据集: {name}")
-
-    if len(feature_cols) == 2:
-        # 无标签原始散点
-        fig, ax = plt.subplots(figsize=(7, 5))
+    fig, ax = plt.subplots(figsize=(8, 6))
+    for color, cls in zip(colors, classes, strict=True):
+        subset = data[data[label_col] == cls]
         ax.scatter(
-            data[feature_cols[0]], data[feature_cols[1]], s=15, alpha=0.5, color="gray"
-        )
-        ax.set_xlabel(feature_cols[0])
-        ax.set_ylabel(feature_cols[1])
-        ax.set_title(f"{short_name} — 原始数据 (无标签)")
-        ax.grid(True, alpha=0.2)
-        fig.tight_layout()
-        _save_fig(fig, "01_raw_scatter.png", short_name)
-
-        # 按真实标签着色
-        _plot_2d_scatter(
-            data,
-            feature_cols[0],
-            feature_cols[1],
-            label_col,
-            short_name,
-            f"{short_name} — 真实标签着色",
-            "02_true_label_scatter.png",
+            subset[x_col],
+            subset[y_col],
+            s=28,
+            alpha=0.75,
+            color=color,
+            edgecolors="black",
+            linewidths=0.3,
+            label=f"类别 {cls}",
         )
 
+    ax.set_title(title)
+    ax.set_xlabel(x_col)
+    ax.set_ylabel(y_col)
+    ax.legend()
+    ax.grid(True, alpha=0.25)
 
-# --- 主入口 ---
-
-
-def plot_scatters() -> None:
-    """
-    为所有 20 个数据集生成散点图
-    """
-    from data_generation import (
-        logistic_regression_data,
-        decision_tree_classification_data,
-        svc_data,
-        naive_bayes_data,
-        knn_data,
-        random_forest_data,
-        linear_regression_data,
-        svr_data,
-        decision_tree_regression_data,
-        regularization_data,
-        kmeans_data,
-        dbscan_data,
-        em_data,
-        hmm_data,
-        bagging_data,
-        gbdt_data,
-        xgboost_data,
-        lightgbm_data,
-        pca_data,
-        lda_data,
-    )
-
-    print("=" * 50)
-    print("生成散点图 (散点图 + 散点矩阵)")
-    print("=" * 50)
-
-    # --- 分类 (6) ---
-
-    _scatter_classification(
-        logistic_regression_data, "LogisticRegression", "logistic_regression"
-    )
-    _scatter_classification(
-        decision_tree_classification_data, "DecisionTree", "decision_tree_clf"
-    )
-    _scatter_classification(svc_data, "SVC", "svc")
-    _scatter_classification(naive_bayes_data, "NaiveBayes — Iris", "naive_bayes")
-    _scatter_classification(knn_data, "KNN", "knn")
-    _scatter_classification(random_forest_data, "RandomForest", "random_forest")
-
-    # --- 回归 (4) ---
-
-    _scatter_regression(linear_regression_data, "LinearRegression", "linear_regression")
-    _scatter_regression(svr_data, "SVR", "svr")
-    _scatter_regression(
-        decision_tree_regression_data, "DecisionTree(回归)", "decision_tree_reg"
-    )
-    _scatter_regression(regularization_data, "Regularization", "regularization")
-
-    # --- 聚类 (2) ---
-
-    _scatter_clustering(kmeans_data, "KMeans", "kmeans")
-    _scatter_clustering(dbscan_data, "DBSCAN", "dbscan")
-
-    # --- 集成 (4) ---
-
-    _scatter_classification(bagging_data, "Bagging", "bagging")
-    _scatter_classification(gbdt_data, "GBDT", "gbdt")
-    _scatter_regression(xgboost_data, "XGBoost", "xgboost")
-    _scatter_classification(lightgbm_data, "LightGBM", "lightgbm")
-
-    # --- 降维 (2) ---
-
-    _scatter_classification(pca_data, "PCA", "pca")
-    _scatter_classification(lda_data, "LDA — Wine", "lda")
-
-    # --- 概率 (2) ---
-
-    _scatter_clustering(em_data, "EM(GMM)", "em")
-    _plot_sequence_plot(hmm_data, "hmm")
-    print("数据集: HMM — 离散序列")
-
-    print("=" * 50)
-    print("散点图生成完成, 共 20 个数据集")
-    print("=" * 50)
-
-
-# --- 直接运行 ---
-
-if __name__ == "__main__":
-    plot_scatters()
+    fig.tight_layout()
+    _save_single_dataset_fig(fig, save_dir, filename)

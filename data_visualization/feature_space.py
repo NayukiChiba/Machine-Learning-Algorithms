@@ -2,21 +2,11 @@
 data_visualization/feature_space.py
 特征空间可视化模块
 
-使用 PCA 将高维数据降至 2D/3D 后可视化:
-  - 2D 投影: PCA 降至 2 维后按类别/簇着色
-  - 3D 投影: PCA 降至 3 维后的三维散点图
-
-对原本就是 2D 的数据 (如 SVC, KNN, KMeans 等) 直接绘制原始特征空间
-
-输出目录: outputs/data_visualization/feature_space/
-
-使用方式:
-    from data_visualization.feature_space import plot_feature_spaces
-    plot_feature_spaces()
-
-或直接运行:
-    python -m data_visualization.feature_space
+提供可复用的单数据集特征空间可视化函数。
+当前模块不再负责“批量生成所有数据集的图片”。
 """
+
+from pathlib import Path
 
 import numpy as np
 import matplotlib.pyplot as plt
@@ -48,6 +38,22 @@ def _save_fig(fig: plt.Figure, filename: str, output_name: str) -> None:
     fig.savefig(filepath, dpi=200, bbox_inches="tight")
     plt.close(fig)
     print(f"  保存: {filepath}")
+
+
+def _save_single_dataset_fig(fig: plt.Figure, save_dir: Path, filename: str) -> None:
+    """
+    保存单数据集展示图到指定目录
+
+    Args:
+        fig: matplotlib 图表对象
+        save_dir: 保存目录
+        filename: 文件名
+    """
+    save_dir.mkdir(parents=True, exist_ok=True)
+    filepath = save_dir / filename
+    fig.savefig(filepath, dpi=200, bbox_inches="tight")
+    plt.close(fig)
+    print(f"数据展示图已保存至: {filepath}")
 
 
 def _plot_2d_projection(
@@ -184,101 +190,125 @@ def _plot_3d_projection(
     _save_fig(fig, "02_3d_projection.png", output_name)
 
 
-# --- 按数据集类型的入口函数 ---
-
-
-def _feature_space_classification(
-    data: DataFrame, name: str, short_name: str, target_col: str = "label"
+def plot_feature_space_2d(
+    data: DataFrame,
+    feature_cols: list[str],
+    label_col: str,
+    save_dir: Path,
+    title: str = "特征空间 2D 投影",
+    filename: str = "data_feature_space_2d.png",
 ) -> None:
-    """分类数据集的特征空间可视化"""
-    feature_cols = [c for c in data.columns if c != target_col]
-    print(f"数据集: {name}")
+    """
+    为单个数据集绘制 2D 特征空间图
 
-    _plot_2d_projection(data, feature_cols, target_col, short_name)
-    _plot_3d_projection(data, feature_cols, target_col, short_name)
+    当原始特征已经是 2D 时，直接绘制原始特征空间；
+    当原始特征维度大于 2 时，自动使用 PCA 压到 2D 再绘制。
+
+    Args:
+        data: 数据集
+        feature_cols: 特征列名
+        label_col: 标签列名
+        save_dir: 保存目录
+        title: 图标题
+        filename: 保存文件名
+    """
+    fig, ax = plt.subplots(figsize=(7, 5))
+
+    X = data[feature_cols].values
+    labels = data[label_col].values
+
+    if len(feature_cols) <= 2:
+        x_plot = X[:, 0]
+        y_plot = X[:, 1] if X.shape[1] > 1 else np.zeros(len(X))
+        x_label = feature_cols[0]
+        y_label = feature_cols[1] if len(feature_cols) > 1 else ""
+    else:
+        pca = PCA(n_components=2)
+        X_2d = pca.fit_transform(X)
+        x_plot = X_2d[:, 0]
+        y_plot = X_2d[:, 1]
+        ev1 = pca.explained_variance_ratio_[0] * 100
+        ev2 = pca.explained_variance_ratio_[1] * 100
+        x_label = f"PC1 ({ev1:.1f}%)"
+        y_label = f"PC2 ({ev2:.1f}%)"
+
+    unique_labels = sorted(np.unique(labels))
+    colors = sns.color_palette("Set2", len(unique_labels))
+
+    for color, label in zip(colors, unique_labels, strict=True):
+        mask = labels == label
+        ax.scatter(
+            x_plot[mask],
+            y_plot[mask],
+            s=16,
+            alpha=0.65,
+            color=color,
+            label=f"{label_col}={label}",
+        )
+
+    ax.set_title(title)
+    ax.set_xlabel(x_label)
+    ax.set_ylabel(y_label)
+    ax.legend(fontsize=8, loc="best")
+    ax.grid(True, alpha=0.2)
+
+    fig.tight_layout()
+    _save_single_dataset_fig(fig, save_dir, filename)
 
 
-def _feature_space_clustering(
-    data: DataFrame, name: str, short_name: str, label_col: str = "true_label"
+def plot_feature_space_3d(
+    data: DataFrame,
+    feature_cols: list[str],
+    label_col: str,
+    save_dir: Path,
+    title: str = "特征空间 3D 投影",
+    filename: str = "data_feature_space_3d.png",
 ) -> None:
-    """聚类数据集的特征空间可视化"""
-    feature_cols = [c for c in data.columns if c != label_col]
-    print(f"数据集: {name}")
-
-    _plot_2d_projection(data, feature_cols, label_col, short_name)
-    _plot_3d_projection(data, feature_cols, label_col, short_name)
-
-
-# --- 主入口 ---
-
-
-def plot_feature_spaces() -> None:
     """
-    为所有适合的数据集生成特征空间可视化
+    为单个数据集绘制 3D 特征空间图
 
-    回归任务没有离散类别标签，不适合着色散点图，跳过
-    HMM 是离散序列，不适合特征空间可视化，跳过
+    原始特征数不足 3 时，函数会直接返回，不强行生成无意义图。
+
+    Args:
+        data: 数据集
+        feature_cols: 特征列名
+        label_col: 标签列名
+        save_dir: 保存目录
+        title: 图标题
+        filename: 保存文件名
     """
-    from data_generation import (
-        logistic_regression_data,
-        decision_tree_classification_data,
-        svc_data,
-        naive_bayes_data,
-        knn_data,
-        random_forest_data,
-        kmeans_data,
-        dbscan_data,
-        em_data,
-        bagging_data,
-        gbdt_data,
-        lightgbm_data,
-        pca_data,
-        lda_data,
-    )
+    if len(feature_cols) < 3:
+        return
 
-    print("=" * 50)
-    print("生成特征空间可视化 (PCA 2D/3D 投影)")
-    print("=" * 50)
+    X = data[feature_cols].values
+    labels = data[label_col].values
+    pca = PCA(n_components=3)
+    X_3d = pca.fit_transform(X)
+    explained = pca.explained_variance_ratio_ * 100
 
-    # --- 分类 (6) ---
+    fig = plt.figure(figsize=(8, 6))
+    ax = fig.add_subplot(111, projection="3d")
 
-    _feature_space_classification(
-        logistic_regression_data, "LogisticRegression", "logistic_regression"
-    )
-    _feature_space_classification(
-        decision_tree_classification_data, "DecisionTree", "decision_tree_clf"
-    )
-    _feature_space_classification(svc_data, "SVC", "svc")
-    _feature_space_classification(naive_bayes_data, "NaiveBayes", "naive_bayes")
-    _feature_space_classification(knn_data, "KNN", "knn")
-    _feature_space_classification(random_forest_data, "RandomForest", "random_forest")
+    unique_labels = sorted(np.unique(labels))
+    colors = sns.color_palette("Set2", len(unique_labels))
 
-    # --- 聚类 (2) ---
+    for color, label in zip(colors, unique_labels, strict=True):
+        mask = labels == label
+        ax.scatter(
+            X_3d[mask, 0],
+            X_3d[mask, 1],
+            X_3d[mask, 2],
+            s=10,
+            alpha=0.55,
+            color=color,
+            label=f"{label_col}={label}",
+        )
 
-    _feature_space_clustering(kmeans_data, "KMeans", "kmeans")
-    _feature_space_clustering(dbscan_data, "DBSCAN", "dbscan")
+    ax.set_title(title)
+    ax.set_xlabel(f"PC1 ({explained[0]:.1f}%)")
+    ax.set_ylabel(f"PC2 ({explained[1]:.1f}%)")
+    ax.set_zlabel(f"PC3 ({explained[2]:.1f}%)")
+    ax.legend(fontsize=7, loc="best")
 
-    # --- 集成 (4, 跳过回归的 XGBoost) ---
-
-    _feature_space_classification(bagging_data, "Bagging", "bagging")
-    _feature_space_classification(gbdt_data, "GBDT", "gbdt")
-    _feature_space_classification(lightgbm_data, "LightGBM", "lightgbm")
-
-    # --- 降维 (2) ---
-
-    _feature_space_classification(pca_data, "PCA", "pca")
-    _feature_space_classification(lda_data, "LDA", "lda")
-
-    # --- 概率 (1, 跳过 HMM) ---
-
-    _feature_space_clustering(em_data, "EM(GMM)", "em")
-
-    print("=" * 50)
-    print("特征空间可视化完成")
-    print("=" * 50)
-
-
-# --- 直接运行 ---
-
-if __name__ == "__main__":
-    plot_feature_spaces()
+    fig.tight_layout()
+    _save_single_dataset_fig(fig, save_dir, filename)
