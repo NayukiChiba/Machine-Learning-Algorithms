@@ -6,7 +6,7 @@ outline: deep
 # Pandas 图
 
 > 对应脚本：`Basic/Visualization/04_pandas_viz.py`
-> 运行方式：`python Basic/Visualization/04_pandas_viz.py`（仓库根目录）
+> 运行方式：`python -m Basic.Visualization.04_pandas_viz`（仓库根目录）
 
 ## 导航
 

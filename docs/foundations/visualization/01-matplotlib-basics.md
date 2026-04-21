@@ -6,7 +6,7 @@ outline: deep
 # Matplotlib 基础
 
 > 对应脚本：`Basic/Visualization/01_matplotlib_basics.py`
-> 运行方式：`python Basic/Visualization/01_matplotlib_basics.py`（仓库根目录）
+> 运行方式：`python -m Basic.Visualization.01_matplotlib_basics`（仓库根目录）
 
 ## 导航
 

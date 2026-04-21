@@ -6,7 +6,7 @@ outline: deep
 # Seaborn
 
 > 对应脚本：`Basic/Visualization/03_seaborn.py`
-> 运行方式：`python Basic/Visualization/03_seaborn.py`（仓库根目录）
+> 运行方式：`python -m Basic.Visualization.03_seaborn`（仓库根目录）
 
 ## 导航
 
