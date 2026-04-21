@@ -6,12 +6,19 @@ Seaborn 库入门
 import numpy as np
 import matplotlib.pyplot as plt
 import seaborn as sns
-import sys
-from pathlib import Path
 
-# 添加项目根目录到搜索路径
-sys.path.insert(0, str(Path(__file__).parent.parent.parent))
-from config import get_output_dir
+from . import output_dir as get_output_dir
+
+
+# 设置中文字体
+plt.rcParams["font.sans-serif"] = ["SimHei", "Microsoft YaHei", "Arial Unicode MS"]
+plt.rcParams["axes.unicode_minus"] = False
+
+
+def _apply_plot_fonts():
+    """重新应用中文字体设置，避免被 Seaborn 主题覆盖。"""
+    plt.rcParams["font.sans-serif"] = ["SimHei", "Microsoft YaHei", "Arial Unicode MS"]
+    plt.rcParams["axes.unicode_minus"] = False
 
 
 def catplot():
@@ -30,9 +37,9 @@ def catplot():
     sns.boxplot(x="day", y="total_bill", hue="sex", data=tips, ax=axes[1])
     axes[1].set_title("Box Plot")
 
-    output_dir = get_output_dir("visualization")
+    output_dir = get_output_dir()
     plt.tight_layout()
-    plt.savefig(output_dir / "viz_03_catplot.png", dpi=100)
+    plt.savefig(output_dir / "03_catplot.png", dpi=100)
     plt.close()
     print("图表已保存")
 
@@ -54,9 +61,9 @@ def distplot():
     sns.kdeplot(data, fill=True, ax=axes[1])
     axes[1].set_title("KDE Plot")
 
-    output_dir = get_output_dir("visualization")
+    output_dir = get_output_dir()
     plt.tight_layout()
-    plt.savefig(output_dir / "viz_03_distplot.png", dpi=100)
+    plt.savefig(output_dir / "03_distplot.png", dpi=100)
     plt.close()
     print("图表已保存")
 
@@ -73,9 +80,9 @@ def regplot():
     sns.regplot(x="total_bill", y="tip", data=tips, ax=ax)
     ax.set_title("Regression Plot")
 
-    output_dir = get_output_dir("visualization")
+    output_dir = get_output_dir()
     plt.tight_layout()
-    plt.savefig(output_dir / "viz_03_regplot.png", dpi=100)
+    plt.savefig(output_dir / "03_regplot.png", dpi=100)
     plt.close()
     print("图表已保存")
 
@@ -93,9 +100,9 @@ def heatmap():
     sns.heatmap(data, annot=True, fmt=".2f", cmap="YlOrRd", ax=ax)
     ax.set_title("Heatmap")
 
-    output_dir = get_output_dir("visualization")
+    output_dir = get_output_dir()
     plt.tight_layout()
-    plt.savefig(output_dir / "viz_03_heatmap.png", dpi=100)
+    plt.savefig(output_dir / "03_heatmap.png", dpi=100)
     plt.close()
     print("图表已保存")
 
@@ -108,11 +115,11 @@ def pairplot():
 
     iris = sns.load_dataset("iris")
 
-    output_dir = get_output_dir("visualization")
+    output_dir = get_output_dir()
     g = sns.pairplot(iris, hue="species", height=2)
     g.fig.suptitle("Pair Plot", y=1.02)
 
-    plt.savefig(output_dir / "viz_03_pairplot.png", dpi=100)
+    plt.savefig(output_dir / "03_pairplot.png", dpi=100)
     plt.close()
     print("图表已保存")
 
@@ -120,6 +127,7 @@ def pairplot():
 def run():
     """运行所有演示"""
     sns.set_theme(style="whitegrid")
+    _apply_plot_fonts()
 
     catplot()
     print()

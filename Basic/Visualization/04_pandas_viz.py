@@ -6,12 +6,13 @@ Pandas 数据可视化
 import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
-import sys
-from pathlib import Path
 
-# 添加项目根目录到搜索路径
-sys.path.insert(0, str(Path(__file__).parent.parent.parent))
-from config import get_output_dir
+from . import output_dir as get_output_dir
+
+
+# 设置中文字体
+plt.rcParams["font.sans-serif"] = ["SimHei", "Microsoft YaHei", "Arial Unicode MS"]
+plt.rcParams["axes.unicode_minus"] = False
 
 
 def df_plot(output_dir):
@@ -48,7 +49,7 @@ def df_plot(output_dir):
     df.plot(kind="box", ax=axes[1, 1], title="Box Plot")
 
     plt.tight_layout()
-    plt.savefig(output_dir / "viz_04_df_plot.png", dpi=100)
+    plt.savefig(output_dir / "04_df_plot.png", dpi=100)
     plt.close()
     print("图表已保存")
 
@@ -67,7 +68,7 @@ def series_plot(output_dir):
     s.plot(kind="hist", bins=20, ax=axes[1], title="Histogram")
 
     plt.tight_layout()
-    plt.savefig(output_dir / "viz_04_series_plot.png", dpi=100)
+    plt.savefig(output_dir / "04_series_plot.png", dpi=100)
     plt.close()
     print("图表已保存")
 
@@ -90,14 +91,14 @@ def groupby_plot(output_dir):
     ax.set_ylabel("Mean")
 
     plt.tight_layout()
-    plt.savefig(output_dir / "viz_04_groupby.png", dpi=100)
+    plt.savefig(output_dir / "04_groupby.png", dpi=100)
     plt.close()
     print("图表已保存")
 
 
 def run():
     """运行所有演示"""
-    output_dir = get_output_dir("visualization")
+    output_dir = get_output_dir()
 
     df_plot(output_dir)
     print()

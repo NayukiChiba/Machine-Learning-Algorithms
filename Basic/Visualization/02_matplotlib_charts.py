@@ -5,12 +5,13 @@ Matplotlib 常用图表类型
 
 import numpy as np
 import matplotlib.pyplot as plt
-import sys
-from pathlib import Path
 
-# 添加项目根目录到搜索路径
-sys.path.insert(0, str(Path(__file__).parent.parent.parent))
-from config import get_output_dir
+from . import output_dir as get_output_dir
+
+
+# 设置中文字体
+plt.rcParams["font.sans-serif"] = ["SimHei", "Microsoft YaHei", "Arial Unicode MS"]
+plt.rcParams["axes.unicode_minus"] = False
 
 
 def bar():
@@ -32,9 +33,9 @@ def bar():
     axes[1].barh(categories, values, color="coral", edgecolor="black")
     axes[1].set_title("Horizontal Bar Chart")
 
-    output_dir = get_output_dir("visualization")
+    output_dir = get_output_dir()
     plt.tight_layout()
-    plt.savefig(output_dir / "viz_02_bar.png", dpi=100)
+    plt.savefig(output_dir / "02_bar.png", dpi=100)
     plt.close()
     print("图表已保存")
 
@@ -58,9 +59,9 @@ def scatter():
     ax.set_ylabel("Y")
     ax.set_title("Scatter Plot with Color and Size")
 
-    output_dir = get_output_dir("visualization")
+    output_dir = get_output_dir()
     plt.tight_layout()
-    plt.savefig(output_dir / "viz_02_scatter.png", dpi=100)
+    plt.savefig(output_dir / "02_scatter.png", dpi=100)
     plt.close()
     print("图表已保存")
 
@@ -84,9 +85,9 @@ def histogram():
     ax.set_title("Histogram")
     ax.legend()
 
-    output_dir = get_output_dir("visualization")
+    output_dir = get_output_dir()
     plt.tight_layout()
-    plt.savefig(output_dir / "viz_02_histogram.png", dpi=100)
+    plt.savefig(output_dir / "02_histogram.png", dpi=100)
     plt.close()
     print("图表已保存")
 
@@ -114,9 +115,9 @@ def pie():
     )
     ax.set_title("Market Share")
 
-    output_dir = get_output_dir("visualization")
+    output_dir = get_output_dir()
     plt.tight_layout()
-    plt.savefig(output_dir / "viz_02_pie.png", dpi=100)
+    plt.savefig(output_dir / "02_pie.png", dpi=100)
     plt.close()
     print("图表已保存")
 
@@ -141,9 +142,9 @@ def boxplot():
     ax.set_ylabel("Value")
     ax.set_title("Box Plot")
 
-    output_dir = get_output_dir("visualization")
+    output_dir = get_output_dir()
     plt.tight_layout()
-    plt.savefig(output_dir / "viz_02_boxplot.png", dpi=100)
+    plt.savefig(output_dir / "02_boxplot.png", dpi=100)
     plt.close()
     print("图表已保存")
 

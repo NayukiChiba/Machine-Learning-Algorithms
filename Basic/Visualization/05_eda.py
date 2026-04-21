@@ -7,12 +7,19 @@ import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
 import seaborn as sns
-import sys
-from pathlib import Path
 
-# 添加项目根目录到搜索路径
-sys.path.insert(0, str(Path(__file__).parent.parent.parent))
-from config import get_output_dir
+from . import output_dir as get_output_dir
+
+
+# 设置中文字体
+plt.rcParams["font.sans-serif"] = ["SimHei", "Microsoft YaHei", "Arial Unicode MS"]
+plt.rcParams["axes.unicode_minus"] = False
+
+
+def _apply_plot_fonts():
+    """重新应用中文字体设置，避免被 Seaborn 主题覆盖。"""
+    plt.rcParams["font.sans-serif"] = ["SimHei", "Microsoft YaHei", "Arial Unicode MS"]
+    plt.rcParams["axes.unicode_minus"] = False
 
 
 def distribution_analysis(output_dir):
@@ -40,7 +47,7 @@ def distribution_analysis(output_dir):
         ax.legend()
 
     plt.tight_layout()
-    plt.savefig(output_dir / "viz_05_distribution.png", dpi=100)
+    plt.savefig(output_dir / "05_distribution.png", dpi=100)
     plt.close()
     print("图表已保存")
 
@@ -74,7 +81,7 @@ def correlation_analysis(output_dir):
     axes[1].axis("off")
 
     plt.tight_layout()
-    plt.savefig(output_dir / "viz_05_correlation.png", dpi=100)
+    plt.savefig(output_dir / "05_correlation.png", dpi=100)
     plt.close()
     print("图表已保存")
 
@@ -104,16 +111,17 @@ def categorical_analysis(output_dir):
     axes[1].set_title("Value by Category")
 
     plt.tight_layout()
-    plt.savefig(output_dir / "viz_05_categorical.png", dpi=100)
+    plt.savefig(output_dir / "05_categorical.png", dpi=100)
     plt.close()
     print("图表已保存")
 
 
 def run():
     """运行所有演示"""
-    output_dir = get_output_dir("visualization")
+    output_dir = get_output_dir()
 
     sns.set_theme(style="whitegrid")
+    _apply_plot_fonts()
 
     distribution_analysis(output_dir)
     print()

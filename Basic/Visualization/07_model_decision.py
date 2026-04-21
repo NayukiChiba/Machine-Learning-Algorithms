@@ -8,12 +8,13 @@ import matplotlib.pyplot as plt
 from sklearn.datasets import make_classification
 from sklearn.tree import DecisionTreeClassifier, plot_tree
 from sklearn.ensemble import RandomForestClassifier
-import sys
-from pathlib import Path
 
-# 添加项目根目录到搜索路径
-sys.path.insert(0, str(Path(__file__).parent.parent.parent))
-from config import get_output_dir
+from . import output_dir as get_output_dir
+
+
+# 设置中文字体
+plt.rcParams["font.sans-serif"] = ["SimHei", "Microsoft YaHei", "Arial Unicode MS"]
+plt.rcParams["axes.unicode_minus"] = False
 
 
 def decision_boundary(output_dir):
@@ -50,7 +51,7 @@ def decision_boundary(output_dir):
     ax.set_title("Decision Boundary")
 
     plt.tight_layout()
-    plt.savefig(output_dir / "viz_07_boundary.png", dpi=100)
+    plt.savefig(output_dir / "07_boundary.png", dpi=100)
     plt.close()
     print("图表已保存")
 
@@ -79,7 +80,7 @@ def tree_viz(output_dir):
     ax.set_title("Decision Tree Visualization")
 
     plt.tight_layout()
-    plt.savefig(output_dir / "viz_07_tree.png", dpi=100)
+    plt.savefig(output_dir / "07_tree.png", dpi=100)
     plt.close()
     print("图表已保存")
 
@@ -111,14 +112,14 @@ def feature_importance(output_dir):
     ax.invert_yaxis()
 
     plt.tight_layout()
-    plt.savefig(output_dir / "viz_07_importance.png", dpi=100)
+    plt.savefig(output_dir / "07_importance.png", dpi=100)
     plt.close()
     print("图表已保存")
 
 
 def run():
     """运行所有演示"""
-    output_dir = get_output_dir("visualization")
+    output_dir = get_output_dir()
 
     decision_boundary(output_dir)
     print()
