@@ -11,7 +11,6 @@ from data_generation import dbscan_data
 from model_training.clustering.dbscan import train_model
 from result_visualization.cluster_plot import plot_clusters
 
-DATASET = "dbscan"
 MODEL = "dbscan"
 
 
@@ -35,7 +34,6 @@ def run():
         labels_pred=model.labels_,
         labels_true=y_true,
         title="DBSCAN 聚类分布",
-        dataset_name=DATASET,
         model_name=MODEL,
     )
 

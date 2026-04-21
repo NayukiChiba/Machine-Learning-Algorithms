@@ -10,7 +10,6 @@ import numpy as np
 from data_generation import hmm_data
 from model_training.probabilistic.hmm import train_model
 
-DATASET = "hmm"
 MODEL = "hmm"
 
 

@@ -11,7 +11,6 @@ from data_generation import em_data
 from model_training.probabilistic.em import train_model
 from result_visualization.cluster_plot import plot_clusters
 
-DATASET = "em"
 MODEL = "gmm"
 
 
@@ -36,7 +35,6 @@ def run():
         labels_pred=labels_pred,
         labels_true=y_true,
         title="EM (GMM) 聚类分布",
-        dataset_name=DATASET,
         model_name=MODEL,
     )
 

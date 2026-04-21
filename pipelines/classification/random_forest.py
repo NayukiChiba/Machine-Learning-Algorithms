@@ -15,7 +15,6 @@ from result_visualization.roc_curve import plot_roc_curve
 from result_visualization.learning_curve import plot_learning_curve
 from result_visualization.feature_importance import plot_feature_importance
 
-DATASET = "random_forest"
 MODEL = "random_forest"
 
 
@@ -41,7 +40,6 @@ def run():
         y_test,
         y_pred,
         title="随机森林 混淆矩阵",
-        dataset_name=DATASET,
         model_name=MODEL,
     )
 
@@ -50,7 +48,6 @@ def run():
         y_test,
         y_scores,
         title="随机森林 ROC 曲线",
-        dataset_name=DATASET,
         model_name=MODEL,
     )
 
@@ -58,7 +55,6 @@ def run():
         model,
         feature_names=feature_names,
         title="随机森林 特征重要性",
-        dataset_name=DATASET,
         model_name=MODEL,
     )
 
@@ -67,7 +63,6 @@ def run():
         X_train.values,
         y_train.values,
         title="随机森林 学习曲线",
-        dataset_name=DATASET,
         model_name=MODEL,
     )
 

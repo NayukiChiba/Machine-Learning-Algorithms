@@ -13,7 +13,6 @@ from model_training.regression.linear_regression import train_model
 from result_visualization.residual_plot import plot_residuals
 from result_visualization.learning_curve import plot_learning_curve
 
-DATASET = "linear_regression"
 MODEL = "linear_regression"
 
 
@@ -38,7 +37,6 @@ def run():
         y_test,
         y_pred,
         title="线性回归 残差分析",
-        dataset_name=DATASET,
         model_name=MODEL,
     )
     plot_learning_curve(
@@ -47,7 +45,6 @@ def run():
         y_train,
         scoring="r2",
         title="线性回归 学习曲线",
-        dataset_name=DATASET,
         model_name=MODEL,
     )
 

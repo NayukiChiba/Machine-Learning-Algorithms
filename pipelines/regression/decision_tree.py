@@ -14,7 +14,6 @@ from result_visualization.residual_plot import plot_residuals
 from result_visualization.learning_curve import plot_learning_curve
 from result_visualization.feature_importance import plot_feature_importance
 
-DATASET = "decision_tree_reg"
 MODEL = "decision_tree"
 
 
@@ -40,14 +39,12 @@ def run():
         y_test,
         y_pred,
         title="决策树回归 残差分析",
-        dataset_name=DATASET,
         model_name=MODEL,
     )
     plot_feature_importance(
         model,
         feature_names=feature_names,
         title="决策树回归 特征重要性",
-        dataset_name=DATASET,
         model_name=MODEL,
     )
     plot_learning_curve(
@@ -56,7 +53,6 @@ def run():
         y_train.values,
         scoring="r2",
         title="决策树回归 学习曲线",
-        dataset_name=DATASET,
         model_name=MODEL,
     )
 

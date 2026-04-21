@@ -11,7 +11,6 @@ from data_generation import lda_data
 from model_training.dimensionality.lda import train_model
 from result_visualization.dimensionality_plot import plot_dimensionality
 
-DATASET = "lda"
 MODEL = "lda"
 
 
@@ -41,7 +40,6 @@ def run():
         y=y,
         explained_variance_ratio=evr,
         title="LDA 降维 (2D)",
-        dataset_name=DATASET,
         model_name=MODEL,
         mode="2d",
     )

@@ -16,7 +16,6 @@ from result_visualization.roc_curve import plot_roc_curve
 from result_visualization.decision_boundary import plot_decision_boundary
 from result_visualization.learning_curve import plot_learning_curve
 
-DATASET = "knn"
 MODEL = "knn"
 
 
@@ -46,9 +45,7 @@ def run():
     y_pred = model.predict(X_test_s)
 
     # 5. 可视化
-    plot_confusion_matrix(
-        y_test, y_pred, title="KNN 混淆矩阵", dataset_name=DATASET, model_name=MODEL
-    )
+    plot_confusion_matrix(y_test, y_pred, title="KNN 混淆矩阵", model_name=MODEL)
 
     if hasattr(model, "predict_proba"):
         y_scores = model.predict_proba(X_test_s)
@@ -56,7 +53,6 @@ def run():
             y_test,
             y_scores,
             title="KNN ROC 曲线",
-            dataset_name=DATASET,
             model_name=MODEL,
         )
 
@@ -69,7 +65,11 @@ def run():
     model_2d = KNeighborsClassifier(n_neighbors=5)
     model_2d.fit(pca.transform(X_train_s), y_train)
     plot_decision_boundary(
-        model_2d, X_2d, y.values, title="KNN 决策边界 (PCA 2D)", dataset_name=DATASET
+        model_2d,
+        X_2d,
+        y.values,
+        title="KNN 决策边界 (PCA 2D)",
+        model_name=MODEL,
     )
 
     # 学习曲线
@@ -80,7 +80,6 @@ def run():
         X_train_s,
         y_train,
         title="KNN 学习曲线",
-        dataset_name=DATASET,
         model_name=MODEL,
     )
 

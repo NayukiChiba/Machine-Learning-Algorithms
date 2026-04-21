@@ -11,7 +11,6 @@ from data_generation import kmeans_data
 from model_training.clustering.kmeans import train_model
 from result_visualization.cluster_plot import plot_clusters
 
-DATASET = "kmeans"
 MODEL = "kmeans"
 
 
@@ -36,7 +35,6 @@ def run():
         labels_true=y_true,
         centers=model.cluster_centers_,
         title="KMeans 聚类分布",
-        dataset_name=DATASET,
         model_name=MODEL,
     )
 

@@ -17,7 +17,6 @@ from result_visualization.roc_curve import plot_roc_curve
 from result_visualization.decision_boundary import plot_decision_boundary
 from result_visualization.learning_curve import plot_learning_curve
 
-DATASET = "naive_bayes"
 MODEL = "naive_bayes"
 
 
@@ -45,7 +44,6 @@ def run():
         y_test,
         y_pred,
         title="朴素贝叶斯 混淆矩阵",
-        dataset_name=DATASET,
         model_name=MODEL,
     )
 
@@ -54,7 +52,6 @@ def run():
         y_test,
         y_scores,
         title="朴素贝叶斯 ROC 曲线",
-        dataset_name=DATASET,
         model_name=MODEL,
     )
 
@@ -69,7 +66,7 @@ def run():
         X_2d,
         y.values,
         title="朴素贝叶斯 决策边界 (PCA 2D)",
-        dataset_name=DATASET,
+        model_name=MODEL,
     )
 
     plot_learning_curve(
@@ -77,7 +74,6 @@ def run():
         X_train_s,
         y_train,
         title="朴素贝叶斯 学习曲线",
-        dataset_name=DATASET,
         model_name=MODEL,
     )
 
