@@ -78,7 +78,7 @@ sns.boxplot(x="day", y="total_bill", hue="sex", data=tips, ax=axes[1])
 ### 结果输出（示例）
 
 ```text
-控制台提示: 图表已保存到 outputs/visualization/viz_03_catplot.png
+控制台提示: 图表已保存到 outputs/visualization/03_catplot.png
 ----------------
 左图展示各天平均账单对比，右图展示分布与离散程度
 ```
@@ -134,7 +134,7 @@ sns.kdeplot(data, fill=True, ax=axes[1])
 ### 结果输出（示例）
 
 ```text
-控制台提示: 图表已保存到 outputs/visualization/viz_03_distplot.png
+控制台提示: 图表已保存到 outputs/visualization/03_distplot.png
 ----------------
 左图为直方图+KDE，右图为独立 KDE 曲线
 ```
@@ -179,7 +179,7 @@ sns.regplot(x="total_bill", y="tip", data=tips, ax=ax)
 ### 结果输出（示例）
 
 ```text
-控制台提示: 图表已保存到 outputs/visualization/viz_03_regplot.png
+控制台提示: 图表已保存到 outputs/visualization/03_regplot.png
 ----------------
 图像内容: 消费总额与小费呈正相关趋势
 ```
@@ -227,7 +227,7 @@ sns.heatmap(data, annot=True, fmt=".2f", cmap="YlOrRd", ax=ax)
 ### 结果输出（示例）
 
 ```text
-控制台提示: 图表已保存到 outputs/visualization/viz_03_heatmap.png
+控制台提示: 图表已保存到 outputs/visualization/03_heatmap.png
 ----------------
 图像内容: 10x10 数值矩阵被映射为颜色强度
 ```
@@ -271,7 +271,7 @@ g.fig.suptitle("Pair Plot", y=1.02)
 ### 结果输出（示例）
 
 ```text
-控制台提示: 图表已保存到 outputs/visualization/viz_03_pairplot.png
+控制台提示: 图表已保存到 outputs/visualization/03_pairplot.png
 ----------------
 图像内容: 多特征成对散点图与对角分布图
 ```
@@ -280,5 +280,4 @@ g.fig.suptitle("Pair Plot", y=1.02)
 
 - `pairplot` 常用于建模前特征筛查与类别可分性判断。
 - 高维场景建议先做降维或特征筛选后再绘制。
-
 

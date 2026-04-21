@@ -86,7 +86,7 @@ df.plot(kind="box", ax=axes[1, 1], title="Box Plot")
 ### 结果输出（示例）
 
 ```text
-控制台提示: 图表已保存到 outputs/visualization/viz_04_df_plot.png
+控制台提示: 图表已保存到 outputs/visualization/04_df_plot.png
 ----------------
 图像内容: 线图、面积图、条形图、箱线图四宫格对比
 ```
@@ -142,7 +142,7 @@ s.plot(kind="hist", bins=20, ax=axes[1], title="Histogram")
 ### 结果输出（示例）
 
 ```text
-控制台提示: 图表已保存到 outputs/visualization/viz_04_series_plot.png
+控制台提示: 图表已保存到 outputs/visualization/04_series_plot.png
 ----------------
 左图展示累计走势，右图展示取值分布
 ```
@@ -203,7 +203,7 @@ df.groupby("Category")["Value"].mean().plot(kind="bar", ax=ax, color=["red", "gr
 ### 结果输出（示例）
 
 ```text
-控制台提示: 图表已保存到 outputs/visualization/viz_04_groupby.png
+控制台提示: 图表已保存到 outputs/visualization/04_groupby.png
 ----------------
 图像内容: A/B/C 三个类别的均值对比柱状图
 ```
@@ -212,5 +212,4 @@ df.groupby("Category")["Value"].mean().plot(kind="bar", ax=ax, color=["red", "gr
 
 - 先聚合后绘图能显著降低噪音干扰。
 - 分组统计应同时配合样本量信息，避免均值误导。
-
 

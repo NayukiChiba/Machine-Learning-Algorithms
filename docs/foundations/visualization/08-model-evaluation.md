@@ -87,7 +87,7 @@ disp.plot(ax=ax, cmap="Blues")
 ### 结果输出（示例）
 
 ```text
-控制台提示: 图表已保存到 outputs/visualization/viz_08_confusion.png
+控制台提示: 图表已保存到 outputs/visualization/08_confusion.png
 ----------------
 图像内容: 2x2 混淆矩阵展示每类预测正确与错误数量
 ```
@@ -156,7 +156,7 @@ ax.plot([0, 1], [0, 1], "r--", label="Random")
 ### 结果输出（示例）
 
 ```text
-控制台提示: 图表已保存到 outputs/visualization/viz_08_roc.png
+控制台提示: 图表已保存到 outputs/visualization/08_roc.png
 ----------------
 图像内容: 模型 ROC 曲线位于随机基线之上并给出 AUC
 ```
@@ -220,7 +220,7 @@ ax.plot(train_sizes, test_mean, "o-", label="Validation")
 ### 结果输出（示例）
 
 ```text
-控制台提示: 图表已保存到 outputs/visualization/viz_08_learning.png
+控制台提示: 图表已保存到 outputs/visualization/08_learning.png
 ----------------
 图像内容: 训练曲线与验证曲线随样本增加逐步收敛
 ```
@@ -229,5 +229,4 @@ ax.plot(train_sizes, test_mean, "o-", label="Validation")
 
 - 学习曲线是判断“继续加数据是否有收益”的核心依据。
 - 曲线分析应与模型复杂度和特征工程一起综合判断。
-
 

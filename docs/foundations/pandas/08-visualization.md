@@ -5,61 +5,84 @@ outline: deep
 
 # Pandas 数据可视化
 
-> 对应脚本：`Basic/Pandas/08_visualization.py`  
-> 运行方式：`python Basic/Pandas/08_visualization.py`（仓库根目录）
-
 ## 本章目标
 
-1. 掌握 Pandas 内置绑定图的基本用法（`df.plot()`）。
-2. 学会绘制折线图、柱状图、直方图、散点图、箱线图、饼图。
-3. 理解 Pandas plot 与 Matplotlib 的关系。
-4. 了解图表保存的基本流程。
+1. 掌握 `df.plot` 的统一入口与 `kind` 参数选择图表类型。
+2. 掌握折线图、柱状图、直方图、散点图、箱线图、饼图的写法。
+3. 了解 Pandas 绘图与 Matplotlib 的关系（底层调用）。
+4. 学会将图保存到文件。
 
-## 重点方法速览
+## 重点方法与概念速览
 
-| 方法 | 图表类型 | 本章位置 |
+| 名称 | 类型 | 作用 |
 |---|---|---|
-| `df.plot()` | 折线图（默认） | `demo_line_plot` |
-| `df.plot(kind="bar")` | 柱状图 | `demo_bar_plot` |
-| `s.plot(kind="hist")` | 直方图 | `demo_histogram` |
-| `df.plot(kind="scatter")` | 散点图 | `demo_scatter` |
-| `df.plot(kind="box")` | 箱线图 | `demo_boxplot` |
-| `s.plot(kind="pie")` | 饼图 | `demo_pie` |
+| `df.plot(...)` | 方法 | 统一绘图入口；默认绘制折线图 |
+| `df.plot.line(...)` / `df.plot(kind='line')` | 方法 | 折线图 |
+| `df.plot.bar(...)` / `df.plot(kind='bar')` | 方法 | 竖柱状图 |
+| `df.plot.barh(...)` | 方法 | 横柱状图 |
+| `df.plot.hist(...)` / `df.plot(kind='hist')` | 方法 | 直方图 |
+| `df.plot.scatter(x, y, ...)` | 方法 | 散点图 |
+| `df.plot.box(...)` | 方法 | 箱线图 |
+| `df.plot.pie(...)` | 方法 | 饼图 |
+| `df.plot.area(...)` | 方法 | 面积图 |
+| `df.plot.kde(...)` / `density()` | 方法 | 核密度估计图 |
+| `df.plot.hexbin(x, y, ...)` | 方法 | 六边形分箱图（高密度散点替代） |
+| `plt.savefig(...)` | 函数 | 保存图像到文件 |
 
-## 前置说明
+## 统一绘图接口
 
-Pandas 的 `plot()` 方法底层调用 Matplotlib，因此：
-- 需要 `import matplotlib.pyplot as plt`。
-- 通过 `ax` 参数可与 Matplotlib 的 `Figure/Axes` 体系集成。
-- 图表保存使用 `plt.savefig()`，交互显示使用 `plt.show()`。
+### `DataFrame.plot`
+
+#### 作用
+
+Pandas 提供的**统一绘图接口**，底层调用 Matplotlib。通过 `kind` 参数切换不同图表。支持链式访问：`df.plot.bar(...)` 等价于 `df.plot(kind='bar', ...)`。
+
+#### 重点方法
+
+```python
+df.plot(x=None, y=None, kind='line', ax=None, subplots=False,
+        sharex=None, sharey=False, layout=None, figsize=None,
+        use_index=True, title=None, grid=None, legend=True,
+        style=None, logx=False, logy=False, loglog=False,
+        xticks=None, yticks=None, xlim=None, ylim=None,
+        rot=None, fontsize=None, colormap=None, table=False,
+        yerr=None, xerr=None, secondary_y=False, sort_columns=False,
+        **kwds)
+```
+
+#### 关键参数
+
+| 参数名       | 本例取值                                     | 说明                                                                 |
+| ------------ | -------------------------------------------- | -------------------------------------------------------------------- |
+| `x` / `y`    | 列名                                         | 指定用哪列作为横 / 纵轴                                              |
+| `kind`       | `'line'`（默认）、`'bar'`、`'barh'`、`'hist'`、`'box'`、`'scatter'`、`'pie'`、`'area'`、`'kde'`、`'hexbin'` | 图表类型 |
+| `ax`         | `None`、Matplotlib Axes                       | 在已有轴上绘制（便于组合布局）                                       |
+| `subplots`   | `False`（默认）、`True`                      | `True` 时每列一个子图                                                |
+| `figsize`    | `None`、`(8, 5)`                              | 画布尺寸（英寸）                                                     |
+| `title`      | `None`、`"Sales"`                             | 图表标题                                                             |
+| `legend`     | `True`（默认）                                | 是否显示图例                                                         |
+| `grid`       | `None`（默认）、`True`                        | 是否显示网格                                                         |
+| `rot`        | `None`（默认）                                | x 轴标签旋转角度                                                     |
+| `colormap`   | `None`、`'viridis'`、`'coolwarm'`             | 颜色映射                                                             |
+| `secondary_y`| `False`（默认）、列名列表                     | 指定某些列用次 y 轴                                                  |
+| `logy` / `logx` | `False`（默认）                           | 坐标轴取对数                                                         |
+
+## 折线图
+
+### `df.plot.line`
+
+#### 作用
+
+按索引绘制折线图，多列自动叠加显示。最适合展示时间序列趋势。
+
+#### 示例代码
 
 ```python
 import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
-```
 
-## 1. 折线图
-
-### 方法重点
-
-- `df.plot()` 默认绘制折线图，每列一条线。
-- 适合展示时间序列趋势。
-- `title` 参数直接设置图标标题。
-
-### 参数速览（本节）
-
-适用 API：`df.plot(ax=None, kind='line', title=None, figsize=None, ...)`
-
-| 参数名 | 本例取值 | 说明 |
-|---|---|---|
-| `ax` | `ax`（Matplotlib Axes 对象） | 绑定到指定画布 |
-| `kind` | `'line'`（默认） | 图表类型 |
-| `title` | `"Sales and Profit Over Time"` | 图表标题 |
-
-### 示例代码
-
-```python
+np.random.seed(42)
 dates = pd.date_range("2023-01-01", periods=30, freq="D")
 df = pd.DataFrame({
     "Sales": np.cumsum(np.random.randn(30)) + 100,
@@ -69,33 +92,42 @@ df = pd.DataFrame({
 fig, ax = plt.subplots(figsize=(10, 5))
 df.plot(ax=ax, title="Sales and Profit Over Time")
 plt.tight_layout()
-plt.savefig("pandas_line_plot.png", dpi=100)
+plt.savefig("outputs/pandas/pandas_line_plot.png", dpi=100)
 plt.close()
 ```
 
-### 理解重点
+#### 输出
 
-- DataFrame 的每一列自动成为一条折线，图例自动生成。
-- `plt.tight_layout()` 避免标签被截断。
-- `plt.close()` 在脚本中释放内存，避免图形叠加。
+```text
+图表已保存到 outputs/pandas/pandas_line_plot.png
+```
 
-## 2. 柱状图
+![Line Plot](../../outputs/pandas/pandas_line_plot.png)
 
-### 方法重点
+## 柱状图
 
-- `kind="bar"` 绘制垂直柱状图，`kind="barh"` 绘制水平柱状图。
-- 索引作为 x 轴标签，适合分类数据对比。
+### `df.plot.bar` / `df.plot.barh`
 
-### 参数速览（本节）
+#### 作用
 
-适用 API：`df.plot(kind="bar", ax=None, title=None, ...)`
+- `bar`：垂直柱状图（x = 类别，y = 数值）
+- `barh`：水平柱状图（适合类别名较长时）
 
-| 参数名 | 本例取值 | 说明 |
-|---|---|---|
-| `kind` | `"bar"` | 垂直柱状图 |
-| `title` | `"Product Sales"` | 图表标题 |
+#### 重点方法
 
-### 示例代码
+```python
+df.plot.bar(x=None, y=None, stacked=False, **kwargs)
+df.plot.barh(x=None, y=None, stacked=False, **kwargs)
+```
+
+#### 参数
+
+| 参数名     | 本例取值        | 说明                                               |
+| ---------- | --------------- | -------------------------------------------------- |
+| `x` / `y`  | 列名            | 横 / 纵轴的列；省略时用索引作 x                    |
+| `stacked`  | `False`（默认） | `True` 时堆叠柱状图                                |
+
+#### 示例代码
 
 ```python
 df = pd.DataFrame({
@@ -106,174 +138,204 @@ df = pd.DataFrame({
 fig, ax = plt.subplots(figsize=(8, 5))
 df.plot(kind="bar", ax=ax, title="Product Sales")
 plt.tight_layout()
-plt.savefig("pandas_bar_plot.png", dpi=100)
+plt.savefig("outputs/pandas/pandas_bar_plot.png", dpi=100)
 plt.close()
 ```
 
-### 理解重点
+#### 输出
 
-- `set_index()` 将分类列设为索引，自动成为 x 轴标签。
-- 多列 DataFrame 会自动绘制分组柱状图。
-- `kind="barh"` 水平柱状图适合标签较长的情况。
+```text
+图表已保存到 outputs/pandas/pandas_bar_plot.png
+```
 
-## 3. 直方图
+![Bar Plot](../../outputs/pandas/pandas_bar_plot.png)
 
-### 方法重点
+## 直方图
 
-- `kind="hist"` 展示数值分布。
-- `bins` 参数控制分组数量，影响分布的粗细粒度。
+### `df.plot.hist`
 
-### 参数速览（本节）
+#### 作用
 
-适用 API：`s.plot(kind="hist", bins=10, ax=None, title=None, ...)`
+绘制数据分布直方图。
 
-| 参数名 | 本例取值 | 说明 |
-|---|---|---|
-| `kind` | `"hist"` | 直方图 |
-| `bins` | `30` | 分组数量 |
-| `title` | `"Distribution"` | 图表标题 |
+#### 重点方法
 
-### 示例代码
+```python
+df.plot.hist(by=None, bins=10, **kwargs)
+```
+
+#### 参数
+
+| 参数名 | 本例取值        | 说明                                                     |
+| ------ | --------------- | -------------------------------------------------------- |
+| `bins` | `10`（默认）、`30` | 区间数量或边界数组                                   |
+| `by`   | `None`          | 分组列；为每组单独画一个直方图                           |
+
+#### 示例代码
 
 ```python
 data = pd.Series(np.random.randn(1000))
-
 fig, ax = plt.subplots(figsize=(8, 5))
 data.plot(kind="hist", bins=30, ax=ax, title="Distribution")
 plt.tight_layout()
-plt.savefig("pandas_histogram.png", dpi=100)
+plt.savefig("outputs/pandas/pandas_histogram.png", dpi=100)
 plt.close()
 ```
 
-### 理解重点
+#### 输出
 
-- `bins` 太少看不到细节，太多噪声过大——通常 20-50 是合理范围。
-- `density=True` 可以将 y 轴改为概率密度。
-- 直方图是数据探索的第一步，快速了解分布是否正态、有无偏斜。
+```text
+图表已保存到 outputs/pandas/pandas_histogram.png
+```
 
-## 4. 散点图
+![Histogram](../../outputs/pandas/pandas_histogram.png)
 
-### 方法重点
+## 散点图
 
-- `kind="scatter"` 展示两个数值变量之间的关系。
-- 需要明确指定 `x` 和 `y` 列名。
+### `df.plot.scatter`
 
-### 参数速览（本节）
+#### 作用
 
-适用 API：`df.plot(kind="scatter", x=..., y=..., ax=None, title=None, ...)`
+绘制两列数据的散点图。可用第三列作颜色 / 大小维度，实现气泡图效果。
 
-| 参数名 | 本例取值 | 说明 |
-|---|---|---|
-| `kind` | `"scatter"` | 散点图 |
-| `x` | `"x"` | x 轴对应的列名 |
-| `y` | `"y"` | y 轴对应的列名 |
-| `title` | `"Scatter Plot"` | 图表标题 |
-
-### 示例代码
+#### 重点方法
 
 ```python
-df = pd.DataFrame({
-    "x": np.random.randn(50),
-    "y": np.random.randn(50),
-})
+df.plot.scatter(x, y, s=None, c=None, colormap=None, **kwargs)
+```
 
+#### 参数
+
+| 参数名     | 本例取值             | 说明                                               |
+| ---------- | -------------------- | -------------------------------------------------- |
+| `x` / `y`  | 列名                 | 必需，分别作为横 / 纵轴                            |
+| `s`        | `None`、标量、列名   | 点大小；可为列名映射为每点不同大小（气泡图）       |
+| `c`        | `None`、颜色、列名   | 点颜色；可为列名映射为渐变色                       |
+| `colormap` | `None`、`'viridis'`  | 颜色映射，与 `c` 配合                              |
+
+#### 示例代码
+
+```python
+df = pd.DataFrame({"x": np.random.randn(50), "y": np.random.randn(50)})
 fig, ax = plt.subplots(figsize=(8, 6))
 df.plot(kind="scatter", x="x", y="y", ax=ax, title="Scatter Plot")
 plt.tight_layout()
-plt.savefig("pandas_scatter.png", dpi=100)
+plt.savefig("outputs/pandas/pandas_scatter.png", dpi=100)
 plt.close()
 ```
 
-### 理解重点
+#### 输出
 
-- 散点图是发现变量相关性的快速工具。
-- `c` 参数可以指定颜色列，`s` 参数可以指定点大小列——实现气泡图效果。
-- 大数据集下点太多会重叠，可用 `alpha=0.5` 增加透明度。
+```text
+图表已保存到 outputs/pandas/pandas_scatter.png
+```
 
-## 5. 箱线图
+![Scatter Plot](../../outputs/pandas/pandas_scatter.png)
 
-### 方法重点
+## 箱线图
 
-- `kind="box"` 展示数据的分位数分布和异常值。
-- 箱体范围为 Q1-Q3（四分位距 IQR），须线延伸至 1.5 倍 IQR。
-- 超出须线的点被标记为异常值。
+### `df.plot.box`
 
-### 参数速览（本节）
+#### 作用
 
-适用 API：`df.plot(kind="box", ax=None, title=None, ...)`
+绘制箱线图（四分位数 + 异常值），用于比较多个分布。
 
-| 参数名 | 本例取值 | 说明 |
-|---|---|---|
-| `kind` | `"box"` | 箱线图 |
-| `title` | `"Box Plot"` | 图表标题 |
+#### 重点方法
 
-### 示例代码
+```python
+df.plot.box(by=None, **kwargs)
+```
+
+#### 参数
+
+| 参数名 | 本例取值 | 说明                         |
+| ------ | -------- | ---------------------------- |
+| `by`   | `None`、列名 | 按此列分组，每组画一个箱线 |
+
+#### 示例代码
 
 ```python
 df = pd.DataFrame({
     "A": np.random.normal(50, 10, 100),
     "B": np.random.normal(55, 15, 100),
 })
-
 fig, ax = plt.subplots(figsize=(8, 6))
 df.plot(kind="box", ax=ax, title="Box Plot")
 plt.tight_layout()
-plt.savefig("pandas_boxplot.png", dpi=100)
+plt.savefig("outputs/pandas/pandas_boxplot.png", dpi=100)
 plt.close()
 ```
 
-### 理解重点
+#### 输出
 
-- 箱线图的五个要素：最小值、Q1、中位数（Q2）、Q3、最大值。
-- 异常值检测的经典方法就是基于 IQR 的箱线图规则。
-- 多列 DataFrame 自动并排绘制，适合对比不同变量的分布。
+```text
+图表已保存到 outputs/pandas/pandas_boxplot.png
+```
 
-## 6. 饼图
+![Box Plot](../../outputs/pandas/pandas_boxplot.png)
 
-### 方法重点
+## 饼图
 
-- `kind="pie"` 展示各部分占总体的比例。
-- `autopct` 参数控制百分比标注的格式。
-- 饼图适合类别较少（3-7 类）的场景。
+### `df.plot.pie`
 
-### 参数速览（本节）
+#### 作用
 
-适用 API：`s.plot(kind="pie", ax=None, autopct=None, title=None, ...)`
+绘制饼图，展示组成比例。只能用于 Series 或 DataFrame 的单列。
 
-| 参数名 | 本例取值 | 说明 |
-|---|---|---|
-| `kind` | `"pie"` | 饼图 |
-| `autopct` | `"%1.1f%%"` | 百分比格式字符串 |
-| `title` | `"Pie Chart"` | 图表标题 |
+#### 重点方法
 
-### 示例代码
+```python
+df.plot.pie(y=None, autopct=None, **kwargs)
+```
+
+#### 参数
+
+| 参数名    | 本例取值       | 说明                                  |
+| --------- | -------------- | ------------------------------------- |
+| `y`       | 列名           | DataFrame 时必须指定列                |
+| `autopct` | `None`、`'%1.1f%%'` | 百分比文本格式                   |
+
+#### 示例代码
 
 ```python
 data = pd.Series([35, 25, 20, 15, 5], index=["A", "B", "C", "D", "E"])
-
 fig, ax = plt.subplots(figsize=(8, 8))
 data.plot(kind="pie", ax=ax, autopct="%1.1f%%", title="Pie Chart")
 ax.set_ylabel("")
 plt.tight_layout()
-plt.savefig("pandas_pie.png", dpi=100)
+plt.savefig("outputs/pandas/pandas_pie.png", dpi=100)
 plt.close()
 ```
 
-### 理解重点
+#### 输出
 
-- `ax.set_ylabel("")` 去除默认的 y 轴标签，饼图不需要。
-- `startangle=90` 可以从 12 点钟位置开始。
-- 类别超过 7 个时，饼图可读性急剧下降，建议改用柱状图。
+```text
+图表已保存到 outputs/pandas/pandas_pie.png
+```
+
+![Pie Chart](../../outputs/pandas/pandas_pie.png)
+
+## 其他常用图
+
+| 图类型 | `kind` 值 | 用途 |
+|---|---|---|
+| 面积图 | `'area'` | 堆叠时间序列占比 |
+| 核密度估计 | `'kde'` / `'density'` | 平滑版直方图 |
+| 六边形分箱图 | `'hexbin'`（需要 `x`/`y`） | 大数据量散点替代 |
 
 ## 常见坑
 
-1. 脚本中不调用 `plt.close()` 会导致多次绘图叠加。
-2. `kind="scatter"` 必须指定 `x` 和 `y` 列名，否则报错。
-3. 中文标签显示为方框——需要设置中文字体：`plt.rcParams['font.sans-serif'] = ['SimHei']`。
-4. 饼图的 `autopct` 格式字符串中 `%%` 表示字面百分号。
+1. `df.plot` **默认画折线**；数据不适合折线（如类别数据）要显式指定 `kind`。
+2. 保存图前**必须先 `plt.tight_layout()`**，否则标签可能被裁剪。
+3. `plt.savefig` 之后要调用 `plt.close()` 关闭图，否则多次循环会积累内存。
+4. 中文标题 / 标签需配置 Matplotlib 字体：`plt.rcParams['font.sans-serif'] = ['SimHei']`。
+5. DataFrame 多列画饼图会报错；饼图只能用单列 Series 或指定 `y='col'`。
+6. 数据规模太大时直接 `plot` 很慢，用 `hexbin` 或 `sample` 降采样后再画。
 
 ## 小结
 
-- Pandas 的 `plot()` 方法是快速数据可视化的入口，底层依赖 Matplotlib。
-- 六种基本图表覆盖了趋势（折线）、对比（柱状）、分布（直方/箱线）、关系（散点）、占比（饼图）等常见需求。
-- 需要精细定制时，应直接使用 Matplotlib 或 Seaborn。
+- Pandas 的 `.plot` 是 Matplotlib 的**便捷封装**，适合快速可视化。
+- 通过 `kind` 切换图表类型，参数几乎与 Matplotlib 同名。
+- 精细控制布局仍需要直接用 Matplotlib（`fig, ax = plt.subplots(...)` 再传 `ax` 给 `plot`）。
+- 复杂统计图（热力图、小提琴图、配对图）建议用 Seaborn 或 Matplotlib 原生接口。
+

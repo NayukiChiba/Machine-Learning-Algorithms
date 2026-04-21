@@ -5,47 +5,55 @@ outline: deep
 
 # Pandas 高级操作与性能优化
 
-> 对应脚本：`Basic/Pandas/09_advanced.py`  
-> 运行方式：`python Basic/Pandas/09_advanced.py`（仓库根目录）
-
 ## 本章目标
 
-1. 掌握透视表（`pivot_table`）和交叉表（`crosstab`）的使用。
-2. 理解多级索引（MultiIndex）的创建与访问。
-3. 认识向量化操作的性能优势。
-4. 学会基本的内存优化技巧。
+1. 掌握透视表 `pivot_table` 与交叉表 `crosstab`。
+2. 理解多级索引 `MultiIndex` 的创建与选择。
+3. 体会向量化 vs 循环的性能差距。
+4. 掌握内存优化技巧（`astype` 降精度、`category` 类型）。
 
-## 重点方法速览
+## 重点方法与概念速览
 
-| 方法 | 作用 | 本章位置 |
+| 名称 | 类型 | 作用 |
 |---|---|---|
-| `pd.pivot_table(...)` | 创建透视表 | `demo_pivot_table` |
-| `pd.crosstab(...)` | 创建交叉表 | `demo_crosstab` |
-| `pd.MultiIndex.from_arrays(...)` | 创建多级索引 | `demo_multi_index` |
-| 向量化运算 `df["A"] + df["B"]` | 避免 Python 循环 | `demo_vectorization` |
-| `s.astype(...)` / `.astype("category")` | 内存优化 | `demo_memory_optimization` |
+| `pd.pivot_table(...)` | 函数 | 透视表（可聚合） |
+| `df.pivot(...)` | 方法 | 简单透视（不聚合，仅重塑） |
+| `pd.crosstab(...)` | 函数 | 交叉频数表 |
+| `pd.MultiIndex.from_arrays(...)` | 类方法 | 从数组创建多级索引 |
+| `pd.MultiIndex.from_tuples(...)` | 类方法 | 从元组创建多级索引 |
+| `df.stack(...)` / `df.unstack(...)` | 方法 | 长宽表相互转换 |
+| `df.melt(...)` | 方法 | 宽表 → 长表 |
+| `df.memory_usage(...)` | 方法 | 查看内存占用 |
+| `astype('category')` | 方法 | 转换为分类类型以节省内存 |
 
-## 1. 透视表
+## 透视表
 
-### 方法重点
+### `pd.pivot_table`
 
-- 透视表类似 Excel 中的"数据透视表"功能。
-- 核心是三要素：行索引（`index`）、列索引（`columns`）、聚合值（`values`）。
-- `aggfunc` 指定聚合方式，默认为 `'mean'`。
+#### 作用
 
-### 参数速览（本节）
+从长表生成透视表，指定行、列、值与聚合函数。类似 Excel 数据透视表。
 
-适用 API：`pd.pivot_table(data, values=None, index=None, columns=None, aggfunc='mean', fill_value=None, margins=False, ...)`
+#### 重点方法
 
-| 参数名 | 本例取值 | 说明 |
-|---|---|---|
-| `data` | `df` | 源 DataFrame |
-| `values` | `"Sales"` | 需要聚合的值列 |
-| `index` | `"Date"` | 行索引（透视后的行） |
-| `columns` | `"Region"` | 列索引（透视后的列） |
-| `aggfunc` | `"sum"` | 聚合函数 |
-| `fill_value` | `None`（默认） | 缺失值填充 |
-| `margins` | `False`（默认） | 是否添加汇总行/列 |
+```python
+pd.pivot_table(data, values=None, index=None, columns=None,
+               aggfunc='mean', fill_value=None, margins=False,
+               dropna=True, margins_name='All', observed=False, sort=True)
+```
+
+#### 参数
+
+| 参数名        | 本例取值                    | 说明                                                                |
+| ------------- | --------------------------- | ------------------------------------------------------------------- |
+| `data`        | DataFrame                   | 源数据                                                              |
+| `values`      | `"Sales"`                   | 被聚合的数值列；`None` 时聚合所有数值列                             |
+| `index`       | `"Date"`、`["A", "B"]`      | 作为行索引的列                                                      |
+| `columns`     | `"Region"`                  | 作为列索引的列                                                      |
+| `aggfunc`     | `'mean'`（默认）、`'sum'`、`['mean', 'sum']`、字典 | 聚合函数                                       |
+| `fill_value`  | `None`（默认）、`0`         | 空值填充                                                            |
+| `margins`     | `False`（默认）、`True`     | 是否添加行 / 列小计（显示"All"）                                    |
+| `margins_name`| `'All'`（默认）              | 小计行 / 列的名字                                                   |
 
 ### 示例代码
 
@@ -59,105 +67,146 @@ df = pd.DataFrame({
     "Quantity": [10, 15, 12, 18],
 })
 
-pivot = pd.pivot_table(
-    df, values="Sales", index="Date",
-    columns="Region", aggfunc="sum",
-)
-print(pivot)
+pivot = pd.pivot_table(df, values="Sales", index="Date",
+                       columns="Region", aggfunc="sum")
+print(f"透视表:\n{pivot}")
+
+# 带小计
+pivot_m = pd.pivot_table(df, values="Sales", index="Date",
+                          columns="Region", aggfunc="sum", margins=True)
+print(f"\n带小计:\n{pivot_m}")
 ```
 
-### 结果输出
+### 输出
 
 ```text
+透视表:
 Region   North  South
 Date
 2023-01    100    150
 2023-02    120    180
+
+带小计:
+Region   North  South  All
+Date
+2023-01    100    150  250
+2023-02    120    180  300
+All        220    330  550
 ```
 
 ### 理解重点
 
-- 透视表将"长格式"数据转为"宽格式"，便于对比分析。
-- `aggfunc` 支持字符串（`'sum'`、`'mean'`）和函数（`np.sum`、自定义）。
-- `margins=True` 会在边缘添加汇总行和汇总列。
+- `pivot_table` 自动聚合（默认 `mean`）；`df.pivot` 只重塑形状，**不聚合**。
+- 当 `index` + `columns` 组合有重复时，必须用 `pivot_table`（会自动聚合）。
+- `margins=True` 添加总计行 / 列，便于总览。
 
-## 2. 交叉表
+## 交叉频数表
 
-### 方法重点
+### `pd.crosstab`
 
-- `crosstab` 是 `pivot_table` 的便捷版本，专门用于频率统计。
-- 默认统计出现次数（计数），无需指定 `values` 和 `aggfunc`。
-- 传入 `normalize=True` 可以得到比例而非计数。
+#### 作用
 
-### 参数速览（本节）
+统计两个或多个分类变量的**频数**（计数）。是 `pivot_table(aggfunc='count')` 的快捷封装。
 
-适用 API：`pd.crosstab(index, columns, values=None, aggfunc=None, normalize=False, margins=False, ...)`
+#### 重点方法
 
-| 参数名 | 本例取值 | 说明 |
-|---|---|---|
-| `index` | `df["Gender"]` | 行维度 |
-| `columns` | `df["City"]` | 列维度 |
-| `normalize` | `False`（默认） | `True` 返回比例 |
-| `margins` | `False`（默认） | 是否添加汇总 |
+```python
+pd.crosstab(index, columns, values=None, rownames=None, colnames=None,
+            aggfunc=None, margins=False, margins_name='All',
+            dropna=True, normalize=False)
+```
+
+#### 参数
+
+| 参数名      | 本例取值                       | 说明                                                             |
+| ----------- | ------------------------------ | ---------------------------------------------------------------- |
+| `index`     | `df["Gender"]`                 | 作为行的 Series                                                  |
+| `columns`   | `df["City"]`                   | 作为列的 Series                                                  |
+| `values`    | `None`（默认）、Series          | 指定时需搭配 `aggfunc`，用于聚合而非计数                         |
+| `aggfunc`   | `None`（默认 count）           | `values` 提供时的聚合函数                                        |
+| `margins`   | `False`（默认）                | 是否添加总计                                                     |
+| `normalize` | `False`（默认）、`True`、`'index'`、`'columns'` | 归一化为频率：整体 / 按行 / 按列                |
 
 ### 示例代码
 
 ```python
+import pandas as pd
+
 df = pd.DataFrame({
     "Gender": ["M", "F", "M", "F", "M", "F"],
-    "City": ["Beijing", "Shanghai", "Beijing",
-             "Beijing", "Shanghai", "Shanghai"],
+    "City": ["Beijing", "Shanghai", "Beijing", "Beijing", "Shanghai", "Shanghai"],
 })
 
-ct = pd.crosstab(df["Gender"], df["City"])
-print(ct)
+print(f"交叉频数:\n{pd.crosstab(df['Gender'], df['City'])}")
+print(f"\n按行归一化:\n{pd.crosstab(df['Gender'], df['City'], normalize='index')}")
 ```
 
-### 结果输出
+### 输出
 
 ```text
+交叉频数:
 City    Beijing  Shanghai
 Gender
 F             1         2
 M             2         1
+
+按行归一化:
+City     Beijing  Shanghai
+Gender
+F       0.333333  0.666667
+M       0.666667  0.333333
 ```
 
-### 理解重点
+## 多级索引
 
-- 交叉表本质是对两个分类变量做频率统计。
-- 等价于 `df.groupby(["Gender", "City"]).size().unstack(fill_value=0)`。
-- 在特征分析中，交叉表常用于观察类别变量之间的关联。
+### `pd.MultiIndex`
 
-## 3. 多级索引
+#### 作用
 
-### 方法重点
+表示二维及以上的**层级索引**。常见于 `groupby(['A', 'B'])` 结果、`pivot_table` 带多列索引、金融时间序列等。
 
-- MultiIndex 允许在行或列上使用多层索引，增加数据维度。
-- 创建方式：`from_arrays`、`from_tuples`、`from_product`。
-- 多级索引的访问使用元组：`df.loc[("A", 1)]`。
+#### 构造方式
 
-### 参数速览（本节）
+```python
+# 从数组
+pd.MultiIndex.from_arrays([['A','A','B','B'], [1, 2, 1, 2]], names=['L', 'N'])
 
-适用 API：`pd.MultiIndex.from_arrays(arrays, names=None)`
+# 从元组
+pd.MultiIndex.from_tuples([('A', 1), ('A', 2), ('B', 1), ('B', 2)])
 
-| 参数名 | 本例取值 | 说明 |
-|---|---|---|
-| `arrays` | `[["A", "A", "B", "B"], [1, 2, 1, 2]]` | 每个数组对应一层索引 |
-| `names` | `["Letter", "Number"]` | 各层的名称 |
+# 从笛卡儿积
+pd.MultiIndex.from_product([['A', 'B'], [1, 2]])
+
+# 从 DataFrame
+pd.MultiIndex.from_frame(df[['col1', 'col2']])
+```
+
+### 索引选择
+
+```python
+df.loc['A']              # 取第一层 'A' 的所有行
+df.loc[('A', 1)]         # 取具体 ('A', 1)
+df.loc[['A', 'B']]       # 取第一层多个值
+df.xs('A', level='Letter')  # 按层级名跨层索引
+```
 
 ### 示例代码
 
 ```python
-arrays = [["A", "A", "B", "B"], [1, 2, 1, 2]]
-index = pd.MultiIndex.from_arrays(arrays, names=["Letter", "Number"])
+import pandas as pd
+
+index = pd.MultiIndex.from_arrays(
+    [["A", "A", "B", "B"], [1, 2, 1, 2]],
+    names=["Letter", "Number"],
+)
 df = pd.DataFrame({"Value": [10, 20, 30, 40]}, index=index)
 
-print(df)
-print(df.loc["A"])
-print(df.loc[("A", 1)])
+print(f"多级索引 DataFrame:\n{df}")
+print(f"\ndf.loc['A']:\n{df.loc['A']}")
+print(f"\ndf.loc[('A', 1)]: {df.loc[('A', 1)].iloc[0]}")
 ```
 
-### 结果输出
+### 输出
 
 ```text
 多级索引 DataFrame:
@@ -167,102 +216,117 @@ A      1          10
        2          20
 B      1          30
        2          40
-----------------
+
 df.loc['A']:
         Value
 Number
 1          10
 2          20
-----------------
-df.loc[('A', 1)]:
-Value    10
-Name: (A, 1), dtype: int64
+
+df.loc[('A', 1)]: 10
 ```
 
 ### 理解重点
 
-- `df.loc["A"]` 选取第一层为 `"A"` 的所有行，返回降级的 DataFrame。
-- `df.loc[("A", 1)]` 精确定位到两层都匹配的行。
-- `reset_index()` 可以将多级索引还原为普通列。
-- `xs` 方法可以在任意层级上选取数据：`df.xs(1, level="Number")`。
+- 多层索引用 **元组** 表示具体位置：`df.loc[('A', 1)]`。
+- `df.reset_index()` 把多级索引变回普通列；`df.set_index(['a', 'b'])` 反之。
+- `df.unstack(level=-1)` 把内层索引变成列（宽表）；`df.stack()` 反之（长表）。
 
-## 4. 向量化操作
+## 长宽表转换
 
-### 方法重点
+### `df.stack` / `df.unstack`
 
-- Pandas 的核心性能优势在于向量化操作——避免 Python 级别的循环。
-- 向量化操作底层调用 NumPy/C 实现，速度比逐行循环快几个数量级。
-- 在可能的情况下，始终优先使用向量化操作。
+- `stack`: 宽 → 长，把**列**移到**内层行索引**
+- `unstack`: 长 → 宽，把**行索引某层**移到**列**
 
-### 参数速览（本节）
+### `df.melt`
 
-| 操作方式 | 示例 | 速度 |
-|---|---|---|
-| Python 循环 | `for i in range(len(df)): result.append(df["A"].iloc[i] + df["B"].iloc[i])` | 慢 |
-| 向量化运算 | `df["A"] + df["B"]` | 快 |
+将宽表转为长表（更常用的"长表化"方式）。
 
-### 示例代码
+#### 重点方法
 
 ```python
-import time
+df.melt(id_vars=None, value_vars=None, var_name=None,
+        value_name='value', col_level=None, ignore_index=True)
+```
+
+| 参数名        | 本例取值                 | 说明                                                  |
+| ------------- | ------------------------ | ----------------------------------------------------- |
+| `id_vars`     | `['id']`                 | 保留为"主键"的列                                      |
+| `value_vars`  | `['A', 'B']`             | 需要"融化"的列；省略则取所有非 `id_vars` 列           |
+| `var_name`    | `None`、`'variable'`      | 变量名列的列名                                        |
+| `value_name`  | `'value'`（默认）         | 值列的列名                                            |
+
+## 性能优化
+
+### 向量化 vs 循环
+
+Pandas 建立在 NumPy 之上，**向量化操作比 Python 循环快数百到数千倍**。
+
+#### 示例代码
+
+```python
+import pandas as pd
 import numpy as np
+import time
 
-n = 100000
-df = pd.DataFrame({
-    "A": np.random.randn(n),
-    "B": np.random.randn(n),
-})
+n = 1_000_000
+df = pd.DataFrame({"A": np.random.randn(n), "B": np.random.randn(n)})
 
-# 循环方式
+# 循环：慢
 start = time.time()
-result1 = []
+result = []
 for i in range(len(df)):
-    result1.append(df["A"].iloc[i] + df["B"].iloc[i])
+    result.append(df["A"].iloc[i] + df["B"].iloc[i])
 loop_time = time.time() - start
 
-# 向量化方式
+# 向量化：快
 start = time.time()
-result2 = df["A"] + df["B"]
+result = df["A"] + df["B"]
 vec_time = time.time() - start
 
-print(f"循环耗时: {loop_time:.4f}秒")
-print(f"向量化耗时: {vec_time:.4f}秒")
-print(f"向量化快了约 {loop_time / vec_time:.1f} 倍")
+print(f"循环: {loop_time:.4f}s")
+print(f"向量化: {vec_time:.4f}s")
+print(f"提速: {loop_time / vec_time:.1f}×")
 ```
 
-### 结果输出（示例）
+#### 输出（示例）
 
 ```text
-循环耗时: 3.2541秒
-向量化耗时: 0.0008秒
-向量化快了约 4068.0 倍
+循环: 25.3412s
+向量化: 0.0041s
+提速: ≈6000×
 ```
 
-### 理解重点
+### 性能最佳实践
 
-- 向量化运算将循环下沉到 C 层，消除了 Python 解释器的逐行开销。
-- `df.apply()` 虽然比裸循环好，但仍然是行级别 Python 调用，不是真正的向量化。
-- 当无法向量化时，考虑使用 `itertuples()`（比 `iterrows()` 快）。
+| 反模式 | 改进写法 |
+|---|---|
+| `for i in range(len(df)): df.iloc[i]` | 向量化 `df["A"] + df["B"]` |
+| `df.apply(fn, axis=1)` | 向量化 / `numpy` 操作（`apply` 慢 10~50×） |
+| 反复在循环中 `append` 到 DataFrame | 先收集到 `list`，最后 `pd.concat` 一次 |
+| 反复读整个 DataFrame | `chunksize` 分块读 |
+| `object` dtype 大数组 | 用 `category` 或明确数值 dtype |
 
-## 5. 内存优化
+## 内存优化
 
-### 方法重点
+### `DataFrame.memory_usage`
 
-- `memory_usage(deep=True)` 精确查看各列内存占用。
-- 降低整数/浮点精度：`int64` → `int8`，`float64` → `float32`。
-- 低基数字符串列转 `category` 类型，可大幅节省内存。
+#### 作用
 
-### 参数速览（本节）
+查看每列占用的字节数。`deep=True` 会精确计算 `object` 列（字符串）的真实占用。
 
-| 优化手段 | 操作 | 效果 |
-|---|---|---|
-| 降低整数精度 | `df["col"].astype("int8")` | 8 字节 → 1 字节 |
-| 降低浮点精度 | `df["col"].astype("float32")` | 8 字节 → 4 字节 |
-| 分类类型 | `df["col"].astype("category")` | 大幅减少重复字符串内存 |
+### 优化策略
+
+1. **整数降精度**：`int64 → int32 → int16 → int8`（根据取值范围）
+2. **浮点降精度**：`float64 → float32`（精度够用时）
+3. **字符串用 `category`**：重复类别很多时节省成倍内存
+4. **稀疏数据**：`SparseDtype`
 
 ### 示例代码
 
 ```python
+import pandas as pd
 import numpy as np
 
 df = pd.DataFrame({
@@ -271,53 +335,52 @@ df = pd.DataFrame({
     "str_col": np.random.choice(["A", "B", "C"], 10000),
 })
 
-print("优化前内存使用:")
-print(df.memory_usage(deep=True))
+print(f"优化前:\n{df.memory_usage(deep=True)}")
 
-# 优化
 df["int_col"] = df["int_col"].astype("int8")
 df["float_col"] = df["float_col"].astype("float32")
 df["str_col"] = df["str_col"].astype("category")
 
-print("\n优化后内存使用:")
-print(df.memory_usage(deep=True))
+print(f"\n优化后:\n{df.memory_usage(deep=True)}")
 ```
 
-### 结果输出（示例）
+### 输出（示例）
 
 ```text
-优化前内存使用:
-Index          128
-int_col      80000
-float_col    80000
-str_col     640000
+优化前:
+Index         132
+int_col     80000
+float_col   80000
+str_col    570000
 dtype: int64
 
-优化后内存使用:
-Index        128
-int_col    10000
-float_col  40000
-str_col    10342
+优化后:
+Index         132
+int_col     10000
+float_col   40000
+str_col     10368
 dtype: int64
 ```
 
 ### 理解重点
 
-- 字符串列是内存杀手——每个元素独立存储 Python 字符串对象。
-- `category` 类型将字符串映射为整数编码，只存储一份字符串表。
-- `int8` 范围是 `-128` 到 `127`，`int16` 范围是 `-32768` 到 `32767`——选择前确认数据范围。
-- `float32` 精度约 7 位有效数字，大部分分析场景足够。
+- `int8` 范围 `[-128, 127]`；`uint8` 范围 `[0, 255]`——根据实际取值选类型。
+- `float32` 约 7 位有效数字；训练数据、特征矩阵几乎都够用。
+- `category` 类型对重复字符串节省**显著**：上例从 570 KB 降到 10 KB。
+- 用 `pd.to_numeric(..., downcast='integer')` 自动选最小整数类型。
 
 ## 常见坑
 
-1. 透视表的 `aggfunc` 默认是 `mean`，忘记改成 `sum` 会导致结果不符预期。
-2. 多级索引的切片语法容易出错，建议用 `xs()` 或 `reset_index()` 后再操作。
-3. 向量化运算中混入 Python 循环会显著拖慢速度。
-4. `astype("int8")` 时数据超出范围会静默溢出，产生错误结果。
+1. `pivot_table` 和 `pivot` **不同**：前者自动聚合可处理重复，后者只重塑。
+2. `crosstab` 默认计数，不是求和；要求和需显式 `values=... , aggfunc='sum'`。
+3. 多级索引选取 `df.loc[('A', 1)]` 的圆括号不能省，`df.loc['A', 1]` 会被解释为行列两个索引。
+4. `apply(axis=1)` 看似方便实则慢，能用向量化 / `np.where` 不要用 `apply`。
+5. `astype('category')` 后再做 `groupby` 需要 `observed=True`，否则会保留所有分类组（空组填 NaN）。
+6. `iterrows` 在大数据上极慢，**永远不要**用它改 DataFrame；需要行级操作用 `apply` 或改写成向量化。
 
 ## 小结
 
-- 透视表和交叉表是数据汇总分析的利器，理解"行-列-值"三要素是关键。
-- 多级索引为复杂数据提供了层次化的组织方式，但会增加操作复杂度。
-- **向量化优先**是 Pandas 性能优化的第一原则。
-- 内存优化的核心思路：降低数值精度 + 字符串转 `category`。
+- `pivot_table` / `crosstab` 是长表 → 宽表的两大工具；前者可聚合，后者专做频数。
+- 多级索引是 `groupby` / `pivot_table` 的自然产物，掌握 `reset_index` / `unstack` 足够应对大多数场景。
+- 向量化 > `apply` > 循环——这是 Pandas 性能的铁律。
+- 大数据表常识：int 降精度、float32、category 三板斧，可节省大半内存。

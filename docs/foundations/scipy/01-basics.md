@@ -5,60 +5,68 @@ outline: deep
 
 # SciPy 概览
 
-> 对应脚本：`Basic/Scipy/01_basics.py`
-> 运行方式：`python Basic/Scipy/01_basics.py`（仓库根目录）
-
 ## 本章目标
 
 1. 了解 SciPy 的整体模块结构与各子模块的功能定位。
 2. 掌握 `scipy.constants` 中物理常数与单位换算的使用。
-3. 认识 `scipy.special` 中常用特殊函数。
-4. 确认 SciPy 与 NumPy 版本信息。
+3. 认识 `scipy.special` 中常用特殊函数（阶乘、组合数、伽马、贝塞尔）。
+4. 会查询 SciPy 与 NumPy 的版本信息。
 
-## 重点方法速览
+## 重点方法与概念速览
 
-| 方法 | 作用 | 本章位置 |
+| 名称 | 类型 | 作用 |
 |---|---|---|
-| `scipy.constants.c` / `.h` / `.k` 等 | 物理常数 | `demo_constants` |
-| `scipy.constants.mile` / `.inch` 等 | 单位换算 | `demo_constants` |
-| `special.factorial(n)` | 阶乘 | `demo_special_functions` |
-| `special.comb(N, k)` | 组合数 | `demo_special_functions` |
-| `special.perm(N, k)` | 排列数 | `demo_special_functions` |
-| `special.gamma(z)` | 伽马函数 | `demo_special_functions` |
-| `special.jv(v, z)` | 贝塞尔函数 | `demo_special_functions` |
+| `scipy.constants.pi` / `.c` / `.h` / `.k` / `.N_A` / `.e` | 常量 | 数学与物理常数 |
+| `scipy.constants.mile` / `.inch` / `.pound` | 常量 | 单位换算因子 |
+| `special.factorial(...)` | 函数 | 阶乘 |
+| `special.comb(...)` | 函数 | 组合数 `C(n, k)` |
+| `special.perm(...)` | 函数 | 排列数 `P(n, k)` |
+| `special.gamma(...)` | 函数 | 伽马函数 Γ(x) |
+| `special.jv(...)` | 函数 | 第一类贝塞尔函数 |
+| `scipy.__version__` | 属性 | SciPy 版本号 |
 
-## 1. SciPy 模块总览
+## SciPy 模块总览
 
-### 方法重点
+### 子模块职能
 
-- SciPy 是基于 NumPy 的科学计算库，包含 10+ 个专业子模块。
-- 每个子模块专注于一个领域：常数、特殊函数、统计、优化、插值、积分、线性代数、信号处理、稀疏矩阵、空间数据。
-- 使用时按需导入子模块（如 `from scipy import optimize`），而非 `import scipy`。
+| 模块               | 功能定位                         |
+| ------------------ | -------------------------------- |
+| `scipy.constants`  | 数学与物理常数、单位换算         |
+| `scipy.special`    | 特殊数学函数（伽马、贝塞尔等）   |
+| `scipy.integrate`  | 数值积分、常微分方程             |
+| `scipy.optimize`   | 优化与求根                       |
+| `scipy.interpolate`| 插值                             |
+| `scipy.linalg`     | 线性代数（比 `numpy.linalg` 更全） |
+| `scipy.signal`     | 信号处理                         |
+| `scipy.sparse`     | 稀疏矩阵                         |
+| `scipy.stats`      | 统计分布与检验                   |
+| `scipy.spatial`    | 空间数据结构（KDTree、凸包等）   |
+| `scipy.fft`        | 快速傅里叶变换                   |
+| `scipy.ndimage`    | 多维图像处理                     |
+| `scipy.io`         | 读写 MATLAB、WAV 等文件          |
 
 ### 示例代码
 
 ```python
 import scipy
 
-# SciPy 子模块一览
 modules = {
-    "constants": "物理常数和单位换算",
-    "special":   "特殊数学函数",
-    "integrate": "数值积分和常微分方程",
-    "optimize":  "优化和求根",
+    "constants":   "物理常数和单位换算",
+    "special":     "特殊数学函数",
+    "integrate":   "数值积分和常微分方程",
+    "optimize":    "优化和求根",
     "interpolate": "插值",
-    "linalg":    "线性代数",
-    "signal":    "信号处理",
-    "sparse":    "稀疏矩阵",
-    "stats":     "统计分布和检验",
-    "spatial":   "空间数据结构和算法",
+    "linalg":      "线性代数",
+    "signal":      "信号处理",
+    "sparse":      "稀疏矩阵",
+    "stats":       "统计分布和检验",
+    "spatial":     "空间数据结构和算法",
 }
-
 for name, desc in modules.items():
     print(f"  scipy.{name:15s} - {desc}")
 ```
 
-### 结果输出
+### 输出
 
 ```text
   scipy.constants       - 物理常数和单位换算
@@ -75,152 +83,141 @@ for name, desc in modules.items():
 
 ### 理解重点
 
-- SciPy 不是一个单一模块，而是子模块集合。
-- 各子模块之间相对独立，可以只学习需要的部分。
-- 后续章节会逐一深入每个子模块。
+- SciPy 不是一个单一模块，而是子模块集合；按需导入：`from scipy import optimize`。
+- 各子模块相对独立，可只学习需要的部分。
+- `scipy.linalg` 比 `numpy.linalg` 更全面，部分函数效率更高。
 
-## 2. 物理常数与单位换算
+## 物理常数与单位换算
 
-### 方法重点
+### `scipy.constants`
 
-- `scipy.constants` 提供 CODATA 推荐的物理常数值。
-- 常数以模块属性形式访问，如 `constants.c`（光速）。
-- 单位换算常量将指定单位转换为 SI 单位（如 `constants.mile` 返回一英里对应的米数）。
+#### 作用
 
-### 参数速览（本节）
+提供标准的数学 / 物理常数以及常用单位到 SI 的换算因子。常数都是**标量浮点数**，可直接参与 NumPy 运算。
 
-适用 API：`scipy.constants` 模块属性（非函数调用）
+#### 常用常数
 
-| 常数名 | 值 | 说明 |
-|---|---|---|
-| `constants.pi` | 3.141593 | 圆周率 |
-| `constants.c` | 299792458.0 | 光速 (m/s) |
-| `constants.h` | 6.626e-34 | 普朗克常数 (J·s) |
-| `constants.k` | 1.381e-23 | 玻尔兹曼常数 (J/K) |
-| `constants.N_A` | 6.022e+23 | 阿伏伽德罗常数 (1/mol) |
-| `constants.e` | 1.602e-19 | 基本电荷 (C) |
+| 名称           | 含义                        | 值（近似）                          |
+| -------------- | --------------------------- | ----------------------------------- |
+| `pi`           | 圆周率 π                    | `3.141592653589793`                 |
+| `e`（模块级）  | 自然对数底 e                | `2.718281828459045`                 |
+| `c`            | 真空光速（m/s）             | `299792458.0`                       |
+| `h`            | 普朗克常数（J·s）           | `6.62607015e-34`                    |
+| `hbar`         | 约化普朗克常数 ħ            | `h / (2π)`                          |
+| `k`            | 玻尔兹曼常数（J/K）         | `1.380649e-23`                      |
+| `N_A`          | 阿伏伽德罗常数              | `6.02214076e23`                     |
+| `G`            | 引力常数                    | `6.67430e-11`                       |
+| `g`            | 重力加速度（m/s²）          | `9.80665`                           |
+| `elementary_charge` / `e` | 基本电荷（C）    | `1.602176634e-19`                   |
+| `R`            | 理想气体常数                | `8.31446261815324`                  |
 
-单位换算（返回对应 SI 值）：
+#### 常用单位换算（到 SI）
 
-| 常量名 | 值 | 说明 |
-|---|---|---|
-| `constants.mile` | 1609.344 | 1 英里 = 1609.344 米 |
-| `constants.inch` | 0.0254 | 1 英寸 = 0.0254 米 |
-| `constants.pound` | 0.45359... | 1 磅 ≈ 0.4536 千克 |
+| 名称     | 含义                    | 值                    |
+| -------- | ----------------------- | --------------------- |
+| `mile`   | 1 英里 = ? 米           | `1609.344`            |
+| `inch`   | 1 英寸 = ? 米           | `0.0254`              |
+| `foot`   | 1 英尺 = ? 米           | `0.3048`              |
+| `pound`  | 1 磅 = ? 千克           | `0.45359237`          |
+| `minute` | 1 分钟 = ? 秒           | `60.0`                |
+| `hour`   | 1 小时 = ? 秒           | `3600.0`              |
+| `degree` | 1 度 = ? 弧度           | `π / 180`             |
 
 ### 示例代码
 
 ```python
 from scipy import constants
 
-# 物理常数
-print(f"圆周率 π = {constants.pi}")
+print(f"π = {constants.pi}")
 print(f"光速 c = {constants.c} m/s")
-print(f"普朗克常数 h = {constants.h} J·s")
-print(f"玻尔兹曼常数 k = {constants.k} J/K")
-print(f"阿伏伽德罗常数 N_A = {constants.N_A} 1/mol")
-print(f"基本电荷 e = {constants.e} C")
+print(f"普朗克 h = {constants.h} J·s")
+print(f"玻尔兹曼 k = {constants.k} J/K")
+print(f"阿伏伽德罗 N_A = {constants.N_A}")
 
-# 单位换算
 print(f"\n1 英里 = {constants.mile} 米")
 print(f"1 英寸 = {constants.inch} 米")
 print(f"1 磅 = {constants.pound} 千克")
 ```
 
-### 结果输出
+### 输出
 
 ```text
-圆周率 π = 3.141592653589793
+π = 3.141592653589793
 光速 c = 299792458.0 m/s
-普朗克常数 h = 6.62607015e-34 J·s
-玻尔兹曼常数 k = 1.380649e-23 J/K
-阿伏伽德罗常数 N_A = 6.02214076e+23 1/mol
-基本电荷 e = 1.602176634e-19 C
+普朗克 h = 6.62607015e-34 J·s
+玻尔兹曼 k = 1.380649e-23 J/K
+阿伏伽德罗 N_A = 6.02214076e+23
 
-1 英里 = 1609.3439999999998 米
+1 英里 = 1609.344 米
 1 英寸 = 0.0254 米
-1 磅 = 0.45359236999999997 千克
+1 磅 = 0.45359237 千克
 ```
 
 ### 理解重点
 
-- 所有常数值均为最新 CODATA 推荐值，可直接用于科学计算。
-- 单位换算：`constants.mile` 的含义是"1 英里等于多少米"，乘以数量即可换算。
-- 不需要手动记忆常数值，直接引用即可保证精度。
+- 全部常数按 **SI 单位制**给出；做物理计算时可直接相乘除。
+- `constants.value('speed of light in vacuum')` 可按 CODATA 标准名查找；`constants.find('planck')` 搜索相关常数。
 
-## 3. 特殊函数
+## 特殊函数
 
-### 方法重点
+### `scipy.special` 速览
 
-- `scipy.special` 包含数学中常用的特殊函数。
-- 阶乘 / 组合 / 排列用于组合数学。
-- 伽马函数是阶乘在实数域的推广：`Γ(n) = (n-1)!`。
-- 贝塞尔函数 `jv(v, z)` 在物理学（波动、热传导）中广泛使用。
-
-### 参数速览（本节）
-
-适用 API（分项）：
-
-1. `special.factorial(n, exact=False)`
-2. `special.comb(N, k, exact=False)`
-3. `special.perm(N, k, exact=False)`
-4. `special.gamma(z)`
-5. `special.jv(v, z)`
-
-| 参数名 | 本例取值 | 说明 |
-|---|---|---|
-| `n` / `N` | `5` / `10` | 整数参数 |
-| `k` | `3` | 选取数量 |
-| `exact` | `False`（默认） | `True` 返回精确整数，`False` 返回浮点数 |
-| `z` | `5` / `0.5` / `1` | 伽马函数或贝塞尔函数的自变量 |
-| `v` | `0` / `1` | 贝塞尔函数的阶数 |
+| 函数                       | 含义                      |
+| -------------------------- | ------------------------- |
+| `factorial(n, exact=True)` | 阶乘 `n!`                 |
+| `comb(N, k, exact=False)`  | 组合数 `C(N, k)`          |
+| `perm(N, k, exact=False)`  | 排列数 `P(N, k)`          |
+| `gamma(z)`                 | 伽马函数 `Γ(z)`           |
+| `gammaln(z)`               | `log(Γ(z))`，避免溢出     |
+| `beta(a, b)`               | 贝塔函数                  |
+| `jv(v, x)`                 | 第一类贝塞尔函数 `J_v(x)` |
+| `yv(v, x)`                 | 第二类贝塞尔函数 `Y_v(x)` |
+| `erf(x)`                   | 误差函数                  |
+| `expit(x)`                 | sigmoid 函数              |
+| `logit(x)`                 | sigmoid 的逆函数          |
+| `softmax(x)`               | softmax 激活              |
 
 ### 示例代码
 
 ```python
 from scipy import special
+import math
 
-# 阶乘、组合、排列
-print(f"5! = {special.factorial(5, exact=True)}")
-print(f"C(10,3) = {special.comb(10, 3, exact=True)}")
-print(f"P(10,3) = {special.perm(10, 3, exact=True)}")
+# 阶乘与组合数
+print(f"5! = {special.factorial(5)}")
+print(f"C(10, 3) = {special.comb(10, 3)}")
+print(f"P(10, 3) = {special.perm(10, 3)}")
 
 # 伽马函数
-print(f"\nΓ(5) = {special.gamma(5)}")     # = 4! = 24
-print(f"Γ(0.5) = {special.gamma(0.5)}")   # = √π
+print(f"Γ(5) (=4!) = {special.gamma(5)}")
+print(f"Γ(0.5) (=√π) = {special.gamma(0.5)}")
+print(f"对比 √π = {math.sqrt(math.pi)}")
 
 # 贝塞尔函数
-print(f"\nJ₀(1) = {special.jv(0, 1):.6f}")
-print(f"J₁(1) = {special.jv(1, 1):.6f}")
+print(f"J_0(1) = {special.jv(0, 1):.6f}")
+print(f"J_1(1) = {special.jv(1, 1):.6f}")
 ```
 
-### 结果输出
+### 输出
 
 ```text
-5! = 120
-C(10,3) = 120
-P(10,3) = 720
-
-Γ(5) = 24.0
-Γ(0.5) = 1.7724538509055159
-
-J₀(1) = 0.765198
-J₁(1) = 0.440051
+5! = 120.0
+C(10, 3) = 120.0
+P(10, 3) = 720.0
+Γ(5) (=4!) = 24.0
+Γ(0.5) (=√π) = 1.7724538509055159
+对比 √π = 1.7724538509055159
+J_0(1) = 0.765198
+J_1(1) = 0.440051
 ```
 
 ### 理解重点
 
-- `factorial(5, exact=True)` 返回 Python 整数 `120`，`exact=False` 返回浮点数 `120.0`。
-- `Γ(n) = (n-1)!`，所以 `Γ(5) = 4! = 24`。
-- `Γ(0.5) = √π ≈ 1.7725`，这是一个经典数学结论。
-- 贝塞尔函数 `jv(v, z)` 中 `v` 是阶数，`z` 是自变量。
+- `factorial(n, exact=True)` 返回整数精确值；默认 `exact=False` 返回浮点。
+- **大数阶乘 / 组合数易溢出**：用 `gammaln` / `comb(..., exact=True)` 更稳。
+- 机器学习中常用：`special.expit` 是 sigmoid 的数值稳定实现、`special.softmax` 避免 overflow。
 
-## 4. 版本信息
-
-### 方法重点
-
-- 通过 `scipy.__version__` 和 `np.__version__` 确认当前环境版本。
-- 版本号在排查 API 行为差异时非常有用。
+## 版本查询
 
 ### 示例代码
 
@@ -232,30 +229,23 @@ print(f"SciPy 版本: {scipy.__version__}")
 print(f"NumPy 版本: {np.__version__}")
 ```
 
-### 结果输出
+### 输出
 
 ```text
-SciPy 版本: 1.15.2
-NumPy 版本: 2.2.4
+SciPy 版本: 1.11.4
+NumPy 版本: 1.26.2
 ```
-
-### 理解重点
-
-- SciPy 依赖 NumPy，版本之间存在兼容性要求。
-- 升级 SciPy 时需要注意 NumPy 最低版本要求。
 
 ## 常见坑
 
-| 坑 | 说明 |
-|---|---|
-| `import scipy` 不会导入子模块 | 必须 `from scipy import optimize` 显式导入 |
-| `factorial` 默认返回浮点数 | 需要精确整数时传 `exact=True` |
-| 常数 `e` 是基本电荷 | 不是自然常数 e ≈ 2.718，自然常数用 `np.e` |
-| 单位换算方向 | `constants.mile` 是"1 英里 = ? 米"，不是反过来 |
+1. 不要写 `import scipy` 然后 `scipy.optimize.minimize(...)`——旧版 `scipy` 顶层不自动导入子模块，需要 `from scipy import optimize`。
+2. `scipy.constants.e` 是**基本电荷**（不是欧拉数 e！），欧拉数用 `math.e` 或 `numpy.e`。
+3. `special.factorial(n)` 对大 `n` 会溢出（尤其 `exact=False` 时），改用 `gammaln(n+1)`。
+4. `special.comb(N, k)` 同理，大数用 `exact=True` 或 `gammaln`。
+5. SciPy 与 NumPy 版本有兼容矩阵，升级前查官方说明。
 
 ## 小结
 
-- SciPy 是 NumPy 之上的科学计算工具箱，由 10+ 个专业子模块组成。
-- `constants` 模块提供物理常数和单位换算，无需手动定义。
-- `special` 模块提供阶乘、组合数、伽马函数、贝塞尔函数等特殊数学函数。
-- 使用 SciPy 前先确认版本，不同版本的 API 可能有变化。
+- SciPy 是**建立在 NumPy 之上**的科学计算生态，按子模块组织。
+- 常数 + 特殊函数是最轻量、最通用的入口，本章作为后续章节的起点。
+- 后续章节会逐一深入核心子模块：`stats`、`optimize`、`interpolate`、`integrate`、`linalg`、`signal`、`sparse`、`spatial`。
