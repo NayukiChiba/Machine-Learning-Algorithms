@@ -19,6 +19,18 @@ from config import DATA_VIS_DISTRIBUTION_DIR as OUTPUT_DIR
 plt.rcParams["font.sans-serif"] = ["SimHei", "Microsoft YaHei"]
 plt.rcParams["axes.unicode_minus"] = False
 
+# 使用更高对比度的离散色板，避免多类别图里“全都偏蓝/偏淡”。
+DISCRETE_COLORS = [
+    "#D81B60",  # 洋红
+    "#1E88E5",  # 蓝
+    "#FFC107",  # 黄
+    "#004D40",  # 深青
+    "#E64A19",  # 橙红
+    "#6A1B9A",  # 紫
+    "#2E7D32",  # 绿
+    "#5D4037",  # 棕
+]
+
 
 # --- 通用绘图工具 ---
 
@@ -57,6 +69,22 @@ def _save_single_dataset_fig(fig: plt.Figure, save_dir: Path, filename: str) -> 
     fig.savefig(filepath, dpi=200, bbox_inches="tight")
     plt.close(fig)
     print(f"数据展示图已保存至: {filepath}")
+
+
+def _get_discrete_colors(n_colors: int) -> list[str]:
+    """
+    返回指定数量的高对比度离散颜色
+
+    Args:
+        n_colors: 需要的颜色数量
+
+    Returns:
+        list[str]: 十六进制颜色列表
+    """
+    colors = []
+    for index in range(n_colors):
+        colors.append(DISCRETE_COLORS[index % len(DISCRETE_COLORS)])
+    return colors
 
 
 def _plot_histograms(
@@ -242,7 +270,7 @@ def plot_class_distribution(
     counts = data[target_col].value_counts().sort_index()
 
     fig, ax = plt.subplots(figsize=(7, 4))
-    colors = sns.color_palette("Set2", len(counts))
+    colors = _get_discrete_colors(len(counts))
     ax.bar(counts.index.astype(str), counts.values, color=colors)
     ax.set_title(title)
     ax.set_xlabel("类别")

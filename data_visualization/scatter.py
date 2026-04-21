@@ -18,6 +18,18 @@ from config import DATA_VIS_SCATTER_DIR as OUTPUT_DIR
 plt.rcParams["font.sans-serif"] = ["SimHei", "Microsoft YaHei"]
 plt.rcParams["axes.unicode_minus"] = False
 
+# 使用高对比度离散色板，避免类别点云颜色过淡、过接近。
+DISCRETE_COLORS = [
+    "#D81B60",  # 洋红
+    "#1E88E5",  # 蓝
+    "#FFC107",  # 黄
+    "#004D40",  # 深青
+    "#E64A19",  # 橙红
+    "#6A1B9A",  # 紫
+    "#2E7D32",  # 绿
+    "#5D4037",  # 棕
+]
+
 
 # --- 通用绘图工具 ---
 
@@ -52,6 +64,22 @@ def _save_single_dataset_fig(fig: plt.Figure, save_dir: Path, filename: str) -> 
     fig.savefig(filepath, dpi=200, bbox_inches="tight")
     plt.close(fig)
     print(f"数据展示图已保存至: {filepath}")
+
+
+def _get_discrete_colors(n_colors: int) -> list[str]:
+    """
+    返回指定数量的高对比度离散颜色
+
+    Args:
+        n_colors: 需要的颜色数量
+
+    Returns:
+        list[str]: 十六进制颜色列表
+    """
+    colors = []
+    for index in range(n_colors):
+        colors.append(DISCRETE_COLORS[index % len(DISCRETE_COLORS)])
+    return colors
 
 
 def _plot_2d_scatter(
@@ -262,7 +290,7 @@ def plot_labeled_2d_scatter(
         filename: 保存文件名
     """
     classes = sorted(data[label_col].unique())
-    colors = sns.color_palette("Set2", len(classes))
+    colors = _get_discrete_colors(len(classes))
 
     fig, ax = plt.subplots(figsize=(8, 6))
     for color, cls in zip(colors, classes, strict=True):
@@ -282,6 +310,48 @@ def plot_labeled_2d_scatter(
     ax.set_xlabel(x_col)
     ax.set_ylabel(y_col)
     ax.legend()
+    ax.grid(True, alpha=0.25)
+
+    fig.tight_layout()
+    _save_single_dataset_fig(fig, save_dir, filename)
+
+
+def plot_raw_2d_scatter(
+    data: DataFrame,
+    x_col: str,
+    y_col: str,
+    save_dir: Path,
+    title: str = "原始散点图",
+    filename: str = "data_raw_scatter.png",
+) -> None:
+    """
+    为单个数据集绘制不带标签着色的二维原始散点图
+
+    这个函数主要服务于无监督学习场景。
+    在聚类任务里，训练阶段本来就看不到真实标签，
+    因此先看一张“纯原始数据散点图”会更符合任务语义。
+
+    Args:
+        data: 数据集
+        x_col: 横轴特征列
+        y_col: 纵轴特征列
+        save_dir: 保存目录
+        title: 图标题
+        filename: 保存文件名
+    """
+    fig, ax = plt.subplots(figsize=(8, 6))
+    ax.scatter(
+        data[x_col],
+        data[y_col],
+        s=28,
+        alpha=0.7,
+        color="#37474F",
+        edgecolors="black",
+        linewidths=0.3,
+    )
+    ax.set_title(title)
+    ax.set_xlabel(x_col)
+    ax.set_ylabel(y_col)
     ax.grid(True, alpha=0.25)
 
     fig.tight_layout()
