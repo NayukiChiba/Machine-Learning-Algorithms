@@ -207,8 +207,6 @@ marimo/_lsp/
 __marimo__/
 
 # Project outputs
-outputs/
-Basic/outputs/
 
 .claude
 .obsidian/
