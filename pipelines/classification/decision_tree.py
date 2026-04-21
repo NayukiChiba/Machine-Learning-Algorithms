@@ -15,6 +15,11 @@ from sklearn.model_selection import train_test_split
 from sklearn.tree import DecisionTreeClassifier
 
 from config import get_model_output_dir
+from data_exploration import (
+    explore_classification_bivariate,
+    explore_classification_multivariate,
+    explore_classification_univariate,
+)
 from data_generation import decision_tree_classification_data
 from data_visualization import (
     plot_class_distribution,
@@ -86,6 +91,29 @@ def show_data_preview(data, feature_names: list[str]) -> None:
         filename="data_correlation.png",
     )
     print("数据展示图生成完成。")
+
+
+def show_data_exploration(data) -> None:
+    """
+    展示决策树训练前的数据探索结果
+
+    数据探索偏“数值统计和结构分析”，
+    它和数据展示图的关系是互补的：
+    1. 数据展示图帮助直观看形状；
+    2. 数据探索帮助直接读统计结论。
+    """
+    explore_classification_univariate(
+        data,
+        dataset_name="DecisionTree",
+    )
+    explore_classification_bivariate(
+        data,
+        dataset_name="DecisionTree",
+    )
+    explore_classification_multivariate(
+        data,
+        dataset_name="DecisionTree",
+    )
 
 
 def show_model_evaluation(
@@ -169,18 +197,25 @@ def run():
     feature_names = list(X.columns)
 
     # ------------------------------------------------------------------
-    # 第 2 步：先做“数据展示”，这一步不参与模型训练
+    # 第 2 步：先做“数据探索”
     # ------------------------------------------------------------------
-    # 这是你刚才特别指出的问题：pipeline 里不能只有结果展示，
-    # 还要先把当前算法的数据展示出来。
-    # 因此这里额外生成三类图：
+    # 这一步以文字统计为主，帮助先从数据层面理解：
+    # 1. 类别是否均衡；
+    # 2. 特征之间是否有关联；
+    # 3. 哪些特征更可能有区分能力。
+    show_data_exploration(data)
+
+    # ------------------------------------------------------------------
+    # 第 3 步：再做“数据展示”，这一步不参与模型训练
+    # ------------------------------------------------------------------
+    # 这里额外生成三类图：
     # 1. 类别分布图：看各类别是否均衡；
     # 2. 原始散点图：看二维空间中的类分布；
     # 3. 相关性热力图：做一个数值层面的补充观察。
     show_data_preview(data, feature_names)
 
     # ------------------------------------------------------------------
-    # 第 3 步：划分训练集 / 测试集
+    # 第 4 步：划分训练集 / 测试集
     # ------------------------------------------------------------------
     # stratify=y 的目的是让训练集和测试集都尽量保持原始类别比例，
     # 避免因为切分随机性导致某一类样本在测试集中过少。
@@ -189,14 +224,14 @@ def run():
     )
 
     # ------------------------------------------------------------------
-    # 第 4 步：训练主模型
+    # 第 5 步：训练主模型
     # ------------------------------------------------------------------
     # 这里训练出来的 model 是整条流水线真正的“最终决策树模型”。
     # 后面的特征重要性、结构图、规则展示、决策边界，都应该尽量围绕它展开。
     model = train_model(X_train.values, y_train.values)
 
     # ------------------------------------------------------------------
-    # 第 5 步：在测试集上做预测
+    # 第 6 步：在测试集上做预测
     # ------------------------------------------------------------------
     # y_pred 用于离散类别评估；
     # y_scores 用于 ROC / AUC 这类基于概率的评估。
@@ -204,7 +239,7 @@ def run():
     y_scores = model.predict_proba(X_test.values)
 
     # ------------------------------------------------------------------
-    # 第 6 步：生成模型评估图
+    # 第 7 步：生成模型评估图
     # ------------------------------------------------------------------
     # 这些图回答的是不同层面的问题：
     # 1. 混淆矩阵：各类别是否被分错；
@@ -258,7 +293,7 @@ def run():
     )
 
     # ------------------------------------------------------------------
-    # 第 7 步：在终端直接展示关键评估结果
+    # 第 8 步：在终端直接展示关键评估结果
     # ------------------------------------------------------------------
     # 这一步不是写额外“报告文件”，而是让命令行执行结束时，
     # 用户可以立即看到：
