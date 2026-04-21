@@ -66,15 +66,19 @@ class ClassificationData:
     # 特征数量
     rf_n_features: int = 10
     # 有用的特征数量
-    rf_n_informative: int = 5
+    rf_n_informative: int = 6
     # 无用的特征数量
-    rf_n_redundant: int = 3
+    rf_n_redundant: int = 2
+    # 重复特征数量
+    rf_n_repeated: int = 0
     # 类别数量
     rf_n_classes: int = 3
+    # 每个类别的簇数量
+    rf_n_clusters_per_class: int = 1
     # 类别之间的距离
-    rf_class_sep: float = 0.8
+    rf_class_sep: float = 1.3
     # 噪声程度
-    rf_flip_y: float = 0.05
+    rf_flip_y: float = 0.02
 
     # 二分类数据集, 用于LogisticRegression
     def logistic_regression(self) -> DataFrame:
@@ -174,19 +178,31 @@ class ClassificationData:
 
     def random_forest(self) -> DataFrame:
         """
-        高维、多噪声、多分类数据
-        特点: 10 个特征(5 有效 + 3 冗余 + 2 纯噪声), 3 个类别
-        体现随机森林相对单棵决策树的抗噪优势
+        适合随机森林的高维多分类数据
+
+        设计目标：
+        1. 仍然保留高维表格数据的特点；
+        2. 仍然保留一定的冗余和少量噪声；
+        3. 但不再把类别间隔压得过小，也不再加入过多标签噪声；
+        4. 让随机森林能够稳定体现出对非线性、多特征分类任务的优势。
+
+        当前配置的特点：
+        - 10 个特征 = 6 个有效 + 2 个冗余 + 2 个纯噪声
+        - 3 个类别
+        - 每个类别只保留 1 个簇，避免类别内部结构过碎
+        - 类别间隔适中，既不是极端容易，也不会被故意做得过难
 
         Returns:
-            data(DataFrame): 适合RandomForest的blob数据
+            data(DataFrame): 适合 RandomForest 的多分类数据
         """
         X, y = make_classification(
             n_samples=self.n_samples,
             n_features=self.rf_n_features,
             n_informative=self.rf_n_informative,
             n_redundant=self.rf_n_redundant,
+            n_repeated=self.rf_n_repeated,
             n_classes=self.rf_n_classes,
+            n_clusters_per_class=self.rf_n_clusters_per_class,
             class_sep=self.rf_class_sep,
             flip_y=self.rf_flip_y,
             random_state=self.random_state,
