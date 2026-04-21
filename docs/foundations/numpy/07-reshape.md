@@ -5,271 +5,363 @@ outline: deep
 
 # NumPy 变形
 
-> 对应脚本：`Basic/Numpy/07_reshape.py`  
-> 运行方式：`python Basic/Numpy/07_reshape.py`
-
 ## 本章目标
 
-1. 掌握 `reshape`、`flatten`、`ravel` 的区别。
-2. 掌握维度调整工具：`transpose`、`squeeze`、`expand_dims`、`newaxis`。
-3. 理解“视图 vs 副本”对数据修改的影响。
+1. 掌握 `reshape` 的规则与 `-1` 自动推导维度。
+2. 区分 `flatten` 与 `ravel`（副本 vs 视图）。
+3. 掌握 `transpose` 对多维数组的轴重排。
+4. 掌握 `squeeze` / `expand_dims` / `np.newaxis` 对维度长度的增删。
+5. 理解 `np.resize` 与 `reshape` 的差别。
 
-## 重点方法速览
+## 重点方法与概念速览
 
-| 方法 | 作用 |
-|---|---|
-| `arr.reshape` | 改变形状（元素总数不变） |
-| `arr.flatten` | 展平为一维，返回副本 |
-| `arr.ravel` | 展平为一维，尽量返回视图 |
-| `arr.T` / `np.transpose` | 维度重排/转置 |
-| `np.squeeze` | 去掉长度为 1 的维度 |
-| `np.expand_dims` / `np.newaxis` | 增加长度为 1 的维度 |
-| `np.resize` | 调整大小，不足会循环填充 |
-
-## 1. `reshape` 基础
-
-### 参数速览（本节）
-
-适用 API：`arr.reshape(shape, order='C')`
-
-| 参数名 | 本例取值 | 说明 |
+| 名称 | 类型 | 作用 |
 |---|---|---|
-| `shape` | `(3,4)`、`(4,3)`、`(2,-1)`、`(-1,6)` | 指定目标形状，`-1` 由 NumPy 自动推导 |
-| `order` | `'C'`（默认） | 按行优先顺序解释内存 |
-| 元素总数约束 | `12 -> 12` | 变形前后元素总数必须一致，且 `-1` 最多一次 |
-### 示例代码
+| `arr.reshape(...)` | 方法 | 改变形状，元素总数不变 |
+| `arr.flatten(...)` | 方法 | 展平为一维，**返回副本** |
+| `arr.ravel(...)` | 方法 | 展平为一维，**尽量返回视图** |
+| `arr.T` | 属性 | 转置视图（反转所有维度） |
+| `np.transpose(...)` | 函数 | 转置，可指定轴顺序 |
+| `np.squeeze(...)` | 函数 | 删除长度为 1 的维度 |
+| `np.expand_dims(...)` | 函数 | 在指定轴插入长度为 1 的维度 |
+| `np.newaxis` | 常量 | 等价于 `None`，在切片中插入新轴 |
+| `np.resize(...)` | 函数 | 调整大小，可改变元素总数（不足时循环填充） |
+
+## 形状变换
+
+### `np.ndarray.reshape`
+
+#### 作用
+
+改变数组形状而**不改变元素总数**。返回视图（内存连续时）或副本。一个维度可写 `-1` 让 NumPy 自动推导。
+
+#### 重点方法
+
+```python
+arr.reshape(*shape, order='C')
+# 或传元组：
+arr.reshape(shape, order='C')
+```
+
+#### 参数
+
+| 参数名  | 本例取值                                | 说明                                                                   |
+| ------- | --------------------------------------- | ---------------------------------------------------------------------- |
+| `shape` | `(3, 4)`、`(4, 3)`、`(2, -1)`、`(-1, 6)` | 目标形状，可用 `-1` 自动推导一个维度；元素总数必须一致                 |
+| `order` | `'C'`（默认）                           | 读写顺序：`'C'` 行优先、`'F'` 列优先、`'A'` 任意、`'K'` 保持内存顺序 |
+
+#### 示例代码
 
 ```python
 import numpy as np
 
 arr = np.arange(1, 13)
-print(arr.reshape(3, 4))
-print(arr.reshape(4, 3))
-print(arr.reshape(2, -1))
-print(arr.reshape(-1, 6))
+print(f"原数组: {arr}, shape={arr.shape}")
+print(f"reshape(3, 4):\n{arr.reshape(3, 4)}")
+print(f"reshape(4, 3):\n{arr.reshape(4, 3)}")
+print(f"reshape(2, -1):\n{arr.reshape(2, -1)}")
+print(f"reshape(-1, 6):\n{arr.reshape(-1, 6)}")
 ```
 
-### 结果输出
+#### 输出
 
 ```text
+原数组: [ 1  2  3  4  5  6  7  8  9 10 11 12], shape=(12,)
+reshape(3, 4):
 [[ 1  2  3  4]
  [ 5  6  7  8]
  [ 9 10 11 12]]
-----------------
+reshape(4, 3):
 [[ 1  2  3]
  [ 4  5  6]
  [ 7  8  9]
  [10 11 12]]
-----------------
+reshape(2, -1):
 [[ 1  2  3  4  5  6]
  [ 7  8  9 10 11 12]]
-----------------
+reshape(-1, 6):
 [[ 1  2  3  4  5  6]
  [ 7  8  9 10 11 12]]
 ```
 
-### 理解重点
+#### 理解重点
 
-- 仅允许一个 `-1`，由 NumPy 自动推导该维长度。
-- 变形前后元素总数必须一致。
+- `-1` 最多出现**一次**；由 NumPy 根据其余维度推导。
+- 变形前后元素总数必须相同，否则抛 `ValueError`。
+- `reshape` 通常返回**视图**，修改结果会影响原数组。
 
-## 2. `flatten` 与 `ravel`
+## 展平
 
-### 参数速览（本节）
+### `np.ndarray.flatten`
 
-适用 API（分项）：
+#### 作用
 
-1. `arr.flatten(order='C')`
-2. `arr.ravel(order='C')`
+将数组展平为一维，**总是返回副本**，修改不会影响原数组。
 
-| 参数名 | 本例取值 | 说明 |
-|---|---|---|
-| `order`（`flatten`） | `'C'`（默认） | 展平为一维并返回副本 |
-| `order`（`ravel`） | `'C'`（默认） | 展平为一维，尽量返回视图 |
-| 内存共享语义 | `flatten: 否`、`ravel: 通常是` | 决定修改结果是否影响原数组 |
+#### 重点方法
+
+```python
+arr.flatten(order='C')
+```
+
+#### 参数
+
+| 参数名  | 本例取值      | 说明                                                   |
+| ------- | ------------- | ------------------------------------------------------ |
+| `order` | `'C'`（默认） | 读取顺序：`'C'` 行优先、`'F'` 列优先、`'A'`、`'K'`      |
+
+### `np.ndarray.ravel`
+
+#### 作用
+
+将数组展平为一维，**尽量返回视图**（若内存连续）。修改结果可能影响原数组。
+
+#### 重点方法
+
+```python
+arr.ravel(order='C')
+```
+
+#### 参数
+
+| 参数名  | 本例取值      | 说明                                                   |
+| ------- | ------------- | ------------------------------------------------------ |
+| `order` | `'C'`（默认） | 读取顺序，同 `flatten`                                 |
+
 ### 示例代码
 
 ```python
 import numpy as np
 
 arr = np.array([[1, 2, 3], [4, 5, 6]])
-flat = arr.flatten()
-rav = arr.ravel()
 
-flat[0] = 999
-rav[1] = 888
-print(arr)
+flat = arr.flatten()
+flat[0] = 999  # 不影响原数组
+
+rav = arr.ravel()
+rav[1] = 888   # 影响原数组（视图）
+
+print(f"flatten 修改后，原数组:\n{arr}")
 ```
 
-### 结果输出
+### 输出
 
 ```text
+flatten 修改后，原数组:
 [[  1 888   3]
  [  4   5   6]]
 ```
 
 ### 理解重点
 
-- `flatten` 修改不影响原数组（副本）。
-- `ravel` 修改通常会影响原数组（视图，若内存连续）。
+- `flatten` = "一定是副本"，安全但有拷贝开销。
+- `ravel` = "能视图就视图"，高效但可能影响原数组。
+- 需要确定语义时优先 `flatten`；注重性能且不写结果时用 `ravel`。
 
-## 3. 转置与轴重排
+## 转置与轴重排
 
-### 参数速览（本节）
+### `np.ndarray.T`
 
-适用 API/属性（分项）：
+#### 作用
 
-1. `arr.T`
-2. `np.transpose(a, axes=None)`
+返回数组转置视图，等价于反转所有轴。对二维就是常规的行列交换。
 
-| 参数名 | 本例取值 | 说明 |
-|---|---|---|
-| 返回值（`arr.T`） | `ndarray` | 返回转置后的数组视图 |
-| `a` | `arr_3d` 形状 `(2,3,4)` | 对多维数组做轴重排 |
-| `axes` | `None`、`(1,0,2)` | `None` 时反转轴顺序；元组时按指定顺序重排 |
+### `np.transpose`
+
+#### 作用
+
+比 `.T` 更灵活，可通过 `axes` 参数指定任意轴的排列顺序，适合多维张量。
+
+#### 重点方法
+
+```python
+np.transpose(a, axes=None)
+```
+
+#### 参数
+
+| 参数名 | 本例取值          | 说明                                                              |
+| ------ | ----------------- | ----------------------------------------------------------------- |
+| `a`    | 任意形状数组      | 输入数组                                                          |
+| `axes` | `None`、`(1,0,2)` | 新的轴顺序；`None` 时反转所有轴；元组长度需等于 `a.ndim`          |
+
 ### 示例代码
 
 ```python
 import numpy as np
 
 arr = np.array([[1, 2, 3], [4, 5, 6]])
-print(arr.T)
+print(f"arr.T:\n{arr.T}")
 
 arr_3d = np.arange(24).reshape(2, 3, 4)
-print(arr_3d.T.shape)
-print(np.transpose(arr_3d, axes=(1, 0, 2)).shape)
+print(f"arr_3d.shape: {arr_3d.shape}")
+print(f"arr_3d.T.shape: {arr_3d.T.shape}")
+print(f"transpose((1,0,2)).shape: {np.transpose(arr_3d, axes=(1, 0, 2)).shape}")
 ```
 
-### 结果输出
+### 输出
 
 ```text
+arr.T:
 [[1 4]
  [2 5]
  [3 6]]
-----------------
-(4, 3, 2)
-----------------
-(3, 2, 4)
+arr_3d.shape: (2, 3, 4)
+arr_3d.T.shape: (4, 3, 2)
+transpose((1,0,2)).shape: (3, 2, 4)
 ```
 
-## 4. `squeeze` 与 `expand_dims`
+## 维度增删
 
-### 参数速览（本节）
+### `np.squeeze`
 
-适用 API（分项）：
+#### 作用
 
-1. `np.squeeze(a, axis=None)`
-2. `np.expand_dims(a, axis)`
+删除数组中**所有长度为 1 的维度**，或指定轴删除。常用于从单样本维度恢复到扁平形状。
 
-| 参数名 | 本例取值 | 说明 |
-|---|---|---|
-| `a`（`squeeze`） | 形状 `(1,1,3)` 的数组 | 删除长度为 1 的轴 |
-| `axis`（`squeeze`） | `None`（默认） | 删除所有长度为 1 的轴 |
-| `a`（`expand_dims`） | `v=[1,2,3]` | 在指定位置插入长度为 1 的维度 |
-| `axis`（`expand_dims`） | `0`、`1` | 生成 `(1,3)` 与 `(3,1)` 两种形状 |
+#### 重点方法
+
+```python
+np.squeeze(a, axis=None)
+```
+
+#### 参数
+
+| 参数名 | 本例取值       | 说明                                                         |
+| ------ | -------------- | ------------------------------------------------------------ |
+| `a`    | 形状 `(1,1,3)` | 输入数组                                                     |
+| `axis` | `None`（默认） | `None` 删除所有长度为 1 的轴；指定 `int` 或元组只删选中的轴 |
+
+### `np.expand_dims`
+
+#### 作用
+
+在指定位置**插入一个长度为 1 的维度**，常用于给一维向量增加 batch / channel 维。
+
+#### 重点方法
+
+```python
+np.expand_dims(a, axis)
+```
+
+#### 参数
+
+| 参数名 | 本例取值     | 说明                                                         |
+| ------ | ------------ | ------------------------------------------------------------ |
+| `a`    | `[1, 2, 3]`  | 输入数组                                                     |
+| `axis` | `0`、`1`、`-1` | 插入新维度的位置（支持负索引）                               |
+
+### `np.newaxis`
+
+#### 作用
+
+一个**常量**（实际是 `None`），在切片中使用可在指定位置插入长度为 1 的维度。是 `expand_dims` 的语法糖。
+
+#### 语法
+
+```python
+arr[np.newaxis, :]   # 在开头插入新轴
+arr[:, np.newaxis]   # 在末尾插入新轴
+arr[np.newaxis, :, np.newaxis]  # 可同时插入多处
+```
+
 ### 示例代码
 
 ```python
 import numpy as np
 
+# squeeze
 arr = np.array([[[1, 2, 3]]])
-print(arr.shape)
-print(np.squeeze(arr).shape)
+print(f"原形状: {arr.shape}")
+print(f"squeeze 后: {np.squeeze(arr).shape}")
 
+# expand_dims
 v = np.array([1, 2, 3])
-print(np.expand_dims(v, axis=0).shape)
-print(np.expand_dims(v, axis=1).shape)
+print(f"原 v.shape: {v.shape}")
+print(f"expand_dims(axis=0).shape: {np.expand_dims(v, axis=0).shape}")
+print(f"expand_dims(axis=1).shape: {np.expand_dims(v, axis=1).shape}")
+
+# newaxis
+print(f"v[np.newaxis, :].shape: {v[np.newaxis, :].shape}")
+print(f"v[:, np.newaxis].shape: {v[:, np.newaxis].shape}")
 ```
 
-### 结果输出
+### 输出
 
 ```text
-(1, 1, 3)
-----------------
-(3,)
-----------------
-(1, 3)
-----------------
-(3, 1)
+原形状: (1, 1, 3)
+squeeze 后: (3,)
+原 v.shape: (3,)
+expand_dims(axis=0).shape: (1, 3)
+expand_dims(axis=1).shape: (3, 1)
+v[np.newaxis, :].shape: (1, 3)
+v[:, np.newaxis].shape: (3, 1)
 ```
 
-## 5. `np.resize`
+### 理解重点
 
-### 参数速览（本节）
+- `(n,)`（一维）、`(1, n)`（行向量）、`(n, 1)`（列向量）在广播中语义不同，要按需转换。
+- 写模型输入批次维度时，`x[np.newaxis, ...]` 是常用写法。
 
-适用 API：`np.resize(a, new_shape)`
+## 改变元素总数
 
-| 参数名 | 本例取值 | 说明 |
-|---|---|---|
-| `a` | `[1,2,3,4]` | 输入数组 |
-| `new_shape` | `(2,4)`、`(3,3)` | 指定目标形状，可改变总元素个数 |
-| 填充规则 | 元素循环重复 | 元素不足时按原顺序重复填充 |
-### 示例代码
+### `np.resize`
+
+#### 作用
+
+与 `reshape` 不同，`np.resize` **可以改变元素总数**。空间不足时会**循环重复**原数组元素填充；空间多余时截断。
+
+#### 重点方法
+
+```python
+np.resize(a, new_shape)
+```
+
+#### 参数
+
+| 参数名      | 本例取值          | 说明                                       |
+| ----------- | ----------------- | ------------------------------------------ |
+| `a`         | `[1, 2, 3, 4]`    | 输入数组                                   |
+| `new_shape` | `(2, 4)`、`(3, 3)`| 目标形状，可大于或小于原元素总数           |
+
+#### 示例代码
 
 ```python
 import numpy as np
 
 arr = np.array([1, 2, 3, 4])
-print(np.resize(arr, (2, 4)))
-print(np.resize(arr, (3, 3)))
+print(f"resize((2, 4)):\n{np.resize(arr, (2, 4))}")
+print(f"resize((3, 3)):\n{np.resize(arr, (3, 3))}")
 ```
 
-### 结果输出
+#### 输出
 
 ```text
+resize((2, 4)):
 [[1 2 3 4]
  [1 2 3 4]]
-----------------
+resize((3, 3)):
 [[1 2 3]
  [4 1 2]
  [3 4 1]]
 ```
 
-### 理解重点
+#### 理解重点
 
-- 与 `reshape` 不同，`resize` 可改变元素总数。
-- 不够时会重复原数组元素填充。
-
-## 6. `np.newaxis`
-
-### 参数速览（本节）
-
-适用语法（分项）：
-
-1. `arr[np.newaxis, :]`
-2. `arr[:, np.newaxis]`
-3. `np.newaxis`
-
-| 参数名 | 本例取值 | 说明 |
-|---|---|---|
-| `np.newaxis` 插入位置（前置） | 第 0 轴 | 把 `(n,)` 扩展为 `(1,n)` |
-| `np.newaxis` 插入位置（后置） | 第 1 轴 | 把 `(n,)` 扩展为 `(n,1)` |
-| 等价对象 | `None` | 语义上用于显式增加长度为 1 的维度 |
-### 示例代码
-
-```python
-import numpy as np
-
-arr = np.array([1, 2, 3, 4, 5])
-print(arr[np.newaxis, :].shape)
-print(arr[:, np.newaxis].shape)
-```
-
-### 结果输出
-
-```text
-(1, 5)
-----------------
-(5, 1)
-```
+- `reshape` 元素总数不变；`resize` 可变（循环填充）。
+- `arr.resize(shape)`（方法形式）是**原地**修改且不循环；与 `np.resize(arr, shape)`（函数形式）行为不同，易混淆。
 
 ## 常见坑
 
-1. `reshape` 失败通常是元素总数不匹配。
-2. `ravel` 可能返回拷贝，也可能返回视图，依赖内存布局。
-3. 写模型输入时，列向量 `(n, 1)` 与行向量 `(1, n)` 语义不同。
+1. `reshape` 失败通常是因为元素总数不匹配。
+2. `ravel` 返回视图还是副本取决于内存布局，**不要假设**；需要确定独立数据用 `flatten` 或 `.copy()`。
+3. 列向量 `(n, 1)` 与行向量 `(1, n)` 在广播和矩阵乘法中语义完全不同，不要省 `np.newaxis`。
+4. `np.resize` 和 `arr.resize` 行为不同：函数形式会循环填充，方法形式会原地填 0。
+5. `transpose(axes=...)` 中 `axes` 长度必须等于数组维度，否则抛 `ValueError`。
 
 ## 小结
 
-- 变形本质是“组织数据”的能力。
-- 熟练使用维度操作，能显著简化后续广播和矩阵计算。
+- 变形操作是"组织数据形状"的基础能力。
+- **总数不变**用 `reshape`；**总数可变**用 `resize`。
+- **只插入 / 删除长度 1 的维度**优先 `np.newaxis` / `squeeze`，比 `reshape` 更语义化。
+- 牢记"副本 vs 视图"：`flatten` 是副本，`ravel` / `reshape` 通常是视图。

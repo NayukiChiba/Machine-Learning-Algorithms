@@ -83,7 +83,7 @@ for ax, col in zip(axes, df.columns):
 ### 结果输出（示例）
 
 ```text
-控制台提示: 图表已保存到 outputs/visualization/viz_05_distribution.png
+控制台提示: 图表已保存到 outputs/visualization/05_distribution.png
 ----------------
 图像内容: age、income、score 三个变量的分布与均值/中位数标记
 ```
@@ -147,7 +147,7 @@ sns.heatmap(corr, annot=True, cmap="coolwarm", center=0, ax=ax)
 ### 结果输出（示例）
 
 ```text
-控制台提示: 图表已保存到 outputs/visualization/viz_05_correlation.png
+控制台提示: 图表已保存到 outputs/visualization/05_correlation.png
 ----------------
 图像内容: x 与 y_strong 相关性最高，x 与 y_none 接近无关
 ```
@@ -216,7 +216,7 @@ sns.boxplot(x="category", y="value", data=df, ax=axes[1])
 ### 结果输出（示例）
 
 ```text
-控制台提示: 图表已保存到 outputs/visualization/viz_05_categorical.png
+控制台提示: 图表已保存到 outputs/visualization/05_categorical.png
 ----------------
 左图展示类别频数，右图展示各类别数值分布与离群点
 ```
@@ -225,5 +225,4 @@ sns.boxplot(x="category", y="value", data=df, ax=axes[1])
 
 - 类别不平衡会直接影响模型评估，需在 EDA 阶段尽早识别。
 - 同一类别中离散度明显更大时，建议追查数据来源和采样口径。
-
 

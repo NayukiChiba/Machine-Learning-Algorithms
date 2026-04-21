@@ -58,7 +58,7 @@ outline: deep
 
 | 参数名 | 本例取值 | 说明 |
 |---|---|---|
-| `fname` | `output_dir / 'viz_10_professional.png'` | 输出文件路径 |
+| `fname` | `output_dir / '10_professional.png'` | 输出文件路径 |
 | `dpi` | `150` | 分辨率 |
 | 返回值 | `None` | 写出图像文件 |
 
@@ -81,7 +81,7 @@ ax.legend(frameon=True, fancybox=True, shadow=True)
 ### 结果输出（示例）
 
 ```text
-控制台提示: 图表已保存到 outputs/visualization/viz_10_professional.png
+控制台提示: 图表已保存到 outputs/visualization/10_professional.png
 ----------------
 图像内容: 统一网格风格、标题层级和图例外观
 ```
@@ -137,7 +137,7 @@ ax5 = fig.add_subplot(gs[1, 2])
 ### 结果输出（示例）
 
 ```text
-控制台提示: 图表已保存到 outputs/visualization/viz_10_multipanel.png
+控制台提示: 图表已保存到 outputs/visualization/10_multipanel.png
 ----------------
 图像内容: 上方主图 + 右上分布图 + 下方三图组合布局
 ```
@@ -247,5 +247,4 @@ colors = plt.cm.Set1(np.linspace(0, 1, 10))
 
 - 颜色体系应与业务语义绑定，例如红色表示风险、绿色表示健康。
 - 建议做色盲友好检查，避免关键信息仅靠颜色传达。
-
 

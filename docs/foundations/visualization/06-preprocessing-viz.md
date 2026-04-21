@@ -85,7 +85,7 @@ sns.heatmap(df.isnull(), cbar=True, ax=axes[0], cmap="YlOrRd")
 ### 结果输出（示例）
 
 ```text
-控制台提示: 图表已保存到 outputs/visualization/viz_06_missing.png
+控制台提示: 图表已保存到 outputs/visualization/06_missing.png
 ----------------
 左图展示缺失位置，右图展示各列缺失百分比
 ```
@@ -156,7 +156,7 @@ axes[1].axvline(upper, color="red", linestyle="--")
 ### 结果输出（示例）
 
 ```text
-控制台提示: 图表已保存到 outputs/visualization/viz_06_outlier.png
+控制台提示: 图表已保存到 outputs/visualization/06_outlier.png
 ----------------
 箱线图显示离群点，直方图标出 IQR 上下界
 ```
@@ -222,7 +222,7 @@ axes[1, 1].hist(std_data, bins=30, edgecolor="black", alpha=0.7)
 ### 结果输出（示例）
 
 ```text
-控制台提示: 图表已保存到 outputs/visualization/viz_06_transform.png
+控制台提示: 图表已保存到 outputs/visualization/06_transform.png
 ----------------
 四宫格对比原始分布、对数变换、平方根变换和标准化结果
 ```
@@ -231,5 +231,4 @@ axes[1, 1].hist(std_data, bins=30, edgecolor="black", alpha=0.7)
 
 - 变换不是为了“好看”，而是为了改善建模稳定性。
 - 变换后应重新评估可解释性与业务阈值含义。
-
 

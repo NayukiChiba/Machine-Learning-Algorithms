@@ -5,60 +5,100 @@ outline: deep
 
 # Pandas 数据清洗与处理
 
-> 对应脚本：`Basic/Pandas/04_cleaning.py`  
-> 运行方式：`python Basic/Pandas/04_cleaning.py`（仓库根目录）
-
 ## 本章目标
 
 1. 掌握缺失值的检测、删除与填充策略。
 2. 学会检测和删除重复值。
-3. 理解数据类型转换方法（`astype`、`to_datetime`）。
+3. 掌握数据类型转换（`astype` / `pd.to_datetime` / `pd.to_numeric`）。
 4. 熟悉字符串向量化操作（`str` 访问器）。
-5. 掌握值替换的基本用法。
+5. 掌握值替换的常见用法。
 
-## 重点方法速览
+## 重点方法与概念速览
 
-| 方法 | 作用 | 本章位置 |
+| 名称 | 类型 | 作用 |
 |---|---|---|
-| `df.isnull()` / `df.isna()` | 检测缺失值 | `demo_missing_values` |
-| `df.dropna()` | 删除含缺失值的行/列 | `demo_missing_values` |
-| `df.fillna(value)` | 填充缺失值 | `demo_missing_values` |
-| `df.duplicated()` | 检测重复行 | `demo_duplicates` |
-| `df.drop_duplicates()` | 删除重复行 | `demo_duplicates` |
-| `s.astype(dtype)` | 类型转换 | `demo_type_conversion` |
-| `pd.to_datetime(...)` | 转换为日期类型 | `demo_type_conversion` |
-| `s.str.*` | 字符串向量化操作 | `demo_string_ops` |
-| `s.replace(...)` | 值替换 | `demo_replace` |
+| `df.isnull(...)` / `df.isna(...)` | 方法 | 检测缺失值（两者完全等价） |
+| `df.notnull(...)` / `df.notna(...)` | 方法 | 检测非缺失值 |
+| `df.dropna(...)` | 方法 | 删除含缺失值的行 / 列 |
+| `df.fillna(...)` | 方法 | 填充缺失值 |
+| `df.duplicated(...)` | 方法 | 标记重复行 |
+| `df.drop_duplicates(...)` | 方法 | 删除重复行 |
+| `s.astype(...)` | 方法 | 类型转换 |
+| `pd.to_datetime(...)` | 函数 | 转换为日期时间类型 |
+| `pd.to_numeric(...)` | 函数 | 转换为数值类型（支持错误处理） |
+| `s.str.xxx(...)` | 访问器 | 字符串向量化操作 |
+| `s.replace(...)` | 方法 | 值替换 |
+| `s.map(...)` | 方法 | 按字典 / 函数逐元素映射 |
 
-## 1. 缺失值处理
+## 缺失值处理
 
-### 方法重点
+### 缺失值表示
 
-- `isnull()` 和 `isna()` 完全等价，返回布尔 DataFrame。
-- `dropna()` 默认删除**任何列**含缺失值的行。
-- `fillna()` 支持常量填充、前向填充（`ffill`）、后向填充（`bfill`）。
+Pandas 用 `NaN`（`float`）、`None`（`object`）、`NaT`（日期时间）等表示缺失值，统称为 NA。
 
-### 参数速览（本节）
+### `DataFrame.isnull` / `isna`
 
-1. `df.isnull()` — 无参数，返回与原数据同形状的布尔 DataFrame
+#### 作用
 
-2. `df.dropna(axis=0, how='any', subset=None, inplace=False)`
+返回与原数据同形状的布尔 DataFrame，`True` 表示该位置为缺失。两方法**完全等价**。
 
-| 参数名 | 本例取值 | 说明 |
-|---|---|---|
-| `axis` | `0`（默认） | `0` 删除行，`1` 删除列 |
-| `how` | `'any'`（默认） | `'any'` 任一缺失即删，`'all'` 全部缺失才删 |
-| `subset` | `None`（默认） | 仅检查指定列的缺失值 |
+#### 重点方法
 
-3. `df.fillna(value=None, method=None, axis=None, inplace=False, limit=None)`
+```python
+df.isnull()
+df.isna()
+```
 
-| 参数名 | 本例取值 | 说明 |
-|---|---|---|
-| `value` | `0` | 用固定值填充 |
-| `method` | `'ffill'` | 前向填充（用前一个有效值） |
-| `limit` | `None`（默认） | 连续填充的最大数量 |
+### `DataFrame.dropna`
 
-### 示例代码
+#### 作用
+
+删除含有缺失值的行或列。
+
+#### 重点方法
+
+```python
+df.dropna(axis=0, how='any', thresh=None, subset=None, inplace=False, ignore_index=False)
+```
+
+#### 参数
+
+| 参数名         | 本例取值         | 说明                                                                   |
+| -------------- | ---------------- | ---------------------------------------------------------------------- |
+| `axis`         | `0`（默认）、`1`  | `0` 删除行，`1` 删除列                                                 |
+| `how`          | `'any'`（默认）、`'all'` | `'any'`：任一位置缺失即删；`'all'`：全部缺失才删              |
+| `thresh`       | `None`（默认）、整数 | 保留至少有 `thresh` 个非缺失值的行 / 列                            |
+| `subset`       | `None`（默认）、列名列表 | 只检查指定列的缺失情况                                         |
+| `inplace`      | `False`（默认）   | 是否原地修改                                                           |
+| `ignore_index` | `False`（默认）   | 是否重置索引为 `RangeIndex`                                            |
+
+### `DataFrame.fillna`
+
+#### 作用
+
+填充缺失值。支持常量、前向 / 后向填充、按列字典填充等。
+
+#### 重点方法
+
+```python
+df.fillna(value=None, method=None, axis=None, inplace=False, limit=None, downcast=None)
+```
+
+#### 参数
+
+| 参数名     | 本例取值                          | 说明                                                          |
+| ---------- | --------------------------------- | ------------------------------------------------------------- |
+| `value`    | `0`、`{'A': 0, 'B': mean}`        | 填充值；可为标量、字典（按列）、Series、DataFrame             |
+| `method`   | `None`、`'ffill'`、`'bfill'`      | 前向 / 后向填充（不能与 `value` 同用）                        |
+| `axis`     | `None`（默认）、`0`、`1`          | 填充方向                                                      |
+| `inplace`  | `False`（默认）                   | 是否原地修改                                                  |
+| `limit`    | `None`、整数                      | 连续填充的最大次数                                            |
+
+注：新版本（Pandas 2.0+）推荐 `df.ffill()` / `df.bfill()` 替代 `method` 参数。
+
+### 综合示例
+
+#### 示例代码
 
 ```python
 import pandas as pd
@@ -70,42 +110,35 @@ df = pd.DataFrame({
     "C": ["x", "y", None, "z", "w"],
 })
 
-# 检测缺失值
-print(df.isnull())
-print(df.isnull().sum())
-
-# 删除含缺失值的行
-print(df.dropna())
-
-# 用 0 填充
-print(df.fillna(0))
-
-# 前向填充
-print(df.fillna(method="ffill"))
+print(f"原数据:\n{df}")
+print(f"\n缺失值统计:\n{df.isnull().sum()}")
+print(f"\ndropna():\n{df.dropna()}")
+print(f"\nfillna(0):\n{df.fillna(0)}")
+print(f"\nffill:\n{df.ffill()}")
 ```
 
-### 结果输出
+#### 输出
 
 ```text
-isnull():
-       A      B      C
-0  False   True  False
-1  False  False  False
-2   True  False   True
-3  False   True  False
-4  False  False  False
-----------------
+原数据:
+     A    B     C
+0  1.0  NaN     x
+1  2.0  2.0     y
+2  NaN  3.0  None
+3  4.0  NaN     z
+4  5.0  5.0     w
+
 缺失值统计:
 A    1
 B    2
 C    1
 dtype: int64
-----------------
+
 dropna():
      A    B  C
 1  2.0  2.0  y
 4  5.0  5.0  w
-----------------
+
 fillna(0):
      A    B  C
 0  1.0  0.0  x
@@ -113,8 +146,8 @@ fillna(0):
 2  0.0  3.0  0
 3  4.0  0.0  z
 4  5.0  5.0  w
-----------------
-fillna(method='ffill'):
+
+ffill:
      A    B  C
 0  1.0  NaN  x
 1  2.0  2.0  y
@@ -125,50 +158,76 @@ fillna(method='ffill'):
 
 ### 理解重点
 
-- `isnull().sum()` 是快速统计缺失值的标准做法。
-- `dropna()` 可能丢失大量数据，优先考虑 `fillna()`。
-- 前向填充（`ffill`）适合时间序列数据，后向填充（`bfill`）适合回溯场景。
+- `isnull()` / `isna()` 完全等价，选用习惯即可。
+- `dropna` 默认删除**任何列缺失**的行；`how='all'` 才是"全部缺失"才删。
+- 填充策略常用组合：数值列用均值 / 中位数，类别列用众数或 `'Unknown'`，时序列用 `ffill`。
 
-## 2. 重复值处理
+## 重复值处理
 
-### 方法重点
+### `DataFrame.duplicated`
 
-- `duplicated()` 返回布尔 Series，标记重复行（首次出现不算重复）。
-- `drop_duplicates()` 默认保留第一次出现的行。
-- `subset` 参数可指定仅基于某些列判断重复。
+#### 作用
 
-### 参数速览（本节）
+标记重复行。返回布尔 Series：**第一次出现标 `False`，后续标 `True`**（可调整）。
 
-1. `df.duplicated(subset=None, keep='first')`
+#### 重点方法
 
-| 参数名 | 本例取值 | 说明 |
-|---|---|---|
-| `subset` | `None`（默认） | 基于所有列判断重复 |
-| `keep` | `'first'`（默认） | 首次出现标记为 False |
+```python
+df.duplicated(subset=None, keep='first')
+```
 
-2. `df.drop_duplicates(subset=None, keep='first', inplace=False)`
+#### 参数
 
-| 参数名 | 本例取值 | 说明 |
-|---|---|---|
-| `subset` | `None`、`["A"]` | 基于指定列去重 |
-| `keep` | `'first'`（默认） | 保留首次出现的行 |
+| 参数名   | 本例取值                                 | 说明                                                                  |
+| -------- | ---------------------------------------- | --------------------------------------------------------------------- |
+| `subset` | `None`（默认）、列名列表                 | 只检查指定列的重复                                                    |
+| `keep`   | `'first'`（默认）、`'last'`、`False`     | 标记策略：保留首次为 `False`、保留末次为 `False`、所有重复都为 `True` |
+
+### `DataFrame.drop_duplicates`
+
+#### 作用
+
+删除重复行。
+
+#### 重点方法
+
+```python
+df.drop_duplicates(subset=None, keep='first', inplace=False, ignore_index=False)
+```
+
+#### 参数
+
+| 参数名         | 本例取值                           | 说明                                               |
+| -------------- | ---------------------------------- | -------------------------------------------------- |
+| `subset`       | `None`（默认）、`['A']`            | 只根据指定列判断重复                               |
+| `keep`         | `'first'`（默认）、`'last'`、`False` | 保留策略；`False` 表示**所有重复都删除**         |
+| `inplace`      | `False`（默认）                    | 是否原地修改                                       |
+| `ignore_index` | `False`（默认）                    | 是否重置索引                                       |
 
 ### 示例代码
 
 ```python
-df = pd.DataFrame({
-    "A": [1, 1, 2, 2, 3],
-    "B": ["a", "a", "b", "c", "c"],
-})
+import pandas as pd
 
-print(df.duplicated())
-print(df.drop_duplicates())
-print(df.drop_duplicates(subset=["A"]))
+df = pd.DataFrame({"A": [1, 1, 2, 2, 3], "B": ["a", "a", "b", "c", "c"]})
+
+print(f"原数据:\n{df}")
+print(f"\nduplicated():\n{df.duplicated()}")
+print(f"\ndrop_duplicates():\n{df.drop_duplicates()}")
+print(f"\ndrop_duplicates(subset=['A']):\n{df.drop_duplicates(subset=['A'])}")
 ```
 
-### 结果输出
+### 输出
 
 ```text
+原数据:
+   A  B
+0  1  a
+1  1  a
+2  2  b
+3  2  c
+4  3  c
+
 duplicated():
 0    False
 1     True
@@ -176,14 +235,14 @@ duplicated():
 3    False
 4    False
 dtype: bool
-----------------
+
 drop_duplicates():
    A  B
 0  1  a
 2  2  b
 3  2  c
 4  3  c
-----------------
+
 drop_duplicates(subset=['A']):
    A  B
 0  1  a
@@ -193,195 +252,245 @@ drop_duplicates(subset=['A']):
 
 ### 理解重点
 
-- `duplicated()` 默认第一次出现的行不算"重复"，`keep='last'` 则保留最后一次。
-- `subset` 指定列时，只要这些列相同就算重复，其他列的值可以不同。
-- `keep=False` 标记所有重复行（包括首次出现），用于发现数据质量问题。
+- `duplicated()` 默认 `keep='first'`：第一次出现不标记（`False`）。
+- 想找**所有重复**的行：`keep=False`。
+- 业务去重常按**关键列**：`drop_duplicates(subset=['id', 'date'])`。
 
-## 3. 数据类型转换
+## 数据类型转换
 
-### 方法重点
+### `Series.astype`
 
-- `astype()` 是最通用的类型转换方法。
-- `pd.to_datetime()` 专门处理日期字符串到时间类型的转换。
-- 类型转换是数据清洗的重要步骤，影响后续计算和内存。
+#### 作用
 
-### 参数速览（本节）
+将 Series 转换为指定 dtype。不能处理转换失败（遇到无法转换的值会抛错）。
 
-1. `s.astype(dtype, copy=True, errors='raise')`
-
-| 参数名 | 本例取值 | 说明 |
-|---|---|---|
-| `dtype` | `int`、`float` | 目标数据类型 |
-| `errors` | `'raise'`（默认） | 转换失败时报错 |
-
-2. `pd.to_datetime(arg, format=None, errors='raise', ...)`
-
-| 参数名 | 本例取值 | 说明 |
-|---|---|---|
-| `arg` | `df["C"]` | 待转换的日期列 |
-| `format` | `None`（默认） | 自动推断格式 |
-
-### 示例代码
+#### 重点方法
 
 ```python
+s.astype(dtype, copy=True, errors='raise')
+```
+
+#### 参数
+
+| 参数名   | 本例取值                  | 说明                                                                 |
+| -------- | ------------------------- | -------------------------------------------------------------------- |
+| `dtype`  | `int`、`np.float32`、`'category'`、`{'A': int, 'B': str}` | 目标 dtype                      |
+| `copy`   | `True`（默认）            | 是否返回副本                                                         |
+| `errors` | `'raise'`（默认）、`'ignore'` | `'raise'` 无法转换时抛错；`'ignore'` 静默保留原值                |
+
+### `pd.to_datetime`
+
+#### 作用
+
+将字符串或数字转换为 `datetime64` 类型。支持多种格式、错误处理、时区等。
+
+#### 重点方法
+
+```python
+pd.to_datetime(arg, errors='raise', dayfirst=False, yearfirst=False,
+               utc=False, format=None, exact=True, unit=None,
+               infer_datetime_format=False, origin='unix', cache=True)
+```
+
+#### 参数
+
+| 参数名                | 本例取值                              | 说明                                                        |
+| --------------------- | ------------------------------------- | ----------------------------------------------------------- |
+| `arg`                 | `"2023-01-01"`、Series、列表          | 输入                                                        |
+| `errors`              | `'raise'`（默认）、`'coerce'`、`'ignore'` | `'coerce'` 将无法解析设为 `NaT`                       |
+| `format`              | `None`、`'%Y-%m-%d'`                   | 日期格式字符串，给出后速度更快                              |
+| `dayfirst`            | `False`（默认）                        | 是否按"日/月/年"解析                                        |
+| `utc`                 | `False`（默认）                        | 是否转为 UTC 时区                                           |
+| `unit`                | `None`、`'s'`、`'ms'`、`'ns'`         | 输入为数字时代表的时间单位                                  |
+
+### `pd.to_numeric`
+
+#### 作用
+
+将字符串 / 混合类型转换为数值，支持错误处理。
+
+#### 重点方法
+
+```python
+pd.to_numeric(arg, errors='raise', downcast=None)
+```
+
+#### 参数
+
+| 参数名     | 本例取值                                  | 说明                                                          |
+| ---------- | ----------------------------------------- | ------------------------------------------------------------- |
+| `arg`      | Series、列表                              | 输入                                                          |
+| `errors`   | `'raise'`（默认）、`'coerce'`、`'ignore'` | `'coerce'` 将无法转换的设为 `NaN`                             |
+| `downcast` | `None`（默认）、`'integer'`、`'float'`、`'signed'`、`'unsigned'` | 尝试降精度以节省内存       |
+
+### 综合示例
+
+#### 示例代码
+
+```python
+import pandas as pd
+
 df = pd.DataFrame({
     "A": ["1", "2", "3", "4", "5"],
     "B": [1.1, 2.2, 3.3, 4.4, 5.5],
-    "C": ["2023-01-01", "2023-01-02", "2023-01-03",
-          "2023-01-04", "2023-01-05"],
+    "C": ["2023-01-01", "2023-01-02", "2023-01-03", "2023-01-04", "2023-01-05"],
 })
-print(df.dtypes)
 
-# astype 转换
 df["A"] = df["A"].astype(int)
 df["B"] = df["B"].astype(int)
-print(df.dtypes)
-
-# 日期转换
 df["C"] = pd.to_datetime(df["C"])
-print(df["C"].dtype)
+
+print(df)
+print(f"\ndtypes:\n{df.dtypes}")
 ```
 
-### 结果输出
+#### 输出
 
 ```text
-转换前:
-A    object
-B    float64
-C    object
+   A  B          C
+0  1  1 2023-01-01
+1  2  2 2023-01-02
+2  3  3 2023-01-03
+3  4  4 2023-01-04
+4  5  5 2023-01-05
+
+dtypes:
+A             int64
+B             int64
+C    datetime64[ns]
 dtype: object
-----------------
-astype 转换后:
-A     int32
-B     int32
-C    object
-dtype: object
-----------------
-日期转换后:
-C 列类型: datetime64[ns]
 ```
 
 ### 理解重点
 
-- 字符串列的 `dtype` 为 `object`，需要 `astype(int)` 才能做数值运算。
-- `pd.to_datetime()` 比 `astype("datetime64")` 更灵活，支持多种日期格式。
-- `errors='coerce'` 可将无法转换的值设为 `NaT`（Not a Time），避免整列报错。
+- `astype(int)` 对浮点**截断**（`1.9 → 1`）；需要四舍五入先 `round()`。
+- `pd.to_datetime` 遇到脏数据用 `errors='coerce'` 生成 `NaT`，再用 `dropna` 清除。
+- `category` 类型可显著节省内存：`df['city'] = df['city'].astype('category')`。
 
-## 4. 字符串操作
+## 字符串向量化操作
 
-### 方法重点
+### `Series.str` 访问器
 
-- Pandas 通过 `str` 访问器提供向量化字符串操作。
-- 所有 Python 字符串方法几乎都有对应的 `str` 版本。
-- `str` 方法自动跳过 `NaN` 值，不会报错。
+Series 通过 `.str` 访问器可以调用**向量化字符串方法**，自动跳过 `NaN`。
 
-### 参数速览（本节）
+### 常用方法一览
 
-适用 API（分项，均通过 `s.str` 访问）：
-
-| 方法 | 说明 |
-|---|---|
-| `s.str.strip()` | 去除首尾空白 |
-| `s.str.lower()` | 转小写 |
-| `s.str.upper()` | 转大写 |
-| `s.str.contains(pat)` | 是否包含子串（返回布尔） |
-| `s.str.split(pat)` | 按分隔符拆分 |
+| 方法                          | 作用                                      |
+| ----------------------------- | ----------------------------------------- |
+| `s.str.lower()` / `upper()`   | 大小写转换                                |
+| `s.str.strip(...)`            | 去除两端空白                              |
+| `s.str.lstrip()` / `rstrip()` | 去除左 / 右空白                           |
+| `s.str.len()`                 | 每个字符串长度                            |
+| `s.str.contains(pat, regex=True)` | 是否包含模式，返回布尔 Series         |
+| `s.str.startswith(p)` / `endswith(p)` | 前缀 / 后缀匹配                   |
+| `s.str.replace(pat, repl, regex=True)` | 替换                             |
+| `s.str.split(sep, expand=False)` | 按分隔符切分                          |
+| `s.str.extract(pat)`          | 正则提取（捕获组）                        |
+| `s.str.cat(sep='')`           | 连接所有字符串                            |
+| `s.str.pad(width, side, fillchar)` | 补齐宽度                            |
+| `s.str.zfill(width)`          | 左侧补零                                  |
+| `s.str[i]` / `s.str[i:j]`     | 按位置取字符                              |
 
 ### 示例代码
 
 ```python
+import pandas as pd
+
 df = pd.DataFrame({
     "Name": ["  Alice  ", "BOB", "charlie", "David Lee"],
     "Email": ["alice@example.com", "bob@test.org",
               "charlie@example.com", "david@test.org"],
 })
 
-print(df["Name"].str.strip())
-print(df["Name"].str.lower())
-print(df["Name"].str.upper())
-print(df["Email"].str.contains("example"))
-print(df["Email"].str.split("@"))
+print(f"strip + lower:\n{df['Name'].str.strip().str.lower()}")
+print(f"\n包含 'example':\n{df['Email'].str.contains('example')}")
+print(f"\nsplit('@'):\n{df['Email'].str.split('@')}")
+print(f"\n提取用户名 / 域名:\n{df['Email'].str.split('@', expand=True)}")
 ```
 
-### 结果输出
+### 输出
 
 ```text
-str.strip():
-0        Alice
-1          BOB
+strip + lower:
+0        alice
+1          bob
 2      charlie
-3    David Lee
-Name: Name, dtype: object
-----------------
-str.lower():
-0      alice
-1        bob
-2    charlie
 3    david lee
 Name: Name, dtype: object
-----------------
-str.upper():
-0        ALICE
-1          BOB
-2      CHARLIE
-3    DAVID LEE
-Name: Name, dtype: object
-----------------
-str.contains('example'):
+
+包含 'example':
 0     True
 1    False
 2     True
 3    False
 Name: Email, dtype: bool
-----------------
-str.split('@'):
-0      [alice, example.com]
-1           [bob, test.org]
+
+split('@'):
+0    [alice, example.com]
+1         [bob, test.org]
 2    [charlie, example.com]
-3        [david, test.org]
+3       [david, test.org]
 Name: Email, dtype: object
+
+提取用户名 / 域名:
+         0            1
+0    alice  example.com
+1      bob     test.org
+2  charlie  example.com
+3    david     test.org
 ```
 
 ### 理解重点
 
-- `str` 访问器是向量化操作，比循环调用字符串方法快得多。
-- `str.contains()` 支持正则表达式，`regex=False` 可关闭。
-- `str.split(..., expand=True)` 可将拆分结果直接展开为多列。
+- `str` 访问器自动跳过 `NaN`（返回 `NaN`），比写 `for` 循环安全得多。
+- `str.split(sep, expand=True)` 直接展开成多列 DataFrame——常用于"名字中分出姓 / 名"。
+- 字符串方法可链式调用：`s.str.strip().str.lower().str.replace(' ', '_')`。
 
-## 5. 值替换
+## 值替换
 
-### 方法重点
+### `Series.replace`
 
-- `replace()` 支持单值替换和字典批量替换。
-- 可以同时作用于整个 DataFrame 或单个 Series。
-- 替换不会修改原数据，返回新对象（除非 `inplace=True`）。
+#### 作用
 
-### 参数速览（本节）
+将指定值替换为新值。支持单值、列表、字典、正则等多种模式。
 
-适用 API：`s.replace(to_replace, value=None, inplace=False, regex=False)`
+#### 重点方法
 
-| 参数名 | 本例取值 | 说明 |
-|---|---|---|
-| `to_replace` | `1`、`{"yes": 1, "no": 0, "maybe": -1}` | 被替换的值或字典映射 |
-| `value` | `100` | 单值替换时的目标值 |
-| `regex` | `False`（默认） | 是否支持正则表达式 |
+```python
+s.replace(to_replace=None, value=None, inplace=False, limit=None,
+          regex=False, method=None)
+```
+
+#### 参数
+
+| 参数名       | 本例取值                                      | 说明                                                             |
+| ------------ | --------------------------------------------- | ---------------------------------------------------------------- |
+| `to_replace` | `1`、`[1, 2]`、`{'yes': 1, 'no': 0}`          | 被替换值；可为标量、列表、字典（键值对映射）、正则               |
+| `value`      | `100`、`None`                                 | 替换为的值；用字典形式时可省略                                   |
+| `inplace`    | `False`（默认）                               | 是否原地修改                                                     |
+| `regex`      | `False`（默认）、`True`                       | 是否将 `to_replace` 作为正则模式                                 |
+| `method`     | `None`（默认）、`'pad'`、`'ffill'`、`'bfill'` | `value=None` 且非字典时的填充策略（已不推荐）                    |
 
 ### 示例代码
 
 ```python
-df = pd.DataFrame({
-    "A": [1, 2, 3, 4, 5],
-    "B": ["yes", "no", "yes", "no", "maybe"],
-})
+import pandas as pd
 
-# 单值替换
-print(df["A"].replace(1, 100))
+df = pd.DataFrame({"A": [1, 2, 3, 4, 5],
+                   "B": ["yes", "no", "yes", "no", "maybe"]})
 
-# 字典替换
-print(df["B"].replace({"yes": 1, "no": 0, "maybe": -1}))
+print(f"replace(1, 100):\n{df['A'].replace(1, 100)}")
+print(f"\n字典替换:\n{df['B'].replace({'yes': 1, 'no': 0, 'maybe': -1})}")
+
+# 多个值换成同一个
+print(f"\n多值→同值:\n{df['A'].replace([1, 2, 3], 0)}")
+
+# 正则
+df2 = pd.DataFrame({"s": ["abc123", "def456", "ghi789"]})
+print(f"\n正则替换:\n{df2['s'].replace(r'\\d+', 'NUM', regex=True)}")
 ```
 
-### 结果输出
+### 输出
 
 ```text
 replace(1, 100):
@@ -391,31 +500,49 @@ replace(1, 100):
 3      4
 4      5
 Name: A, dtype: int64
-----------------
-replace({'yes': 1, 'no': 0, 'maybe': -1}):
+
+字典替换:
 0    1
 1    0
 2    1
 3    0
 4   -1
 Name: B, dtype: int64
+
+多值→同值:
+0    0
+1    0
+2    0
+3    4
+4    5
+Name: A, dtype: int64
+
+正则替换:
+0    abcNUM
+1    defNUM
+2    ghiNUM
+Name: s, dtype: object
 ```
 
 ### 理解重点
 
-- 字典替换是将分类标签映射为数值的常用方法。
-- `replace` 和 `map` 功能类似，但 `replace` 只替换匹配项，`map` 会将不匹配项设为 `NaN`。
-- `regex=True` 时可以用正则表达式进行模式替换。
+- **字典形式**是最直观的映射写法，尤其适合"类别 → 整数编码"。
+- `regex=True` 时所有字符串模式按正则解析，注意转义。
+- `replace` 适合已知旧值替换；若需**任意映射**（含函数）用 `s.map(...)` 更合适。
 
 ## 常见坑
 
-1. `fillna(method='ffill')` 在首行就是 NaN 时无法填充。
-2. `astype(int)` 遇到 NaN 会报错，需先处理缺失值或使用 `Int64`（可空整数类型）。
-3. `drop_duplicates` 默认基于所有列判断，大数据集下可能很慢，建议指定 `subset`。
-4. `str` 方法只能用于 `object` 类型的 Series，数值列调用会报错。
+1. `isnull` 只识别 `NaN` / `None` / `NaT`，**不识别**空字符串 `""`；需要先 `s.replace('', np.nan)`。
+2. `fillna(method='ffill')` 在新版本已弃用，改用 `df.ffill()`。
+3. `dropna(inplace=True)` 后 `df` 索引**不重置**；需要 `reset_index(drop=True)` 或加 `ignore_index=True`。
+4. `duplicated(keep=False)` 会把**所有**重复行都标为 `True`（包括第一个），和默认行为不同。
+5. `astype(int)` 遇到 `NaN` 会抛错；先 `fillna` 或用可空整数类型 `Int64`（大写）。
+6. `str.contains(pat)` 遇到 `NaN` 默认返回 `NaN`；布尔索引前要先 `fillna(False)` 或用 `na=False` 参数。
+7. 链式字符串调用 `s.str.strip().lower()` 是**错的**，每步都要 `.str`：`s.str.strip().str.lower()`。
 
 ## 小结
 
-- 数据清洗是分析流水线中最耗时但最关键的步骤。
-- 缺失值处理三板斧：检测（`isnull`）→ 删除（`dropna`）或填充（`fillna`）。
-- `str` 访问器和 `replace` 是文本列清洗的核心工具。
+- **清洗四步曲**：检测缺失 → 处理缺失 → 去重 → 类型转换。
+- 缺失值处理思路：能删就删（`dropna`），不能删就填（`fillna` + 合适策略）。
+- `str` 访问器是 Pandas 最强的字符串处理工具，比 apply 快得多。
+- 值替换 `replace`（键值对）与 `map`（函数映射）搭配使用，覆盖绝大多数映射需求。

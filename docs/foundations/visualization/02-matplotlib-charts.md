@@ -74,7 +74,7 @@ axes[1].barh(categories, values, color="coral", edgecolor="black")
 ### 结果输出（示例）
 
 ```text
-控制台提示: 图表已保存到 outputs/visualization/viz_02_bar.png
+控制台提示: 图表已保存到 outputs/visualization/02_bar.png
 ----------------
 左图为垂直柱状图，右图为水平柱状图
 ```
@@ -135,7 +135,7 @@ plt.colorbar(sc, ax=ax, label="Color Value")
 ### 结果输出（示例）
 
 ```text
-控制台提示: 图表已保存到 outputs/visualization/viz_02_scatter.png
+控制台提示: 图表已保存到 outputs/visualization/02_scatter.png
 ----------------
 图像内容: 点的颜色和大小分别编码额外变量
 ```
@@ -193,7 +193,7 @@ ax.legend()
 ### 结果输出（示例）
 
 ```text
-控制台提示: 图表已保存到 outputs/visualization/viz_02_histogram.png
+控制台提示: 图表已保存到 outputs/visualization/02_histogram.png
 ----------------
 图像内容: 正态近似分布并标注均值位置
 ```
@@ -241,7 +241,7 @@ ax.pie(sizes, labels=labels, explode=explode, autopct="%1.1f%%", startangle=90)
 ### 结果输出（示例）
 
 ```text
-控制台提示: 图表已保存到 outputs/visualization/viz_02_pie.png
+控制台提示: 图表已保存到 outputs/visualization/02_pie.png
 ----------------
 图像内容: Product A 扇区被突出显示
 ```
@@ -289,7 +289,7 @@ ax.set_xticklabels(["σ=1", "σ=2", "σ=3", "σ=4"])
 ### 结果输出（示例）
 
 ```text
-控制台提示: 图表已保存到 outputs/visualization/viz_02_boxplot.png
+控制台提示: 图表已保存到 outputs/visualization/02_boxplot.png
 ----------------
 图像内容: 四组不同标准差分布的中位数和离散度对比
 ```
@@ -298,5 +298,4 @@ ax.set_xticklabels(["σ=1", "σ=2", "σ=3", "σ=4"])
 
 - 箱线图适合稳健比较，不依赖分布假设。
 - 与直方图结合使用可同时获得整体形态与统计摘要。
-
 

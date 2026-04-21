@@ -5,41 +5,71 @@ outline: deep
 
 # NumPy 文件 IO
 
-> 对应脚本：`Basic/Numpy/10_file_io.py`  
-> 运行方式：`python Basic/Numpy/10_file_io.py`
-
 ## 本章目标
 
-1. 掌握二进制保存/加载：`save`、`load`、`savez`。
-2. 掌握文本保存/加载：`savetxt`、`loadtxt`。
-3. 掌握格式控制参数：`delimiter`、`fmt`、`header`、`skiprows`。
+1. 掌握二进制保存 / 加载：`save`、`load`、`savez`。
+2. 掌握文本保存 / 加载：`savetxt`、`loadtxt`。
+3. 掌握 `fmt` / `delimiter` / `header` / `skiprows` 等格式控制参数。
+4. 理解 `.npy` / `.npz` / `.csv` 三种格式的选择场景。
 
-## 重点方法速览
+## 重点方法与概念速览
 
-| 方法 | 用途 |
-|---|---|
-| `np.save(file, arr)` | 保存单个 `.npy` |
-| `np.load(file)` | 加载 `.npy` / `.npz` |
-| `np.savez(file, **kwargs)` | 保存多个数组到 `.npz` |
-| `np.savetxt(file, arr, ...)` | 保存文本文件 |
-| `np.loadtxt(file, ...)` | 从文本读取数组 |
-
-## 1. `.npy`：`save` + `load`
-
-### 参数速览（本节）
-
-适用 API（分项）：
-
-1. `np.save(file, arr, allow_pickle=True, fix_imports=...)`
-2. `np.load(file, mmap_mode=None, allow_pickle=False, ...)`
-
-| 参数名 | 本例取值 | 说明 |
+| 名称 | 类型 | 作用 |
 |---|---|---|
-| `file` / `arr`（`save`） | `"array.npy"` / `arr(3x4)` | 保存单个数组为 `.npy` |
-| `allow_pickle`（`save`） | `True`（默认） | 控制 object 数组序列化 |
-| `file`（`load`） | `"array.npy"` | 读取 `.npy` 文件 |
-| `mmap_mode` / `allow_pickle`（`load`） | `None` / `False` | 默认普通读取且更安全 |
-### 示例代码
+| `np.save(...)` | 函数 | 保存**单个**数组到 `.npy` 二进制文件 |
+| `np.savez(...)` | 函数 | 保存**多个**数组到 `.npz` 容器 |
+| `np.savez_compressed(...)` | 函数 | 同 `savez`，额外压缩存储 |
+| `np.load(...)` | 函数 | 加载 `.npy` / `.npz` |
+| `np.savetxt(...)` | 函数 | 保存数组为可读文本（`.txt` / `.csv`） |
+| `np.loadtxt(...)` | 函数 | 从文本读取数组 |
+
+## 二进制：`.npy` 单数组
+
+### `np.save`
+
+#### 作用
+
+将单个 NumPy 数组保存为 `.npy` 二进制文件。保真度高、速度快，是 NumPy 内部数据的首选格式。
+
+#### 重点方法
+
+```python
+np.save(file, arr, allow_pickle=True, fix_imports=True)
+```
+
+#### 参数
+
+| 参数名         | 本例取值          | 说明                                                           |
+| -------------- | ----------------- | -------------------------------------------------------------- |
+| `file`         | `"array.npy"`     | 文件路径或类文件对象；不带 `.npy` 后缀会自动追加               |
+| `arr`          | 任意 `ndarray`    | 要保存的数组                                                   |
+| `allow_pickle` | `True`（默认）    | 是否允许保存 object 数组（依赖 pickle，存在反序列化安全风险）  |
+| `fix_imports`  | `True`（默认）    | Python 2/3 兼容选项，现代代码可保持默认                        |
+
+### `np.load`
+
+#### 作用
+
+加载 `.npy` 或 `.npz` 文件。`.npy` 返回单个数组；`.npz` 返回可按键访问的容器对象。
+
+#### 重点方法
+
+```python
+np.load(file, mmap_mode=None, allow_pickle=False, fix_imports=True, encoding='ASCII')
+```
+
+#### 参数
+
+| 参数名         | 本例取值         | 说明                                                                 |
+| -------------- | ---------------- | -------------------------------------------------------------------- |
+| `file`         | `"array.npy"`    | 文件路径或类文件对象                                                 |
+| `mmap_mode`    | `None`（默认）   | 内存映射模式：`'r'` / `'r+'` / `'c'` / `'w+'`；大文件避免全量加载    |
+| `allow_pickle` | `False`（默认）  | 是否允许反序列化 object 数组；默认禁用以提高安全性                   |
+| `encoding`     | `'ASCII'`（默认）| object 数组读取时的字符编码                                          |
+
+### 综合示例
+
+#### 示例代码
 
 ```python
 import numpy as np
@@ -50,45 +80,67 @@ arr = np.random.random((3, 4))
 np.save("array.npy", arr)
 loaded = np.load("array.npy")
 
-print(arr)
-print(loaded)
-print(np.array_equal(arr, loaded))
+print(f"原数组:\n{arr}")
+print(f"加载后:\n{loaded}")
+print(f"相等: {np.array_equal(arr, loaded)}")
 ```
 
-### 结果输出
+#### 输出
 
 ```text
+原数组:
 [[0.37454012 0.95071431 0.73199394 0.59865848]
  [0.15601864 0.15599452 0.05808361 0.86617615]
  [0.60111501 0.70807258 0.02058449 0.96990985]]
-----------------
+加载后:
 [[0.37454012 0.95071431 0.73199394 0.59865848]
  [0.15601864 0.15599452 0.05808361 0.86617615]
  [0.60111501 0.70807258 0.02058449 0.96990985]]
-----------------
-True
+相等: True
 ```
 
-### 理解重点
+#### 理解重点
 
-- `.npy` 速度快、保真高，适合 NumPy 内部数据存储。
+- `.npy` 保存完整的 `dtype` / `shape` / 内存布局，读写往返**完全无损**。
+- 大文件配合 `mmap_mode='r'` 可按需读取不占内存。
 
-## 2. `.npz`：`savez` 保存多个数组
+## 二进制：`.npz` 多数组
 
-### 参数速览（本节）
+### `np.savez`
 
-适用 API（分项）：
+#### 作用
 
-1. `np.savez(file, *args, **kwds)`
-2. `np.load(file)`
+将多个数组保存到一个 `.npz` 容器中。使用**关键字参数**命名，后续按键读取。
 
-| 参数名 | 本例取值 | 说明 |
-|---|---|---|
-| `file`（`savez`） | `"arrays.npz"` | 保存多个数组到压缩包容器 |
-| `**kwds`（`savez`） | `a=arr1, b=arr2, c=arr3` | 具名键便于后续按键读取 |
-| `*args`（`savez`） | 未使用 | 若用匿名参数会自动命名 `arr_0` 等 |
-| `file`（`load`） | `"arrays.npz"` | 返回可按键访问的容器对象 |
-### 示例代码
+#### 重点方法
+
+```python
+np.savez(file, *args, **kwds)
+```
+
+#### 参数
+
+| 参数名  | 本例取值                     | 说明                                                                  |
+| ------- | ---------------------------- | --------------------------------------------------------------------- |
+| `file`  | `"arrays.npz"`               | 文件路径或类文件对象；自动追加 `.npz`                                 |
+| `*args` | —                            | 位置参数保存的数组，自动命名为 `arr_0`、`arr_1`...                    |
+| `**kwds`| `a=arr1, b=arr2, c=arr3`     | 关键字参数保存的数组，按给定名称存取                                  |
+
+### `np.savez_compressed`
+
+#### 作用
+
+语义与 `savez` 相同，但对内容**压缩存储**。牺牲一些速度换取更小文件体积，适合分发或归档。
+
+#### 重点方法
+
+```python
+np.savez_compressed(file, *args, **kwds)
+```
+
+### 综合示例
+
+#### 示例代码
 
 ```python
 import numpy as np
@@ -100,44 +152,93 @@ arr3 = np.arange(10)
 np.savez("arrays.npz", a=arr1, b=arr2, c=arr3)
 data = np.load("arrays.npz")
 
-print(list(data.keys()))
-print(data["a"])
-print(data["b"])
-print(data["c"])
+print(f"包含的数组: {list(data.keys())}")
+print(f"data['a']: {data['a']}")
+print(f"data['b']:\n{data['b']}")
+print(f"data['c']: {data['c']}")
 ```
 
-### 结果输出
+#### 输出
 
 ```text
-['a', 'b', 'c']
-----------------
-[1 2 3 4 5]
-----------------
+包含的数组: ['a', 'b', 'c']
+data['a']: [1 2 3 4 5]
+data['b']:
 [[1 2]
  [3 4]]
-----------------
-[0 1 2 3 4 5 6 7 8 9]
+data['c']: [0 1 2 3 4 5 6 7 8 9]
 ```
 
-## 3. 文本读写：`savetxt` 与 `loadtxt`
+## 文本：`savetxt` / `loadtxt`
 
-### 参数速览（本节）
+### `np.savetxt`
 
-适用 API（分项）：
+#### 作用
 
-1. `np.savetxt(fname, X, fmt='%.18e', delimiter=' ', header='', comments='# ', ...)`
-2. `np.loadtxt(fname, dtype=float, delimiter=None, skiprows=0, usecols=None, ...)`
-3. `np.allclose(a, b, rtol=1e-05, atol=1e-08)`
+将一维或二维数组保存为可读文本（如 `.txt` / `.csv`）。支持自定义分隔符、格式化、表头。
 
-| 参数名 | 本例取值 | 说明 |
-|---|---|---|
-| `fname` / `X`（`savetxt`） | `"array.txt"` / `arr` | 保存文本数组 |
-| `delimiter` / `fmt`（`savetxt`） | `","` / `"%.4f"` | 写 CSV 时指定逗号分隔与保留 4 位小数 |
-| `header` / `comments`（`savetxt`） | `"col1,col2,col3,col4"` / `""` | 写入表头并取消默认注释前缀 |
-| `fname` / `delimiter`（`loadtxt`） | `"array.txt"` / `None` | 按默认空白分隔读取文本 |
-| `skiprows` / `usecols`（`loadtxt`） | `0` / `None` | 不跳行且读取全部列 |
-| `a` / `b`（`allclose`） | `arr` / `loaded` | 判断浮点数组近似相等 |
-### 示例代码
+#### 重点方法
+
+```python
+np.savetxt(fname, X, fmt='%.18e', delimiter=' ', newline='\n',
+           header='', footer='', comments='# ', encoding=None)
+```
+
+#### 参数
+
+| 参数名      | 本例取值                | 说明                                                                |
+| ----------- | ----------------------- | ------------------------------------------------------------------- |
+| `fname`     | `"array.csv"`           | 文件路径                                                            |
+| `X`         | `arr(3, 4)`             | 一维或二维数组                                                      |
+| `fmt`       | `'%.18e'`（默认）、`'%.4f'`、`'%d'` | 格式字符串，遵循 C 的 `printf` 语法（见下表）             |
+| `delimiter` | `' '`（默认）、`','`    | 列之间的分隔符                                                      |
+| `newline`   | `'\n'`（默认）          | 行间分隔符                                                          |
+| `header`    | `''`（默认）、`"A,B,C"` | 文件头部附加的字符串                                                |
+| `footer`    | `''`（默认）            | 文件末尾附加的字符串                                                |
+| `comments`  | `'# '`（默认）、`''`    | `header` / `footer` 前自动添加的注释前缀；写纯 CSV 时设为 `''`      |
+| `encoding`  | `None`（默认）          | 写入文件使用的编码                                                  |
+
+### `np.loadtxt`
+
+#### 作用
+
+从文本读取数值数组。支持自定义分隔符、跳行、选取列等。
+
+#### 重点方法
+
+```python
+np.loadtxt(fname, dtype=float, comments='#', delimiter=None, converters=None,
+           skiprows=0, usecols=None, unpack=False, ndmin=0, encoding='bytes')
+```
+
+#### 参数
+
+| 参数名       | 本例取值           | 说明                                                       |
+| ------------ | ------------------ | ---------------------------------------------------------- |
+| `fname`      | `"array.csv"`      | 文件路径                                                   |
+| `dtype`      | `float`（默认）    | 结果数据类型                                               |
+| `comments`   | `'#'`（默认）      | 以此字符开头的行视为注释跳过                               |
+| `delimiter`  | `None`（默认）、`','`| 列分隔符，`None` 表示任意空白字符                        |
+| `converters` | `None`（默认）     | 字典，指定按列自定义转换函数                               |
+| `skiprows`   | `0`（默认）、`1`   | 跳过文件头部多少行（常用于跳过表头）                       |
+| `usecols`    | `None`（默认）、`(0, 2)` | 指定读取哪些列                                         |
+| `unpack`     | `False`（默认）    | `True` 时返回按列解包的结果，便于 `x, y = loadtxt(...)`    |
+| `ndmin`      | `0`（默认）        | 结果最小维度，避免单行 / 单列被降维为一维                  |
+
+### `fmt` 常见写法
+
+| `fmt` 写法 | 含义                 | 示例输入 → 输出        |
+| ---------- | -------------------- | ---------------------- |
+| `'%.2f'`   | 保留 2 位小数        | `1.23456` → `1.23`     |
+| `'%.4f'`   | 保留 4 位小数        | `1.23456` → `1.2346`   |
+| `'%d'`     | 整数格式             | `1.23` → `1`           |
+| `'%.2e'`   | 科学计数法 2 位小数  | `123.45` → `1.23e+02`  |
+| `'%10.4f'` | 宽度 10，4 位小数    | `1.23` → `    1.2300`  |
+| `'%s'`     | 字符串格式           | —                      |
+
+### 综合示例
+
+#### 示例代码
 
 ```python
 import numpy as np
@@ -145,7 +246,10 @@ import numpy as np
 np.random.seed(42)
 arr = np.random.random((3, 4))
 
+# 默认格式
 np.savetxt("array.txt", arr)
+
+# CSV 格式，带表头
 np.savetxt(
     "array.csv",
     arr,
@@ -155,11 +259,12 @@ np.savetxt(
     comments="",
 )
 
+# 加载
 loaded = np.loadtxt("array.txt")
-print(np.allclose(arr, loaded))
+print(f"加载一致: {np.allclose(arr, loaded)}")
 ```
 
-### `array.csv` 示例内容
+#### `array.csv` 文件内容
 
 ```text
 col1,col2,col3,col4
@@ -168,89 +273,62 @@ col1,col2,col3,col4
 0.6011,0.7081,0.0206,0.9699
 ```
 
-### 理解重点
+#### 理解重点
 
-- 文本格式便于查看和交换，但精度与速度不如二进制。
-- `allclose` 常用于验证浮点读写误差。
+- `comments=''` 不可少；默认 `'# '` 会让表头变成 `# col1,col2,col3,col4`，`loadtxt` 将其识别为注释行。
+- 文本读写有**精度损失**（`fmt` 决定）；需要无损保留用 `.npy`。
+- `np.allclose` 用于浮点近似比较，是读写往返验证的标准做法。
 
-## 4. `fmt` 格式参数
+## 带表头 CSV 的完整流程
 
-### 参数速览（本节）
-
-适用参数：`savetxt` 的 `fmt`
-
-| 参数名 | 本例取值 | 说明 |
-|---|---|---|
-| `fmt` | `"%.2f"` | 保留 2 位小数（定点小数） |
-| `fmt` | `"%.4f"` | 保留 4 位小数（定点小数） |
-| `fmt` | `"%d"` | 以整数格式输出（去除小数部分显示） |
-| `fmt` | `"%.2e"` | 科学计数法，2 位小数 |
-| `fmt` | `"%10.4f"` | 宽度 10，4 位小数（对齐输出列宽） |
-
-脚本演示了常见格式：
-
-- `%.2f`：2 位小数
-- `%.4f`：4 位小数
-- `%d`：整数
-- `%.2e`：科学计数法
-- `%10.4f`：宽度 10，4 位小数
-
-### 示例输出（一行）
-
-```text
-%.2f  -> 1.23 2.35
-----------------
-%.4f  -> 1.2346 2.3457
-----------------
-%d    -> 1 2
-----------------
-%.2e  -> 1.23e+00 2.35e+00
-----------------
-%10.4f->     1.2346     2.3457
-```
-
-## 5. 带表头文件与 `skiprows`
-
-### 参数速览（本节）
-
-适用 API（分项）：
-
-1. `np.savetxt(..., header='A,B,C', comments='')`
-2. `np.savetxt(..., delimiter=',', fmt='%d')`
-3. `np.loadtxt(..., delimiter=',', skiprows=1)`
-
-| 参数名 | 本例取值 | 说明 |
-|---|---|---|
-| `header` / `comments` | `"A,B,C"` / `""` | 写表头并取消默认 `# ` 前缀 |
-| `delimiter` / `fmt` | `","` / `"%d"` | 以 CSV 整数格式写入 |
-| `delimiter` / `skiprows` | `","` / `1` | 与写入分隔符一致并跳过第一行表头 |
 ### 示例代码
 
 ```python
 import numpy as np
 
 arr = np.array([[1, 2, 3], [4, 5, 6], [7, 8, 9]])
-np.savetxt("with_header.csv", arr, delimiter=",", fmt="%d", header="A,B,C", comments="")
 
+# 写：CSV + 表头
+np.savetxt(
+    "with_header.csv",
+    arr,
+    delimiter=",",
+    fmt="%d",
+    header="A,B,C",
+    comments="",
+)
+
+# 读：跳过表头
 loaded = np.loadtxt("with_header.csv", delimiter=",", skiprows=1)
-print(loaded)
+print(f"加载结果:\n{loaded}")
 ```
 
-### 结果输出
+### 输出
 
 ```text
+加载结果:
 [[1. 2. 3.]
  [4. 5. 6.]
  [7. 8. 9.]]
 ```
 
+### 理解重点
+
+- 写入 `header` 用的**分隔符**和 `delimiter` 要一致，否则 `loadtxt` 解析会错位。
+- `loadtxt` 默认以 `float` 读取；需要整数用 `dtype=int`。
+
 ## 常见坑
 
-1. `loadtxt` 遇到表头会报错，记得 `skiprows=1`。
-2. CSV 读写分隔符要一致。
-3. 文本保存精度由 `fmt` 决定，过低会丢失信息。
+1. `np.loadtxt` 遇到表头行会报 `ValueError`，加 `skiprows=1` 跳过。
+2. 写 CSV 时忘了 `comments=''`，`header` 会被注释前缀污染。
+3. `fmt` 精度过低会丢失信息，科学计算默认用 `'%.18e'`。
+4. `np.load` 的 `allow_pickle=False` 是默认值，加载含 object 数组的旧文件会报错；**仅在信任来源时**手动开启。
+5. `.npz` 用 `np.load` 得到的是懒加载对象，别忘了 `.close()` 或用 `with` 上下文管理；或直接 `dict(np.load(...))`。
+6. CSV 分隔符可能是 `,` / `;` / `\t`；读写要**前后一致**。
 
 ## 小结
 
-- 训练过程建议用 `.npy` / `.npz`，数据交换可用 `.csv`。
-- 写入时明确格式、读取时明确解析规则，避免隐式错误。
+- 训练 / 实验过程优先用 `.npy`（单数组）或 `.npz`（多数组），无损又快速。
+- 需要与 Excel / pandas / 其他语言交换数据时用 `.csv`，明确 `delimiter` 和 `fmt`。
+- 大文件或内存紧张场景用 `mmap_mode='r'` 做内存映射加载。
+- 写入端明确格式、读取端明确解析规则，避免隐式错误。

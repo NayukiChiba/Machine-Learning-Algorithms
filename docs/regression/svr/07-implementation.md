@@ -132,8 +132,8 @@ SVR 流水线完成！
 
 适用路径表达式（分项）：
 
-1. `RV_RESIDUAL_PLOT_DIR / dataset_name / f"{model_name}_residual.png"`
-2. `RV_LEARNING_CURVE_DIR / dataset_name / f"{model_name}_learning_curve.png"`
+1. `outputs/<model_name>/residual_plot.png`
+2. `outputs/<model_name>/learning_curve.png`
 
 | 参数名 | 本例取值 | 说明 |
 |---|---|---|

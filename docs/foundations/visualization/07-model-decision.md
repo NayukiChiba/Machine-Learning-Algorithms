@@ -90,7 +90,7 @@ ax.scatter(X[:, 0], X[:, 1], c=y, cmap="RdYlBu", edgecolors="black")
 ### 结果输出（示例）
 
 ```text
-控制台提示: 图表已保存到 outputs/visualization/viz_07_boundary.png
+控制台提示: 图表已保存到 outputs/visualization/07_boundary.png
 ----------------
 图像内容: 背景为模型分类区域，散点为真实样本标签
 ```
@@ -148,7 +148,7 @@ plot_tree(clf, ax=ax, filled=True, rounded=True,
 ### 结果输出（示例）
 
 ```text
-控制台提示: 图表已保存到 outputs/visualization/viz_07_tree.png
+控制台提示: 图表已保存到 outputs/visualization/07_tree.png
 ----------------
 图像内容: 每个节点展示分裂条件、样本数和类别分布
 ```
@@ -215,7 +215,7 @@ ax.set_yticklabels([feature_names[i] for i in indices])
 ### 结果输出（示例）
 
 ```text
-控制台提示: 图表已保存到 outputs/visualization/viz_07_importance.png
+控制台提示: 图表已保存到 outputs/visualization/07_importance.png
 ----------------
 图像内容: 特征按重要性从高到低排序展示
 ```
@@ -224,5 +224,4 @@ ax.set_yticklabels([feature_names[i] for i in indices])
 
 - 重要性图可用于快速筛选，但不应替代交叉验证评估。
 - 不同模型的“重要性定义”不同，跨模型比较需谨慎。
-
 

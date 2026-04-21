@@ -76,7 +76,7 @@ ax.grid(True)
 ### 结果输出（示例）
 
 ```text
-控制台提示: 图表已保存到 outputs/visualization/viz_01_basic.png
+控制台提示: 图表已保存到 outputs/visualization/01_basic.png
 ----------------
 图像内容: 同一坐标轴上展示 sin(x) 与 cos(x) 两条曲线
 ```
@@ -123,7 +123,7 @@ ax.legend()
 ### 结果输出（示例）
 
 ```text
-控制台提示: 图表已保存到 outputs/visualization/viz_01_line_styles.png
+控制台提示: 图表已保存到 outputs/visualization/01_line_styles.png
 ----------------
 常用线型: - / -- / : / -.
 ```
@@ -177,7 +177,7 @@ ax.legend(ncol=4)
 ### 结果输出（示例）
 
 ```text
-控制台提示: 图表已保存到 outputs/visualization/viz_01_markers.png
+控制台提示: 图表已保存到 outputs/visualization/01_markers.png
 ----------------
 图像内容: 8 种 marker 在同一图内对比
 ```
@@ -281,7 +281,7 @@ plt.tight_layout()
 ### 结果输出（示例）
 
 ```text
-控制台提示: 图表已保存到 outputs/visualization/viz_01_subplots.png
+控制台提示: 图表已保存到 outputs/visualization/01_subplots.png
 ----------------
 图像内容: 2x2 子图分别展示不同函数形态
 ```
@@ -290,5 +290,4 @@ plt.tight_layout()
 
 - 子图布局是“同一视图比较”最有效的表达方式。
 - 建议保持统一配色和字体，避免多图布局视觉噪音。
-
 
