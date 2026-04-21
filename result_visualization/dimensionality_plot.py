@@ -19,10 +19,12 @@ def plot_dimensionality(
     y=None,
     explained_variance_ratio=None,
     class_names: list[str] | None = None,
+    axis_labels: list[str] | None = None,
     title: str = "降维可视化",
     model_name: str = "model",
     figsize: tuple = (10, 8),
     mode: str = "2d",
+    filename: str | None = None,
 ):
     """
     绘制降维后的散点图
@@ -32,10 +34,12 @@ def plot_dimensionality(
         y: 标签数组（可选，用于着色）
         explained_variance_ratio: 各主成分的解释方差比（可选，用于标注轴）
         class_names: 类别名称列表
+        axis_labels: 坐标轴名称列表（可选）
         title: 图标题
         model_name: 模型名称
         figsize: 图像尺寸
         mode: "2d" 或 "3d"
+        filename: 输出文件名（可选）
     """
     n_components = X_transformed.shape[1]
 
@@ -53,7 +57,11 @@ def plot_dimensionality(
             alpha=0.7,
         )
         z_label = "PC3"
-        if explained_variance_ratio is not None and len(explained_variance_ratio) >= 3:
+        if axis_labels is not None and len(axis_labels) >= 3:
+            z_label = axis_labels[2]
+        elif (
+            explained_variance_ratio is not None and len(explained_variance_ratio) >= 3
+        ):
             z_label = f"PC3 ({explained_variance_ratio[2]:.1%})"
         ax.set_zlabel(z_label)
     else:
@@ -71,7 +79,10 @@ def plot_dimensionality(
     # 设置轴标签
     x_label = "PC1"
     y_label = "PC2"
-    if explained_variance_ratio is not None:
+    if axis_labels is not None and len(axis_labels) >= 2:
+        x_label = axis_labels[0]
+        y_label = axis_labels[1]
+    elif explained_variance_ratio is not None:
         if len(explained_variance_ratio) >= 1:
             x_label = f"PC1 ({explained_variance_ratio[0]:.1%})"
         if len(explained_variance_ratio) >= 2:
@@ -91,7 +102,9 @@ def plot_dimensionality(
     plt.tight_layout()
     save_dir = get_model_output_dir(model_name)
     save_dir.mkdir(parents=True, exist_ok=True)
-    filepath = save_dir / f"dimensionality_{mode}.png"
+    if filename is None:
+        filename = f"dimensionality_{mode}.png"
+    filepath = save_dir / filename
     fig.savefig(filepath, dpi=150, bbox_inches="tight")
     print(f"降维可视化已保存至: {filepath}")
     plt.close(fig)
