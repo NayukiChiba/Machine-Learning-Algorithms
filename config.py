@@ -34,15 +34,6 @@ DATA_VIS_SCATTER_DIR = DATA_VIS_ROOT / "scatter"
 DATA_VIS_CORRELATION_DIR = DATA_VIS_ROOT / "correlation"
 DATA_VIS_FEATURE_SPACE_DIR = DATA_VIS_ROOT / "feature_space"
 
-# 模型训练输出目录
-MODEL_TRAINING_ROOT = OUTPUTS_ROOT / "model_training"
-MT_CLASSIFICATION_DIR = MODEL_TRAINING_ROOT / "classification"
-MT_REGRESSION_DIR = MODEL_TRAINING_ROOT / "regression"
-MT_CLUSTERING_DIR = MODEL_TRAINING_ROOT / "clustering"
-MT_ENSEMBLE_DIR = MODEL_TRAINING_ROOT / "ensemble"
-MT_DIMENSIONALITY_DIR = MODEL_TRAINING_ROOT / "dimensionality"
-MT_PROBABILISTIC_DIR = MODEL_TRAINING_ROOT / "probabilistic"
-
 
 def get_output_dir(module: str, create: bool = True) -> Path:
     """
@@ -70,12 +61,6 @@ def get_output_dir(module: str, create: bool = True) -> Path:
         "data_vis_scatter": DATA_VIS_SCATTER_DIR,
         "data_vis_correlation": DATA_VIS_CORRELATION_DIR,
         "data_vis_feature_space": DATA_VIS_FEATURE_SPACE_DIR,
-        "mt_classification": MT_CLASSIFICATION_DIR,
-        "mt_regression": MT_REGRESSION_DIR,
-        "mt_clustering": MT_CLUSTERING_DIR,
-        "mt_ensemble": MT_ENSEMBLE_DIR,
-        "mt_dimensionality": MT_DIMENSIONALITY_DIR,
-        "mt_probabilistic": MT_PROBABILISTIC_DIR,
     }
 
     module_lower = module.lower()
@@ -111,36 +96,18 @@ def get_output_path(module: str, filename: str, create_dir: bool = True) -> Path
     return output_dir / filename
 
 
-def init_output_dirs():
+def get_model_output_dir(model_name: str, create: bool = True) -> Path:
     """
-    初始化所有输出目录
-    在项目启动时调用，确保所有目录存在
+    获取模型结果图输出目录
+
+    Args:
+        model_name: 模型名称，例如 knn、svr、lightgbm
+        create: 是否自动创建目录，默认 True
+
+    Returns:
+        Path: 模型对应的输出目录，例如 outputs/knn
     """
-    dirs = [
-        OUTPUTS_ROOT,
-        NUMPY_OUTPUT_DIR,
-        PANDAS_OUTPUT_DIR,
-        SKLEARN_OUTPUT_DIR,
-        SCIPY_OUTPUT_DIR,
-        VISUALIZATION_OUTPUT_DIR,
-        DATA_VIS_DISTRIBUTION_DIR,
-        DATA_VIS_SCATTER_DIR,
-        DATA_VIS_CORRELATION_DIR,
-        DATA_VIS_FEATURE_SPACE_DIR,
-        MODEL_TRAINING_ROOT,
-        MT_CLASSIFICATION_DIR,
-        MT_REGRESSION_DIR,
-        MT_CLUSTERING_DIR,
-        MT_ENSEMBLE_DIR,
-        MT_DIMENSIONALITY_DIR,
-        MT_PROBABILISTIC_DIR,
-    ]
-    for d in dirs:
-        d.mkdir(parents=True, exist_ok=True)
-
-
-# 模块导入时自动初始化目录
-init_output_dirs()
+    return get_output_dir(model_name, create=create)
 
 
 if __name__ == "__main__":
@@ -148,7 +115,7 @@ if __name__ == "__main__":
     print(f"项目根目录: {PROJECT_ROOT}")
     print(f"输出根目录: {OUTPUTS_ROOT}")
     print()
-    print("各模块输出目录:")
+    print("基础模块输出目录:")
     print(f"  NumPy:         {NUMPY_OUTPUT_DIR}")
     print(f"  Pandas:        {PANDAS_OUTPUT_DIR}")
     print(f"  Scikit-learn:  {SKLEARN_OUTPUT_DIR}")
@@ -161,13 +128,11 @@ if __name__ == "__main__":
     print(f"  相关性热力图:   {DATA_VIS_CORRELATION_DIR}")
     print(f"  特征空间:      {DATA_VIS_FEATURE_SPACE_DIR}")
     print()
-    print("模型训练输出目录:")
-    print(f"  分类 (Classification): {MT_CLASSIFICATION_DIR}")
-    print(f"  回归 (Regression):     {MT_REGRESSION_DIR}")
-    print(f"  聚类 (Clustering):     {MT_CLUSTERING_DIR}")
-    print(f"  集成 (Ensemble):       {MT_ENSEMBLE_DIR}")
-    print(f"  降维 (Dimensionality): {MT_DIMENSIONALITY_DIR}")
-    print(f"  概率 (Probabilistic):  {MT_PROBABILISTIC_DIR}")
+    print("模型结果图示例目录:")
+    print(f"  knn:           {get_model_output_dir('knn', create=False)}")
+    print(
+        f"  linear_regression: {get_model_output_dir('linear_regression', create=False)}"
+    )
     print()
     print("测试 get_output_path:")
     print(

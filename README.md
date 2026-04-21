@@ -40,6 +40,9 @@ python -m pipelines.classification.knn
 
 运行产生的图表等默认写入 `outputs/`（路径由 [`config.py`](config.py) 中的 `OUTPUTS_ROOT` 及各子目录常量约定）。
 
+- `numpy/pandas/sklearn/scipy/visualization` 输出：`outputs/<模块名>/`
+- 模型结果图片输出：`outputs/<model_name>/<png文件>`
+
 ## 仓库结构
 
 ```

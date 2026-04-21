@@ -13,7 +13,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 from sklearn.model_selection import learning_curve as sk_learning_curve
 
-from config import RV_LEARNING_CURVE_DIR
+from config import get_model_output_dir
 
 
 def plot_learning_curve(
@@ -24,10 +24,9 @@ def plot_learning_curve(
     scoring: str = "accuracy",
     train_sizes=None,
     title: str = "学习曲线",
-    dataset_name: str = "default",
     model_name: str = "model",
     figsize: tuple = (10, 7),
-    n_jobs: int = -1,
+    n_jobs: int = 1,
 ):
     """
     绘制学习曲线
@@ -40,10 +39,9 @@ def plot_learning_curve(
         scoring: 评分指标
         train_sizes: 训练集大小比例数组
         title: 图标题
-        dataset_name: 数据集名称
         model_name: 模型名称
         figsize: 图像尺寸
-        n_jobs: 并行数
+        n_jobs: 并行数，默认 1 以避免 Windows 环境下的进程权限问题
     """
     if train_sizes is None:
         train_sizes = np.linspace(0.1, 1.0, 10)
@@ -92,9 +90,9 @@ def plot_learning_curve(
     ax.grid(True, alpha=0.3)
 
     plt.tight_layout()
-    save_dir = RV_LEARNING_CURVE_DIR / dataset_name
+    save_dir = get_model_output_dir(model_name)
     save_dir.mkdir(parents=True, exist_ok=True)
-    filepath = save_dir / f"{model_name}_learning_curve.png"
+    filepath = save_dir / "learning_curve.png"
     fig.savefig(filepath, dpi=150, bbox_inches="tight")
     print(f"学习曲线已保存至: {filepath}")
     plt.close(fig)
@@ -111,6 +109,5 @@ if __name__ == "__main__":
         X,
         y,
         title="KNN 学习曲线",
-        dataset_name="test_knn",
         model_name="knn",
     )

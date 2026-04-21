@@ -12,7 +12,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 from sklearn.metrics import confusion_matrix as sk_confusion_matrix
 
-from config import RV_CONFUSION_MATRIX_DIR
+from config import get_model_output_dir
 
 
 def plot_confusion_matrix(
@@ -21,7 +21,6 @@ def plot_confusion_matrix(
     class_names: list[str] | None = None,
     normalize: bool = False,
     title: str = "混淆矩阵",
-    dataset_name: str = "default",
     model_name: str = "model",
     figsize: tuple = (8, 7),
     cmap: str = "Blues",
@@ -35,7 +34,6 @@ def plot_confusion_matrix(
         class_names: 类别名称列表
         normalize: 是否归一化（按行显示百分比）
         title: 图标题
-        dataset_name: 数据集名称
         model_name: 模型名称
         figsize: 图像尺寸
         cmap: 颜色映射
@@ -80,9 +78,9 @@ def plot_confusion_matrix(
             )
 
     plt.tight_layout()
-    save_dir = RV_CONFUSION_MATRIX_DIR / dataset_name
+    save_dir = get_model_output_dir(model_name)
     save_dir.mkdir(parents=True, exist_ok=True)
-    filepath = save_dir / f"{model_name}_confusion_matrix.png"
+    filepath = save_dir / "confusion_matrix.png"
     fig.savefig(filepath, dpi=150, bbox_inches="tight")
     print(f"混淆矩阵已保存至: {filepath}")
     plt.close(fig)
@@ -105,6 +103,5 @@ if __name__ == "__main__":
         y_pred,
         class_names=["负类", "正类"],
         title="逻辑回归 混淆矩阵",
-        dataset_name="test_lr",
         model_name="logistic_regression",
     )
