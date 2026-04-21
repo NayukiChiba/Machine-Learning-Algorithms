@@ -16,6 +16,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 from sklearn.cluster import DBSCAN
+from sklearn.cluster import KMeans
 from sklearn.neighbors import NearestNeighbors
 
 from config import get_model_output_dir
@@ -243,4 +244,163 @@ def plot_dbscan_eps_sweep(
 
     fig.tight_layout()
     _save_figure(fig, save_dir, "eps_sweep_curve.png")
+    return result_df
+
+
+def plot_kmeans_k_sweep(
+    X,
+    labels_true,
+    model_name: str,
+    current_k: int,
+    init: str = "k-means++",
+    n_init: int = 10,
+    max_iter: int = 300,
+    random_state: int = 42,
+    k_values: np.ndarray | None = None,
+    figsize: tuple = (12, 9),
+) -> pd.DataFrame:
+    """
+    绘制 KMeans 的 k 扫描评估曲线
+
+    这张图回答的是：
+    “当簇数 k 改变时，聚类结构和评估指标会怎么变化？”
+
+    展示的指标包括：
+    1. Inertia
+    2. Silhouette
+    3. ARI
+    4. NMI
+
+    Args:
+        X: 特征矩阵
+        labels_true: 真实标签（仅用于评估）
+        model_name: 模型名称
+        current_k: 当前实际使用的簇数
+        init: 初始化方式
+        n_init: 初始化次数
+        max_iter: 最大迭代次数
+        random_state: 随机种子
+        k_values: 手动指定的 k 候选值；为空则自动生成
+        figsize: 图尺寸
+
+    Returns:
+        pd.DataFrame: 每个 k 对应的评估结果
+    """
+    X = np.asarray(X)
+    labels_true = np.asarray(labels_true)
+    save_dir = get_model_output_dir(model_name)
+
+    if k_values is None:
+        k_values = np.arange(2, 9)
+
+    k_values = np.unique(np.append(np.asarray(k_values, dtype=int), current_k))
+    k_values.sort()
+
+    records = []
+    for k in k_values:
+        model = KMeans(
+            n_clusters=int(k),
+            init=init,
+            n_init=n_init,
+            max_iter=max_iter,
+            random_state=random_state,
+        )
+        labels_pred = model.fit_predict(X)
+        metrics = evaluate_clustering_with_ground_truth(
+            X,
+            labels_pred,
+            labels_true,
+            inertia=model.inertia_,
+            print_report=False,
+        )
+        record = {
+            "k": int(k),
+            "inertia": metrics["inertia"],
+            "ari": metrics["ari"],
+            "nmi": metrics["nmi"],
+            "silhouette": metrics.get("silhouette", np.nan),
+        }
+        records.append(record)
+
+    result_df = pd.DataFrame(records)
+
+    fig, axes = plt.subplots(2, 2, figsize=figsize)
+    fig.suptitle("KMeans 诊断：k 扫描评估曲线", fontsize=14, fontweight="bold")
+
+    axes[0, 0].plot(
+        result_df["k"],
+        result_df["inertia"],
+        marker="o",
+        color="#1E88E5",
+        linewidth=2,
+    )
+    axes[0, 0].axvline(current_k, color="#D81B60", linestyle="--", linewidth=1.5)
+    axes[0, 0].set_title("k vs Inertia")
+    axes[0, 0].set_xlabel("k")
+    axes[0, 0].set_ylabel("Inertia")
+    axes[0, 0].grid(True, alpha=0.25)
+
+    axes[0, 1].plot(
+        result_df["k"],
+        result_df["silhouette"],
+        marker="o",
+        color="#004D40",
+        linewidth=2,
+    )
+    axes[0, 1].axvline(current_k, color="#D81B60", linestyle="--", linewidth=1.5)
+    axes[0, 1].set_title("k vs Silhouette")
+    axes[0, 1].set_xlabel("k")
+    axes[0, 1].set_ylabel("Silhouette")
+    axes[0, 1].grid(True, alpha=0.25)
+
+    axes[1, 0].plot(
+        result_df["k"],
+        result_df["ari"],
+        marker="o",
+        color="#2E7D32",
+        linewidth=2,
+        label="ARI",
+    )
+    axes[1, 0].plot(
+        result_df["k"],
+        result_df["nmi"],
+        marker="s",
+        color="#6A1B9A",
+        linewidth=2,
+        label="NMI",
+    )
+    axes[1, 0].axvline(current_k, color="#D81B60", linestyle="--", linewidth=1.5)
+    axes[1, 0].set_title("k vs 外部评估指标")
+    axes[1, 0].set_xlabel("k")
+    axes[1, 0].set_ylabel("得分")
+    axes[1, 0].legend(loc="best")
+    axes[1, 0].grid(True, alpha=0.25)
+
+    # 右下角给一个综合对照表格感更强的折线图：ARI 与 Inertia 同时看趋势
+    axes[1, 1].plot(
+        result_df["k"],
+        result_df["ari"],
+        marker="o",
+        color="#E64A19",
+        linewidth=2,
+        label="ARI",
+    )
+    normalized_inertia = result_df["inertia"] / result_df["inertia"].max()
+    axes[1, 1].plot(
+        result_df["k"],
+        normalized_inertia,
+        marker="^",
+        color="#5D4037",
+        linewidth=2,
+        label="Inertia(归一化)",
+    )
+    axes[1, 1].axvline(current_k, color="#D81B60", linestyle="--", linewidth=1.5)
+    axes[1, 1].set_title("k vs 综合趋势")
+    axes[1, 1].set_xlabel("k")
+    axes[1, 1].set_ylabel("归一化得分")
+    axes[1, 1].legend(loc="best")
+    axes[1, 1].grid(True, alpha=0.25)
+
+    fig.tight_layout()
+    _save_figure(fig, save_dir, "k_sweep_curve.png")
     return result_df
