@@ -30,19 +30,17 @@ plt.rcParams["axes.unicode_minus"] = False
 # --- 通用绘图工具 ---
 
 
-def _save_fig(fig: plt.Figure, filename: str, dataset_name: str) -> None:
+def _save_fig(fig: plt.Figure, filename: str, output_name: str) -> None:
     """
-    保存图表到对应数据集的子目录
+    保存图表到当前模块目录
 
     args:
         fig(Figure): matplotlib 图表对象
         filename(str): 文件名
-        dataset_name(str): 数据集名称 (子目录名)
+        output_name(str): 输出名称前缀
     """
-    save_dir = OUTPUT_DIR / dataset_name
-    save_dir.mkdir(parents=True, exist_ok=True)
-
-    filepath = save_dir / filename
+    OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
+    filepath = OUTPUT_DIR / f"{output_name}_{filename}"
     fig.savefig(filepath, dpi=200, bbox_inches="tight")
     plt.close(fig)
     print(f"  保存: {filepath}")
@@ -53,7 +51,7 @@ def _plot_2d_scatter(
     x_col: str,
     y_col: str,
     color_col: str,
-    dataset_name: str,
+    output_name: str,
     title: str,
     filename: str,
 ) -> None:
@@ -65,7 +63,7 @@ def _plot_2d_scatter(
         x_col(str): x 轴特征列名
         y_col(str): y 轴特征列名
         color_col(str): 着色列名 (类别/簇标签)
-        dataset_name(str): 数据集名称
+        output_name(str): 输出名称前缀
         title(str): 图标题
         filename(str): 保存文件名
     """
@@ -92,14 +90,14 @@ def _plot_2d_scatter(
     ax.grid(True, alpha=0.2)
 
     fig.tight_layout()
-    _save_fig(fig, filename, dataset_name)
+    _save_fig(fig, filename, output_name)
 
 
 def _plot_pairplot(
     data: DataFrame,
     feature_cols: list[str],
     color_col: str,
-    dataset_name: str,
+    output_name: str,
     max_features: int = 6,
 ) -> None:
     """
@@ -112,7 +110,7 @@ def _plot_pairplot(
         data(DataFrame): 数据
         feature_cols(list[str]): 特征列名列表
         color_col(str): 着色列名
-        dataset_name(str): 数据集名称
+        output_name(str): 输出名称前缀
         max_features(int): 最大特征数
     """
     # 限制特征数量，避免散点矩阵过大
@@ -130,7 +128,7 @@ def _plot_pairplot(
         diag_kws={"alpha": 0.5},
         height=2,
     )
-    g.fig.suptitle(f"{dataset_name} — 散点矩阵", fontsize=13, fontweight="bold", y=1.02)
+    g.fig.suptitle(f"{output_name} — 散点矩阵", fontsize=13, fontweight="bold", y=1.02)
 
     if len(feature_cols) > max_features:
         g.fig.text(
@@ -142,14 +140,14 @@ def _plot_pairplot(
             color="gray",
         )
 
-    _save_fig(g.fig, "02_pairplot.png", dataset_name)
+    _save_fig(g.fig, "02_pairplot.png", output_name)
 
 
 def _plot_regression_scatter(
     data: DataFrame,
     feature_cols: list[str],
     target_col: str,
-    dataset_name: str,
+    output_name: str,
     max_features: int = 8,
 ) -> None:
     """
@@ -161,7 +159,7 @@ def _plot_regression_scatter(
         data(DataFrame): 数据
         feature_cols(list[str]): 特征列名列表
         target_col(str): 目标变量列名
-        dataset_name(str): 数据集名称
+        output_name(str): 输出名称前缀
         max_features(int): 最大特征数
     """
     plot_cols = feature_cols[:max_features]
@@ -172,7 +170,7 @@ def _plot_regression_scatter(
 
     fig, axes = plt.subplots(rows, cols, figsize=(cols * 4, rows * 3))
     fig.suptitle(
-        f"{dataset_name} — 特征 vs {target_col}", fontsize=13, fontweight="bold"
+        f"{output_name} — 特征 vs {target_col}", fontsize=13, fontweight="bold"
     )
 
     if n == 1:
@@ -197,10 +195,10 @@ def _plot_regression_scatter(
         axes[row_idx][col_idx].axis("off")
 
     fig.tight_layout()
-    _save_fig(fig, "01_feature_vs_target.png", dataset_name)
+    _save_fig(fig, "01_feature_vs_target.png", output_name)
 
 
-def _plot_sequence_plot(data: DataFrame, dataset_name: str) -> None:
+def _plot_sequence_plot(data: DataFrame, output_name: str) -> None:
     """
     HMM 序列: 绘制观测和隐状态的时间序列图
 
@@ -210,10 +208,10 @@ def _plot_sequence_plot(data: DataFrame, dataset_name: str) -> None:
 
     args:
         data(DataFrame): HMM 序列数据
-        dataset_name(str): 数据集名称
+        output_name(str): 输出名称前缀
     """
     fig, axes = plt.subplots(2, 1, figsize=(12, 5), sharex=True)
-    fig.suptitle(f"{dataset_name} — 时间序列", fontsize=13, fontweight="bold")
+    fig.suptitle(f"{output_name} — 时间序列", fontsize=13, fontweight="bold")
 
     # 观测序列
     axes[0].step(
@@ -231,7 +229,7 @@ def _plot_sequence_plot(data: DataFrame, dataset_name: str) -> None:
     axes[1].grid(True, alpha=0.2)
 
     fig.tight_layout()
-    _save_fig(fig, "01_time_series.png", dataset_name)
+    _save_fig(fig, "01_time_series.png", output_name)
 
 
 # --- 按数据集类型的绘图函数 ---

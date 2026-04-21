@@ -30,19 +30,17 @@ plt.rcParams["axes.unicode_minus"] = False
 # --- 通用绘图工具 ---
 
 
-def _save_fig(fig: plt.Figure, filename: str, dataset_name: str) -> None:
+def _save_fig(fig: plt.Figure, filename: str, output_name: str) -> None:
     """
-    保存图表到对应数据集的子目录
+    保存图表到当前模块目录
 
     args:
         fig(Figure): matplotlib 图表对象
         filename(str): 文件名
-        dataset_name(str): 数据集名称
+        output_name(str): 输出名称前缀
     """
-    save_dir = OUTPUT_DIR / dataset_name
-    save_dir.mkdir(parents=True, exist_ok=True)
-
-    filepath = save_dir / filename
+    OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
+    filepath = OUTPUT_DIR / f"{output_name}_{filename}"
     fig.savefig(filepath, dpi=200, bbox_inches="tight")
     plt.close(fig)
     print(f"  保存: {filepath}")
@@ -51,7 +49,7 @@ def _save_fig(fig: plt.Figure, filename: str, dataset_name: str) -> None:
 def _plot_heatmap(
     data: DataFrame,
     columns: list[str],
-    dataset_name: str,
+    output_name: str,
     title: str,
     filename: str,
     annot: bool = True,
@@ -69,7 +67,7 @@ def _plot_heatmap(
     args:
         data(DataFrame): 数据
         columns(list[str]): 列名列表
-        dataset_name(str): 数据集名称
+        output_name(str): 输出名称前缀
         title(str): 图标题
         filename(str): 保存文件名
         annot(bool): 是否显示相关系数数值
@@ -107,7 +105,7 @@ def _plot_heatmap(
     ax.tick_params(axis="y", rotation=0)
 
     fig.tight_layout()
-    _save_fig(fig, filename, dataset_name)
+    _save_fig(fig, filename, output_name)
 
 
 # --- 按数据集类型的绘图函数 ---

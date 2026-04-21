@@ -34,19 +34,17 @@ plt.rcParams["axes.unicode_minus"] = False
 # --- 通用绘图工具 ---
 
 
-def _save_fig(fig: plt.Figure, filename: str, dataset_name: str) -> None:
+def _save_fig(fig: plt.Figure, filename: str, output_name: str) -> None:
     """
-    保存图表到对应数据集的子目录
+    保存图表到当前模块目录
 
     args:
         fig(Figure): matplotlib 图表对象
         filename(str): 文件名
-        dataset_name(str): 数据集名称
+        output_name(str): 输出名称前缀
     """
-    save_dir = OUTPUT_DIR / dataset_name
-    save_dir.mkdir(parents=True, exist_ok=True)
-
-    filepath = save_dir / filename
+    OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
+    filepath = OUTPUT_DIR / f"{output_name}_{filename}"
     fig.savefig(filepath, dpi=200, bbox_inches="tight")
     plt.close(fig)
     print(f"  保存: {filepath}")
@@ -56,7 +54,7 @@ def _plot_2d_projection(
     data: DataFrame,
     feature_cols: list[str],
     color_col: str,
-    dataset_name: str,
+    output_name: str,
     title_suffix: str = "",
 ) -> None:
     """
@@ -68,7 +66,7 @@ def _plot_2d_projection(
         data(DataFrame): 数据
         feature_cols(list[str]): 特征列名列表
         color_col(str): 着色列名
-        dataset_name(str): 数据集名称
+        output_name(str): 输出名称前缀
         title_suffix(str): 标题后缀
     """
     fig, ax = plt.subplots(figsize=(7, 5))
@@ -83,7 +81,7 @@ def _plot_2d_projection(
         x_label = feature_cols[0]
         y_label = feature_cols[1] if len(feature_cols) > 1 else ""
         fig.suptitle(
-            f"{dataset_name} — 原始特征空间{title_suffix}",
+            f"{output_name} — 原始特征空间{title_suffix}",
             fontsize=13,
             fontweight="bold",
         )
@@ -100,7 +98,7 @@ def _plot_2d_projection(
         x_label = f"PC1 ({ev1:.1f}%)"
         y_label = f"PC2 ({ev2:.1f}%)"
         fig.suptitle(
-            f"{dataset_name} — PCA 2D 投影{title_suffix}",
+            f"{output_name} — PCA 2D 投影{title_suffix}",
             fontsize=13,
             fontweight="bold",
         )
@@ -126,14 +124,14 @@ def _plot_2d_projection(
     ax.grid(True, alpha=0.2)
 
     fig.tight_layout()
-    _save_fig(fig, "01_2d_projection.png", dataset_name)
+    _save_fig(fig, "01_2d_projection.png", output_name)
 
 
 def _plot_3d_projection(
     data: DataFrame,
     feature_cols: list[str],
     color_col: str,
-    dataset_name: str,
+    output_name: str,
 ) -> None:
     """
     PCA 降至 3D 后的三维散点图
@@ -144,7 +142,7 @@ def _plot_3d_projection(
         data(DataFrame): 数据
         feature_cols(list[str]): 特征列名列表
         color_col(str): 着色列名
-        dataset_name(str): 数据集名称
+        output_name(str): 输出名称前缀
     """
     if len(feature_cols) < 3:
         return
@@ -180,10 +178,10 @@ def _plot_3d_projection(
     ax.set_ylabel(f"PC2 ({ev[1]:.1f}%)")
     ax.set_zlabel(f"PC3 ({ev[2]:.1f}%)")
     ax.legend(fontsize=7, loc="best")
-    fig.suptitle(f"{dataset_name} — PCA 3D 投影", fontsize=13, fontweight="bold")
+    fig.suptitle(f"{output_name} — PCA 3D 投影", fontsize=13, fontweight="bold")
 
     fig.tight_layout()
-    _save_fig(fig, "02_3d_projection.png", dataset_name)
+    _save_fig(fig, "02_3d_projection.png", output_name)
 
 
 # --- 按数据集类型的入口函数 ---
