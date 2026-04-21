@@ -16,7 +16,6 @@ from result_visualization.confusion_matrix import plot_confusion_matrix
 from result_visualization.decision_boundary import plot_decision_boundary
 from result_visualization.learning_curve import plot_learning_curve
 
-DATASET = "svc"
 MODEL = "svc"
 
 
@@ -40,9 +39,7 @@ def run():
     model = train_model(X_train_s, y_train)
     y_pred = model.predict(X_test_s)
 
-    plot_confusion_matrix(
-        y_test, y_pred, title="SVC 混淆矩阵", dataset_name=DATASET, model_name=MODEL
-    )
+    plot_confusion_matrix(y_test, y_pred, title="SVC 混淆矩阵", model_name=MODEL)
 
     # 决策边界
     pca = PCA(n_components=2, random_state=42)
@@ -51,7 +48,11 @@ def run():
     model_2d = SVC_Model(kernel="rbf", random_state=42)
     model_2d.fit(pca.transform(X_train_s), y_train)
     plot_decision_boundary(
-        model_2d, X_2d, y.values, title="SVC 决策边界 (PCA 2D)", dataset_name=DATASET
+        model_2d,
+        X_2d,
+        y.values,
+        title="SVC 决策边界 (PCA 2D)",
+        model_name=MODEL,
     )
 
     plot_learning_curve(
@@ -59,7 +60,6 @@ def run():
         X_train_s,
         y_train,
         title="SVC 学习曲线",
-        dataset_name=DATASET,
         model_name=MODEL,
     )
 

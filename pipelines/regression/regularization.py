@@ -12,8 +12,6 @@ from data_generation import regularization_data
 from model_training.regression.regularization import train_model
 from result_visualization.residual_plot import plot_residuals
 
-DATASET = "regularization"
-
 
 def run():
     """正则化回归完整流水线"""
@@ -41,7 +39,6 @@ def run():
             y_test,
             y_pred,
             title=f"{name} 残差分析",
-            dataset_name=DATASET,
             model_name=name.lower(),
         )
 

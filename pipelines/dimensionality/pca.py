@@ -11,7 +11,6 @@ from data_generation import pca_data
 from model_training.dimensionality.pca import train_model
 from result_visualization.dimensionality_plot import plot_dimensionality
 
-DATASET = "pca"
 MODEL = "pca"
 
 
@@ -36,7 +35,6 @@ def run():
         y=y,
         explained_variance_ratio=model.explained_variance_ratio_,
         title="PCA 降维 (2D)",
-        dataset_name=DATASET,
         model_name=MODEL,
         mode="2d",
     )
@@ -49,7 +47,6 @@ def run():
         y=y,
         explained_variance_ratio=model_3d.explained_variance_ratio_,
         title="PCA 降维 (3D)",
-        dataset_name=DATASET,
         model_name=MODEL,
         mode="3d",
     )

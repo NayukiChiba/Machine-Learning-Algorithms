@@ -14,7 +14,6 @@ from model_training.regression.svr import train_model
 from result_visualization.residual_plot import plot_residuals
 from result_visualization.learning_curve import plot_learning_curve
 
-DATASET = "svr"
 MODEL = "svr"
 
 
@@ -38,16 +37,13 @@ def run():
     model = train_model(X_train_s, y_train)
     y_pred = model.predict(X_test_s)
 
-    plot_residuals(
-        y_test, y_pred, title="SVR 残差分析", dataset_name=DATASET, model_name=MODEL
-    )
+    plot_residuals(y_test, y_pred, title="SVR 残差分析", model_name=MODEL)
     plot_learning_curve(
         SVR(kernel="rbf", C=10.0),
         X_train_s,
         y_train,
         scoring="r2",
         title="SVR 学习曲线",
-        dataset_name=DATASET,
         model_name=MODEL,
     )
 

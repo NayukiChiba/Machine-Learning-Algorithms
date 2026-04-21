@@ -13,7 +13,6 @@ from model_training.ensemble.bagging import train_model
 from result_visualization.confusion_matrix import plot_confusion_matrix
 from result_visualization.roc_curve import plot_roc_curve
 
-DATASET = "bagging"
 MODEL = "bagging"
 
 
@@ -37,9 +36,7 @@ def run():
     model = train_model(X_train_s, y_train)
     y_pred = model.predict(X_test_s)
 
-    plot_confusion_matrix(
-        y_test, y_pred, title="Bagging 混淆矩阵", dataset_name=DATASET, model_name=MODEL
-    )
+    plot_confusion_matrix(y_test, y_pred, title="Bagging 混淆矩阵", model_name=MODEL)
 
     if hasattr(model, "predict_proba"):
         y_scores = model.predict_proba(X_test_s)
@@ -47,7 +44,6 @@ def run():
             y_test,
             y_scores,
             title="Bagging ROC 曲线",
-            dataset_name=DATASET,
             model_name=MODEL,
         )
 

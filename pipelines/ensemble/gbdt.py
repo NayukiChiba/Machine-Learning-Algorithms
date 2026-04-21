@@ -16,7 +16,6 @@ from result_visualization.roc_curve import plot_roc_curve
 from result_visualization.feature_importance import plot_feature_importance
 from result_visualization.learning_curve import plot_learning_curve
 
-DATASET = "gbdt"
 MODEL = "gbdt"
 
 
@@ -41,20 +40,15 @@ def run():
     model = train_model(X_train_s, y_train)
     y_pred = model.predict(X_test_s)
 
-    plot_confusion_matrix(
-        y_test, y_pred, title="GBDT 混淆矩阵", dataset_name=DATASET, model_name=MODEL
-    )
+    plot_confusion_matrix(y_test, y_pred, title="GBDT 混淆矩阵", model_name=MODEL)
 
     y_scores = model.predict_proba(X_test_s)
-    plot_roc_curve(
-        y_test, y_scores, title="GBDT ROC 曲线", dataset_name=DATASET, model_name=MODEL
-    )
+    plot_roc_curve(y_test, y_scores, title="GBDT ROC 曲线", model_name=MODEL)
 
     plot_feature_importance(
         model,
         feature_names=feature_names,
         title="GBDT 特征重要性",
-        dataset_name=DATASET,
         model_name=MODEL,
     )
 
@@ -63,7 +57,6 @@ def run():
         X_train_s,
         y_train,
         title="GBDT 学习曲线",
-        dataset_name=DATASET,
         model_name=MODEL,
     )
 

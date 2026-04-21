@@ -14,7 +14,6 @@ from result_visualization.confusion_matrix import plot_confusion_matrix
 from result_visualization.roc_curve import plot_roc_curve
 from result_visualization.feature_importance import plot_feature_importance
 
-DATASET = "lightgbm"
 MODEL = "lightgbm"
 
 
@@ -43,7 +42,6 @@ def run():
         y_test,
         y_pred,
         title="LightGBM 混淆矩阵",
-        dataset_name=DATASET,
         model_name=MODEL,
     )
 
@@ -52,7 +50,6 @@ def run():
         y_test,
         y_scores,
         title="LightGBM ROC 曲线",
-        dataset_name=DATASET,
         model_name=MODEL,
     )
 
@@ -60,7 +57,6 @@ def run():
         model,
         feature_names=feature_names,
         title="LightGBM 特征重要性",
-        dataset_name=DATASET,
         model_name=MODEL,
     )
 

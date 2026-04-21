@@ -12,7 +12,6 @@ from model_training.ensemble.xgboost import train_model
 from result_visualization.residual_plot import plot_residuals
 from result_visualization.feature_importance import plot_feature_importance
 
-DATASET = "xgboost"
 MODEL = "xgboost"
 
 
@@ -34,14 +33,11 @@ def run():
     model = train_model(X_train, y_train)
     y_pred = model.predict(X_test)
 
-    plot_residuals(
-        y_test, y_pred, title="XGBoost 残差分析", dataset_name=DATASET, model_name=MODEL
-    )
+    plot_residuals(y_test, y_pred, title="XGBoost 残差分析", model_name=MODEL)
     plot_feature_importance(
         model,
         feature_names=feature_names,
         title="XGBoost 特征重要性",
-        dataset_name=DATASET,
         model_name=MODEL,
     )
 
