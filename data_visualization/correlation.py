@@ -7,6 +7,7 @@ data_visualization/correlation.py
 """
 
 from pathlib import Path
+from textwrap import fill
 
 import matplotlib.pyplot as plt
 import seaborn as sns
@@ -54,6 +55,27 @@ def _save_single_dataset_fig(fig: plt.Figure, save_dir: Path, filename: str) -> 
     print(f"数据展示图已保存至: {filepath}")
 
 
+def _wrap_labels(columns: list[str], width: int = 18) -> list[str]:
+    """
+    对长坐标标签做自动换行
+
+    这里不截断字段名，而是尽量保留完整含义。
+    对于像 Wine 这种长特征名数据集，完整显示更利于阅读。
+
+    Args:
+        columns: 原始列名列表
+        width: 每行最大字符数
+
+    Returns:
+        list[str]: 换行后的标签
+    """
+    labels = []
+    for column in columns:
+        normalized = column.replace("_", " ")
+        labels.append(fill(normalized, width=width))
+    return labels
+
+
 def _plot_heatmap(
     data: DataFrame,
     columns: list[str],
@@ -82,15 +104,17 @@ def _plot_heatmap(
     """
     corr = data[columns].corr(method="pearson")
 
-    # 动态调整图表大小
+    # 把整体画布和单元格都放大，避免长标签把图挤得发乱。
     n = len(columns)
-    size = max(6, n * 0.6)
+    max_label_length = max(len(column) for column in columns)
+    width = max(10, n * 1.15, max_label_length * 0.55)
+    height = max(8, n * 0.95)
 
     # 特征过多时关闭数字标注
     show_annot = annot and n <= 15
     fmt = ".2f" if show_annot else ""
 
-    fig, ax = plt.subplots(figsize=(size, size * 0.85))
+    fig, ax = plt.subplots(figsize=(width, height))
     fig.suptitle(title, fontsize=13, fontweight="bold")
 
     sns.heatmap(
@@ -108,11 +132,13 @@ def _plot_heatmap(
         vmax=1,
     )
 
-    # 特征名过长时旋转
-    ax.tick_params(axis="x", rotation=45)
-    ax.tick_params(axis="y", rotation=0)
+    wrapped_labels = _wrap_labels(columns, width=18)
+    ax.set_xticklabels(wrapped_labels, rotation=35, ha="right", rotation_mode="anchor")
+    ax.set_yticklabels(wrapped_labels, rotation=0, va="center")
+    ax.tick_params(axis="x", labelsize=9)
+    ax.tick_params(axis="y", labelsize=9)
 
-    fig.tight_layout()
+    fig.subplots_adjust(left=0.26, bottom=0.27, right=0.95, top=0.92)
     _save_fig(fig, filename, output_name)
 
 
@@ -137,11 +163,13 @@ def plot_correlation_heatmap(
     """
     corr = data[columns].corr(method="pearson")
     n = len(columns)
-    size = max(6, n * 0.6)
+    max_label_length = max(len(column) for column in columns)
+    width = max(10, n * 1.15, max_label_length * 0.55)
+    height = max(8, n * 0.95)
     show_annot = annot and n <= 15
     fmt = ".2f" if show_annot else ""
 
-    fig, ax = plt.subplots(figsize=(size, size * 0.85))
+    fig, ax = plt.subplots(figsize=(width, height))
     sns.heatmap(
         corr,
         annot=show_annot,
@@ -157,8 +185,11 @@ def plot_correlation_heatmap(
         vmax=1,
     )
     ax.set_title(title)
-    ax.tick_params(axis="x", rotation=45)
-    ax.tick_params(axis="y", rotation=0)
+    wrapped_labels = _wrap_labels(columns, width=18)
+    ax.set_xticklabels(wrapped_labels, rotation=35, ha="right", rotation_mode="anchor")
+    ax.set_yticklabels(wrapped_labels, rotation=0, va="center")
+    ax.tick_params(axis="x", labelsize=9)
+    ax.tick_params(axis="y", labelsize=9)
 
-    fig.tight_layout()
+    fig.subplots_adjust(left=0.26, bottom=0.27, right=0.95, top=0.92)
     _save_single_dataset_fig(fig, save_dir, filename)
