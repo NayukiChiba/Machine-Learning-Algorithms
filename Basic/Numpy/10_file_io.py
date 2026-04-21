@@ -3,16 +3,12 @@ NumPy 文件操作
 对应文档: ../../docs/foundations/numpy/10-file-io.md
 
 使用方式：
-    python 10_file_io.py
+    python -m Basic.Numpy.10_file_io
 """
 
 import numpy as np
-import sys
-from pathlib import Path
 
-# 添加项目根目录到搜索路径
-sys.path.insert(0, str(Path(__file__).parent.parent.parent))
-from config import get_output_dir
+from . import output_dir as get_output_dir
 
 
 def save_load_npy():
@@ -22,7 +18,7 @@ def save_load_npy():
     print("=" * 50)
 
     # 获取输出目录
-    output_dir = get_output_dir("numpy")
+    output_dir = get_output_dir()
 
     # 创建测试数组
     np.random.seed(42)
@@ -49,7 +45,7 @@ def savez():
     print("2. savez 保存多个数组 (.npz)")
     print("=" * 50)
 
-    output_dir = get_output_dir("numpy")
+    output_dir = get_output_dir()
 
     # 创建多个数组
     arr1 = np.array([1, 2, 3, 4, 5])
@@ -76,7 +72,7 @@ def savetxt_loadtxt():
     print("3. savetxt 和 loadtxt (文本格式)")
     print("=" * 50)
 
-    output_dir = get_output_dir("numpy")
+    output_dir = get_output_dir()
 
     # 创建测试数组
     np.random.seed(42)
@@ -119,7 +115,7 @@ def format_options():
     print("4. 格式选项 (fmt)")
     print("=" * 50)
 
-    output_dir = get_output_dir("numpy")
+    output_dir = get_output_dir()
 
     arr = np.array([[1.23456789, 2.34567890], [3.45678901, 4.56789012]])
     print(f"原数组:\n{arr}")
@@ -150,7 +146,7 @@ def header_skiprows():
     print("5. 带表头的文件处理")
     print("=" * 50)
 
-    output_dir = get_output_dir("numpy")
+    output_dir = get_output_dir()
 
     arr = np.array([[1, 2, 3], [4, 5, 6], [7, 8, 9]])
 

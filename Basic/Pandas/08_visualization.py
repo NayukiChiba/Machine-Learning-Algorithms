@@ -6,12 +6,13 @@ Pandas 数据可视化
 import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
-import sys
-from pathlib import Path
 
-# 添加项目根目录到搜索路径
-sys.path.insert(0, str(Path(__file__).parent.parent.parent))
-from config import get_output_dir
+from . import output_dir as get_output_dir
+
+
+# 设置中文字体
+plt.rcParams["font.sans-serif"] = ["SimHei", "Microsoft YaHei", "Arial Unicode MS"]
+plt.rcParams["axes.unicode_minus"] = False
 
 
 def line_plot():
@@ -32,7 +33,7 @@ def line_plot():
     print("数据 (前5行):")
     print(df.head())
 
-    output_dir = get_output_dir("pandas")
+    output_dir = get_output_dir()
     fig, ax = plt.subplots(figsize=(10, 5))
     df.plot(ax=ax, title="Sales and Profit Over Time")
     plt.tight_layout()
@@ -51,7 +52,7 @@ def bar_plot():
         {"Product": ["A", "B", "C", "D"], "Sales": [150, 200, 180, 220]}
     ).set_index("Product")
 
-    output_dir = get_output_dir("pandas")
+    output_dir = get_output_dir()
     fig, ax = plt.subplots(figsize=(8, 5))
     df.plot(kind="bar", ax=ax, title="Product Sales")
     plt.tight_layout()
@@ -67,7 +68,7 @@ def histogram():
     print("=" * 50)
 
     data = pd.Series(np.random.randn(1000))
-    output_dir = get_output_dir("pandas")
+    output_dir = get_output_dir()
     fig, ax = plt.subplots(figsize=(8, 5))
     data.plot(kind="hist", bins=30, ax=ax, title="Distribution")
     plt.tight_layout()
@@ -83,7 +84,7 @@ def scatter():
     print("=" * 50)
 
     df = pd.DataFrame({"x": np.random.randn(50), "y": np.random.randn(50)})
-    output_dir = get_output_dir("pandas")
+    output_dir = get_output_dir()
     fig, ax = plt.subplots(figsize=(8, 6))
     df.plot(kind="scatter", x="x", y="y", ax=ax, title="Scatter Plot")
     plt.tight_layout()
@@ -101,7 +102,7 @@ def boxplot():
     df = pd.DataFrame(
         {"A": np.random.normal(50, 10, 100), "B": np.random.normal(55, 15, 100)}
     )
-    output_dir = get_output_dir("pandas")
+    output_dir = get_output_dir()
     fig, ax = plt.subplots(figsize=(8, 6))
     df.plot(kind="box", ax=ax, title="Box Plot")
     plt.tight_layout()
@@ -117,7 +118,7 @@ def pie():
     print("=" * 50)
 
     data = pd.Series([35, 25, 20, 15, 5], index=["A", "B", "C", "D", "E"])
-    output_dir = get_output_dir("pandas")
+    output_dir = get_output_dir()
     fig, ax = plt.subplots(figsize=(8, 8))
     data.plot(kind="pie", ax=ax, autopct="%1.1f%%", title="Pie Chart")
     ax.set_ylabel("")

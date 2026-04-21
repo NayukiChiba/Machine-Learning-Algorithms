@@ -3,14 +3,14 @@ Scikit-learn 实用技巧
 对应文档: ../../docs/foundations/sklearn/08-tips.md
 
 使用方式：
-    from code.08_tips import *
-    clone()
-    class_weight()
+    python -m Basic.ScikitLearn.08_tips
 """
 
 import numpy as np
 from sklearn import datasets
 from sklearn.model_selection import train_test_split
+
+from . import output_path as get_output_path
 
 
 def clone():
@@ -149,8 +149,6 @@ def model_persistence():
     print("=" * 50)
 
     import joblib
-    import os
-    from tempfile import mkdtemp
     from sklearn.ensemble import RandomForestClassifier
 
     iris = datasets.load_iris()
@@ -162,21 +160,22 @@ def model_persistence():
     rf = RandomForestClassifier(n_estimators=100, random_state=42)
     rf.fit(X_train, y_train)
 
-    temp_dir = mkdtemp()
-
     # 保存
-    path = os.path.join(temp_dir, "model.joblib")
+    path = get_output_path("08_random_forest_model.joblib")
     joblib.dump(rf, path)
-    print(f"保存大小: {os.path.getsize(path) / 1024:.1f} KB")
+    print(f"模型已保存到: {path}")
+    print(f"保存大小: {path.stat().st_size / 1024:.1f} KB")
 
     # 加载
     rf_loaded = joblib.load(path)
-    print(f"加载后预测一致: {(rf_loaded.predict(X_test) == rf.predict(X_test)).run()}")
+    predictions_equal = np.array_equal(rf_loaded.predict(X_test), rf.predict(X_test))
+    print(f"加载后预测一致: {predictions_equal}")
 
     # 压缩保存
-    path_compressed = os.path.join(temp_dir, "model_compressed.joblib")
+    path_compressed = get_output_path("08_random_forest_model_compressed.joblib")
     joblib.dump(rf, path_compressed, compress=3)
-    print(f"压缩后大小: {os.path.getsize(path_compressed) / 1024:.1f} KB")
+    print(f"压缩模型已保存到: {path_compressed}")
+    print(f"压缩后大小: {path_compressed.stat().st_size / 1024:.1f} KB")
 
 
 def sklearn_config():
@@ -210,10 +209,10 @@ def version_check():
     print(f"sklearn 版本: {sklearn.__version__}")
 
     if version.parse(sklearn.__version__) >= version.parse("1.0"):
-        print("✓ 版本 >= 1.0")
+        print("[OK] 版本 >= 1.0")
 
     if version.parse(sklearn.__version__) >= version.parse("1.2"):
-        print("✓ 版本 >= 1.2, 支持 set_output API")
+        print("[OK] 版本 >= 1.2, 支持 set_output API")
 
 
 def all_estimators():

@@ -9,6 +9,7 @@ import matplotlib
 
 matplotlib.use("Agg")  # 使用非交互式后端，避免字体警告
 import matplotlib.pyplot as plt
+from matplotlib.ticker import FuncFormatter, NullFormatter
 import warnings
 
 warnings.filterwarnings("ignore", category=UserWarning, module="matplotlib")
@@ -168,6 +169,8 @@ def sparse_linalg():
     ax3.set_title(f"残差 |Ax - b|\n(最大残差: {np.max(residual):.2e})")
     ax3.set_xlabel("索引")
     ax3.set_ylabel("残差 (对数尺度)")
+    ax3.yaxis.set_major_formatter(FuncFormatter(lambda value, _: f"{value:.0e}"))
+    ax3.yaxis.set_minor_formatter(NullFormatter())
     ax3.grid(True, alpha=0.3)
 
     plt.tight_layout()
@@ -235,6 +238,8 @@ def sparse_efficiency():
     ax1.set_xticklabels([f"{n}×{n}" for n in sizes])
     ax1.legend()
     ax1.set_yscale("log")
+    ax1.yaxis.set_major_formatter(FuncFormatter(lambda value, _: f"{value:g}"))
+    ax1.yaxis.set_minor_formatter(NullFormatter())
     ax1.grid(True, alpha=0.3, axis="y")
 
     # 节省百分比

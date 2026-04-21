@@ -3,14 +3,12 @@
 对应文档: ../../docs/foundations/pandas/02-io.md
 
 使用方式：
-    python 02_io.py
-    或
-    from Basic.Pandas.02_io import *
-    run()
+    python -m Basic.Pandas.02_io
 """
 
 import pandas as pd
-import os
+
+from . import output_path as get_output_path
 
 
 def read_csv():
@@ -28,13 +26,13 @@ def read_csv():
         }
     )
 
-    # 保存到临时文件
-    temp_file = "temp_demo.csv"
-    df.to_csv(temp_file, index=False)
-    print(f"已保存示例数据到 {temp_file}")
+    # 直接保存到输出目录，方便后续查看
+    output_file = get_output_path("pandas_demo.csv")
+    df.to_csv(output_file, index=False)
+    print(f"已保存示例数据到 {output_file}")
 
     # 读取 CSV
-    df_read = pd.read_csv(temp_file)
+    df_read = pd.read_csv(output_file)
     print("\n读取的数据:")
     print(df_read)
 
@@ -48,9 +46,6 @@ def read_csv():
     print("  - skiprows: 跳过行数")
     print("  - encoding: 编码格式")
 
-    # 清理临时文件
-    os.remove(temp_file)
-
 
 def read_excel():
     """演示 Excel 文件读写（概念演示）"""
@@ -62,7 +57,9 @@ def read_excel():
     print("  df = pd.read_excel('file.xlsx', sheet_name='Sheet1')")
     print()
     print("保存到 Excel:")
-    print("  df.to_excel('output.xlsx', sheet_name='Sheet1', index=False)")
+    print(
+        "  df.to_excel('outputs/pandas/pandas_demo.xlsx', sheet_name='Sheet1', index=False)"
+    )
     print()
     print("常用参数:")
     print("  - sheet_name: 工作表名或索引")
@@ -87,12 +84,12 @@ def read_json():
     )
 
     # 保存为 JSON
-    temp_file = "temp_demo.json"
-    df.to_json(temp_file, orient="records", indent=2, force_ascii=False)
-    print(f"已保存到 {temp_file}")
+    output_file = get_output_path("pandas_demo.json")
+    df.to_json(output_file, orient="records", indent=2, force_ascii=False)
+    print(f"已保存到 {output_file}")
 
     # 读取 JSON
-    df_read = pd.read_json(temp_file)
+    df_read = pd.read_json(output_file)
     print("\n读取的数据:")
     print(df_read)
 
@@ -102,9 +99,6 @@ def read_json():
     print("  - 'index': {索引: {列:值}}")
     print("  - 'values': [[值, 值], [值, 值]]")
 
-    # 清理
-    os.remove(temp_file)
-
 
 def export():
     """演示数据导出的各种格式"""
@@ -113,12 +107,20 @@ def export():
     print("=" * 50)
 
     df = pd.DataFrame({"A": [1, 2, 3], "B": ["x", "y", "z"]})
+    csv_file = get_output_path("export_demo.csv")
+    json_file = get_output_path("export_demo.json")
+    html_file = get_output_path("export_demo.html")
+
+    # 保存几种最常见的导出文件，便于直接查看结果
+    df.to_csv(csv_file, index=False)
+    df.to_json(json_file, orient="records", indent=2, force_ascii=False)
+    df.to_html(html_file, index=False)
 
     print("导出方法:")
-    print("  df.to_csv('file.csv')       # CSV")
-    print("  df.to_excel('file.xlsx')    # Excel")
-    print("  df.to_json('file.json')     # JSON")
-    print("  df.to_html('file.html')     # HTML")
+    print(f"  df.to_csv('{csv_file}')       # CSV")
+    print("  df.to_excel('outputs/pandas/export_demo.xlsx')    # Excel")
+    print(f"  df.to_json('{json_file}')     # JSON")
+    print(f"  df.to_html('{html_file}')     # HTML")
     print("  df.to_sql('table', conn)    # SQL数据库")
     print("  df.to_pickle('file.pkl')    # Pickle序列化")
     print("  df.to_parquet('file.parquet') # Parquet")
