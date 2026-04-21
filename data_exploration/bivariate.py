@@ -277,6 +277,30 @@ def explore_classification_bivariate(
     _print_class_feature_diff(data, feature_cols, target_col)
 
 
+def explore_clustering_bivariate(
+    data: DataFrame,
+    dataset_name: str,
+    label_col: str = "true_label",
+) -> None:
+    """
+    对单个聚类数据集执行双变量分析
+
+    Args:
+        data: 聚类数据集
+        dataset_name: 数据集名称
+        label_col: 真实标签列名
+    """
+    feature_cols = [column for column in data.columns if column != label_col]
+
+    print("=" * 60)
+    print(f"{dataset_name}：双变量数据探索")
+    print("=" * 60)
+    print("--- 特征间相关性 ---")
+    _print_correlation_matrix(data, feature_cols)
+    print("--- 各真实簇下的特征均值差异 ---")
+    _print_cluster_feature_diff(data, feature_cols, label_col)
+
+
 # --- 按数据集类型的分析函数 ---
 
 

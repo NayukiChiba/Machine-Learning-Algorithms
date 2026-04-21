@@ -331,6 +331,39 @@ def explore_classification_multivariate(
     _print_fisher_ratio(data, feature_cols, target_col)
 
 
+def explore_clustering_multivariate(
+    data: DataFrame,
+    dataset_name: str,
+    label_col: str = "true_label",
+) -> None:
+    """
+    对单个聚类数据集执行多变量分析
+
+    Args:
+        data: 聚类数据集
+        dataset_name: 数据集名称
+        label_col: 真实标签列名
+    """
+    feature_cols = [column for column in data.columns if column != label_col]
+
+    print("=" * 60)
+    print(f"{dataset_name}：多变量数据探索")
+    print("=" * 60)
+    print("--- 相关性矩阵全局统计 ---")
+    _print_corr_summary(data, feature_cols)
+
+    if len(feature_cols) >= 2:
+        print("--- 多重共线性检测 (VIF) ---")
+        _print_vif(data, feature_cols)
+
+    if len(feature_cols) >= 3:
+        print("--- 主成分方差分析 ---")
+        _print_pca_variance(data, feature_cols)
+
+    print("--- Fisher 判别比（基于真实簇标签，仅评估用）---")
+    _print_fisher_ratio(data, feature_cols, label_col)
+
+
 # --- 按数据集类型的分析函数 ---
 
 
