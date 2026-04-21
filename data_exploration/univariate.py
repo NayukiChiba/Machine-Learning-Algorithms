@@ -153,12 +153,50 @@ def _print_discrete_distribution(
     counts = data[col].value_counts().sort_index()
     total = len(data)
 
-    print(f"[{name}] 共 {counts.nunique()} 个取值")
+    print(f"[{name}] 共 {len(counts)} 个取值")
 
     # 逐个打印每个取值的频率和占比
     for val, cnt in counts.items():
         ratio = cnt / total
         print(f"值 {val}: {cnt} 个 ({ratio * 100:.1f}%)")
+
+
+def explore_classification_univariate(
+    data: DataFrame,
+    dataset_name: str,
+    target_col: str = "label",
+) -> None:
+    """
+    对单个分类数据集执行单变量分析
+
+    Args:
+        data: 分类数据集
+        dataset_name: 数据集名称
+        target_col: 标签列名
+    """
+    feature_cols = [column for column in data.columns if column != target_col]
+
+    print("=" * 60)
+    print(f"{dataset_name}：单变量数据探索")
+    print("=" * 60)
+    print(f"样本数: {len(data)}")
+    print(f"特征数: {len(feature_cols)}")
+    print(f"类别数: {data[target_col].nunique()}")
+    print(f"特征列: {feature_cols}")
+
+    missing_count = data.isnull().sum().sum()
+    if missing_count == 0:
+        print("缺失值: 无")
+    else:
+        print(f"缺失值: 共 {missing_count} 个")
+
+    print("--- 各特征单变量统计 ---")
+    for column in feature_cols:
+        _print_single_continuous(data, column)
+        print()
+
+    print("--- 标签分布 ---")
+    _print_discrete_distribution(data, target_col, target_col)
 
 
 # --- 按数据集类型的分析函数 ---
