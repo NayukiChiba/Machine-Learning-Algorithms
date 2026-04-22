@@ -301,6 +301,30 @@ def explore_clustering_bivariate(
     _print_cluster_feature_diff(data, feature_cols, label_col)
 
 
+def explore_regression_bivariate(
+    data: DataFrame,
+    dataset_name: str,
+    target_col: str = "price",
+) -> None:
+    """
+    对单个回归数据集执行双变量分析
+
+    Args:
+        data: 回归数据集
+        dataset_name: 数据集名称
+        target_col: 目标变量列名
+    """
+    feature_cols = [column for column in data.columns if column != target_col]
+
+    print("=" * 60)
+    print(f"{dataset_name}：双变量数据探索")
+    print("=" * 60)
+    print("--- 特征间相关性 ---")
+    _print_correlation_matrix(data, feature_cols)
+    print("--- 特征与目标变量的相关性 ---")
+    _print_feature_target_corr(data, feature_cols, target_col)
+
+
 # --- 按数据集类型的分析函数 ---
 
 
