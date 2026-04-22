@@ -237,6 +237,43 @@ def explore_clustering_univariate(
     _print_discrete_distribution(data, label_col, label_col)
 
 
+def explore_regression_univariate(
+    data: DataFrame,
+    dataset_name: str,
+    target_col: str = "price",
+) -> None:
+    """
+    对单个回归数据集执行单变量分析
+
+    Args:
+        data: 回归数据集
+        dataset_name: 数据集名称
+        target_col: 目标变量列名
+    """
+    feature_cols = [column for column in data.columns if column != target_col]
+
+    print("=" * 60)
+    print(f"{dataset_name}：单变量数据探索")
+    print("=" * 60)
+    print(f"样本数: {len(data)}")
+    print(f"特征数: {len(feature_cols)}")
+    print(f"特征列: {feature_cols}")
+
+    missing_count = data.isnull().sum().sum()
+    if missing_count == 0:
+        print("缺失值: 无")
+    else:
+        print(f"缺失值: 共 {missing_count} 个")
+
+    print("--- 各特征单变量统计 ---")
+    for column in feature_cols:
+        _print_single_continuous(data, column)
+        print()
+
+    print("--- 目标变量单变量统计 ---")
+    _print_single_continuous(data, target_col)
+
+
 # --- 按数据集类型的分析函数 ---
 
 

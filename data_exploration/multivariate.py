@@ -364,6 +364,36 @@ def explore_clustering_multivariate(
     _print_fisher_ratio(data, feature_cols, label_col)
 
 
+def explore_regression_multivariate(
+    data: DataFrame,
+    dataset_name: str,
+    target_col: str = "price",
+) -> None:
+    """
+    对单个回归数据集执行多变量分析
+
+    Args:
+        data: 回归数据集
+        dataset_name: 数据集名称
+        target_col: 目标变量列名
+    """
+    feature_cols = [column for column in data.columns if column != target_col]
+
+    print("=" * 60)
+    print(f"{dataset_name}：多变量数据探索")
+    print("=" * 60)
+    print("--- 相关性矩阵全局统计 ---")
+    _print_corr_summary(data, feature_cols)
+
+    if len(feature_cols) >= 2:
+        print("--- 多重共线性检测 (VIF) ---")
+        _print_vif(data, feature_cols)
+
+    if len(feature_cols) >= 3:
+        print("--- 主成分方差分析 ---")
+        _print_pca_variance(data, feature_cols)
+
+
 # --- 按数据集类型的分析函数 ---
 
 

@@ -9,15 +9,21 @@ data_exploration 包
 
 from .bivariate import explore_classification_bivariate
 from .bivariate import explore_clustering_bivariate
+from .bivariate import explore_regression_bivariate
 from .multivariate import explore_classification_multivariate
 from .multivariate import explore_clustering_multivariate
+from .multivariate import explore_regression_multivariate
 from .univariate import explore_classification_univariate
 from .univariate import explore_clustering_univariate
+from .univariate import explore_regression_univariate
 
 __all__ = [
     "explore_classification_univariate",
     "explore_classification_bivariate",
     "explore_classification_multivariate",
+    "explore_regression_univariate",
+    "explore_regression_bivariate",
+    "explore_regression_multivariate",
     "explore_clustering_univariate",
     "explore_clustering_bivariate",
     "explore_clustering_multivariate",
