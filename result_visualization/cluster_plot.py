@@ -52,6 +52,7 @@ def plot_clusters(
     title: str = "聚类分布",
     model_name: str = "model",
     figsize: tuple = (12, 5),
+    filename: str = "cluster_plot.png",
 ):
     """
     绘制聚类分布散点图
@@ -65,6 +66,7 @@ def plot_clusters(
         title: 图标题
         model_name: 模型名称
         figsize: 图像尺寸
+        filename: 保存文件名
     """
     if X.shape[1] != 2:
         raise ValueError(
@@ -154,7 +156,7 @@ def plot_clusters(
     plt.tight_layout()
     save_dir = get_model_output_dir(model_name)
     save_dir.mkdir(parents=True, exist_ok=True)
-    filepath = save_dir / "cluster_plot.png"
+    filepath = save_dir / filename
     fig.savefig(filepath, dpi=150, bbox_inches="tight")
     print(f"聚类分布图已保存至: {filepath}")
     plt.close(fig)

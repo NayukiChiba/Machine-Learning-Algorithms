@@ -17,6 +17,7 @@ import numpy as np
 import pandas as pd
 from sklearn.cluster import DBSCAN
 from sklearn.cluster import KMeans
+from sklearn.mixture import GaussianMixture
 from sklearn.neighbors import NearestNeighbors
 
 from config import get_model_output_dir
@@ -403,4 +404,170 @@ def plot_kmeans_k_sweep(
 
     fig.tight_layout()
     _save_figure(fig, save_dir, "k_sweep_curve.png")
+    return result_df
+
+
+def plot_gmm_component_sweep(
+    X,
+    labels_true,
+    model_name: str,
+    current_components: int,
+    covariance_type: str = "full",
+    max_iter: int = 200,
+    random_state: int = 42,
+    component_values: np.ndarray | None = None,
+    figsize: tuple = (12, 9),
+) -> pd.DataFrame:
+    """
+    绘制 GMM 的分量数扫描评估曲线
+
+    这张图回答的是：
+    “当高斯分量数改变时，模型拟合质量和聚类结果会怎么变化？”
+
+    这里展示的指标包括：
+    1. BIC / AIC
+    2. ARI / NMI
+    3. Silhouette
+    4. 对数似然下界
+
+    Args:
+        X: 特征矩阵
+        labels_true: 真实标签（仅用于评估）
+        model_name: 模型名称
+        current_components: 当前实际使用的分量数
+        covariance_type: 协方差类型
+        max_iter: 最大迭代次数
+        random_state: 随机种子
+        component_values: 手动指定的分量数候选值
+        figsize: 图尺寸
+
+    Returns:
+        pd.DataFrame: 每个分量数对应的评估结果
+    """
+    X = np.asarray(X)
+    labels_true = np.asarray(labels_true)
+    save_dir = get_model_output_dir(model_name)
+
+    if component_values is None:
+        component_values = np.arange(1, 7)
+
+    component_values = np.unique(
+        np.append(np.asarray(component_values, dtype=int), current_components)
+    )
+    component_values.sort()
+
+    records = []
+    for n_components in component_values:
+        model = GaussianMixture(
+            n_components=int(n_components),
+            covariance_type=covariance_type,
+            max_iter=max_iter,
+            random_state=random_state,
+        )
+        model.fit(X)
+        labels_pred = model.predict(X)
+        metrics = evaluate_clustering_with_ground_truth(
+            X,
+            labels_pred,
+            labels_true,
+            print_report=False,
+        )
+        record = {
+            "n_components": int(n_components),
+            "bic": model.bic(X),
+            "aic": model.aic(X),
+            "lower_bound": model.lower_bound_,
+            "ari": metrics["ari"],
+            "nmi": metrics["nmi"],
+            "silhouette": metrics.get("silhouette", np.nan),
+        }
+        records.append(record)
+
+    result_df = pd.DataFrame(records)
+
+    fig, axes = plt.subplots(2, 2, figsize=figsize)
+    fig.suptitle("EM(GMM) 诊断：分量数扫描评估曲线", fontsize=14, fontweight="bold")
+
+    axes[0, 0].plot(
+        result_df["n_components"],
+        result_df["bic"],
+        marker="o",
+        color="#1E88E5",
+        linewidth=2,
+        label="BIC",
+    )
+    axes[0, 0].plot(
+        result_df["n_components"],
+        result_df["aic"],
+        marker="s",
+        color="#E64A19",
+        linewidth=2,
+        label="AIC",
+    )
+    axes[0, 0].axvline(
+        current_components, color="#D81B60", linestyle="--", linewidth=1.5
+    )
+    axes[0, 0].set_title("分量数 vs BIC/AIC")
+    axes[0, 0].set_xlabel("高斯分量数")
+    axes[0, 0].set_ylabel("信息准则")
+    axes[0, 0].legend(loc="best")
+    axes[0, 0].grid(True, alpha=0.25)
+
+    axes[0, 1].plot(
+        result_df["n_components"],
+        result_df["ari"],
+        marker="o",
+        color="#2E7D32",
+        linewidth=2,
+        label="ARI",
+    )
+    axes[0, 1].plot(
+        result_df["n_components"],
+        result_df["nmi"],
+        marker="s",
+        color="#6A1B9A",
+        linewidth=2,
+        label="NMI",
+    )
+    axes[0, 1].axvline(
+        current_components, color="#D81B60", linestyle="--", linewidth=1.5
+    )
+    axes[0, 1].set_title("分量数 vs 外部评估指标")
+    axes[0, 1].set_xlabel("高斯分量数")
+    axes[0, 1].set_ylabel("得分")
+    axes[0, 1].legend(loc="best")
+    axes[0, 1].grid(True, alpha=0.25)
+
+    axes[1, 0].plot(
+        result_df["n_components"],
+        result_df["silhouette"],
+        marker="o",
+        color="#004D40",
+        linewidth=2,
+    )
+    axes[1, 0].axvline(
+        current_components, color="#D81B60", linestyle="--", linewidth=1.5
+    )
+    axes[1, 0].set_title("分量数 vs Silhouette")
+    axes[1, 0].set_xlabel("高斯分量数")
+    axes[1, 0].set_ylabel("Silhouette")
+    axes[1, 0].grid(True, alpha=0.25)
+
+    axes[1, 1].plot(
+        result_df["n_components"],
+        result_df["lower_bound"],
+        marker="o",
+        color="#5D4037",
+        linewidth=2,
+    )
+    axes[1, 1].axvline(
+        current_components, color="#D81B60", linestyle="--", linewidth=1.5
+    )
+    axes[1, 1].set_title("分量数 vs 对数似然下界")
+    axes[1, 1].set_xlabel("高斯分量数")
+    axes[1, 1].set_ylabel("lower bound")
+    axes[1, 1].grid(True, alpha=0.25)
+
+    fig.tight_layout()
+    _save_figure(fig, save_dir, "component_sweep_curve.png")
     return result_df
