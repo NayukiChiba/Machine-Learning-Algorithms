@@ -12,6 +12,7 @@ result_visualization/decision_boundary.py
 import numpy as np
 import matplotlib.pyplot as plt
 from matplotlib.colors import ListedColormap
+import pandas as pd
 
 from config import get_model_output_dir
 
@@ -58,7 +59,16 @@ def plot_decision_boundary(
 
     # 预测网格点
     grid_points = np.c_[xx.ravel(), yy.ravel()]
-    Z = model.predict(grid_points)
+
+    # 某些模型（如 LightGBM）在训练时会记录特征名。
+    # 如果预测时直接传裸 ndarray，就会触发“特征名不匹配”的 warning。
+    # 这里在能够确定特征名时，显式构造成 DataFrame。
+    if feature_names is not None and len(feature_names) == 2:
+        predict_input = pd.DataFrame(grid_points, columns=feature_names)
+    else:
+        predict_input = grid_points
+
+    Z = model.predict(predict_input)
     Z = Z.reshape(xx.shape)
 
     # 配色

@@ -34,10 +34,11 @@ class EnsembleData:
 
     # --- LightGBM 专属参数 ---
     lgbm_n_features: int = 20  # 高维特征(体现 LightGBM 处理大规模数据的速度优势)
-    lgbm_n_informative: int = 8  # 有效特征数
-    lgbm_n_redundant: int = 5  # 冗余特征数
+    lgbm_n_informative: int = 10  # 有效特征数
+    lgbm_n_redundant: int = 4  # 冗余特征数
     lgbm_n_classes: int = 4  # 四分类
-    lgbm_class_sep: float = 0.6  # 类别间隔小, 难度较高
+    lgbm_class_sep: float = 1.2  # 类别间隔适中，既保留难度，也更适合教学展示
+    lgbm_flip_y: float = 0.01  # 少量标签噪声，避免任务被故意做得过难
 
     def bagging(self) -> DataFrame:
         """
@@ -100,8 +101,9 @@ class EnsembleData:
     def lightgbm(self) -> DataFrame:
         """
         高维多类别分类数据(make_classification)
-        特点:20 个特征(8 有效 + 5 冗余 + 7 噪声), 4 个类别, 类别间隔小
-               LightGBM 以直方图算法处理高维大规模数据见长, 此数据集充分体现其优势
+        特点:20 个特征(10 有效 + 4 冗余 + 6 噪声), 4 个类别, 每类一个簇
+               这份数据依然保留高维多分类特征，但不过度压缩类别间隔，
+               更适合教学中展示 LightGBM 在表格数据上的优势
         注意:n_samples 共享属性对此方法有效
 
         Returns:
@@ -116,6 +118,7 @@ class EnsembleData:
             n_classes=self.lgbm_n_classes,
             n_clusters_per_class=1,
             class_sep=self.lgbm_class_sep,
+            flip_y=self.lgbm_flip_y,
             random_state=self.random_state,
         )
         columns = [f"x{i + 1}" for i in range(self.lgbm_n_features)]
