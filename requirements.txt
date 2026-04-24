@@ -7,3 +7,5 @@ pre-commit
 scikit-learn
 hmmlearn
 lightgbm
+xgboost
+pytest
