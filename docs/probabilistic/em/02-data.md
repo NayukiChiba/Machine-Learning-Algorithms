@@ -160,6 +160,16 @@ X_scaled = scaler.fit_transform(X)
 - 与前面几个监督学习分册不同，这里没有 train/test split，因此也不存在“只在训练集拟合标准化器”这一流程。
 - 文档必须如实描述当前实现边界，不能套用监督学习分册的切分逻辑。
 
+## 数据可视化
+
+![原始数据散点图](../../../outputs/gmm/data_raw_scatter.png)
+
+![真实标签散点图](../../../outputs/gmm/data_true_label_scatter.png)
+
+![聚类分布图](../../../outputs/gmm/data_cluster_distribution.png)
+
+![特征相关性图](../../../outputs/gmm/data_correlation.png)
+
 ## 常见坑
 
 1. 把 `true_label` 当成训练输入，误以为当前 EM 是监督学习流程。

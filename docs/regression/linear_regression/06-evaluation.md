@@ -178,6 +178,10 @@ plot_learning_curve(
 - 当前实现的评估重点是图形诊断，而不是数值面板。
 - 如果后续扩展这部分，最自然的方向是补指标打印，而不是替换现有残差图和学习曲线逻辑。
 
+![特征重要性](../../../outputs/linear_regression/feature_importance.png)
+
+![残差图](../../../outputs/linear_regression/residual_plot.png)
+
 ## 常见坑
 
 1. 只看残差图，不看学习曲线，错过对样本量与泛化趋势的观察。

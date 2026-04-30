@@ -108,6 +108,8 @@ as_frame=True:
 - `return_X_y=True` 是最常用的加载方式，代码更简洁。
 - `as_frame=True` 在数据探索阶段非常方便，列名自动对应特征名称。
 
+![加载内置数据集](../../../outputs/sklearn/01_datasets.png)
+
 ## 2. 生成人工数据集
 
 ### 方法重点
@@ -186,6 +188,8 @@ print(f"聚类数据: X={X_blob.shape}, y={np.unique(y_blob)}")
 - `random_state` 保证每次生成相同的数据，实验可复现。
 - 人工数据的优势：已知"真相"（ground truth），便于验证模型行为。
 
+![生成人工数据集](../../../outputs/sklearn/01_generate_data.png)
+
 ## 3. 数据划分
 
 ### 方法重点
@@ -243,6 +247,8 @@ print(f"测试集类别分布: {np.bincount(y_test)}")
 - 返回值顺序：`X_train, X_test, y_train, y_test`（先 X 后 y，先 train 后 test）。
 - `test_size=0.3` 是常用默认值，实际中根据数据量调整（数据量大时可缩小测试集比例）。
 - 同一个 `random_state` 保证实验可复现。
+
+![数据划分](../../../outputs/sklearn/01_train_test_split.png)
 
 ## 4. 第一个模型（KNN）
 
@@ -304,6 +310,8 @@ score方法: 0.9778
 - `accuracy_score(y_test, y_pred)` 和 `knn.score(X_test, y_test)` 结果完全一致。
 - `score` 方法内部调用 `predict` 再计算指标，是一个便捷方法。
 - KNN 的 k 值是关键超参数：k 太小容易过拟合，k 太大容易欠拟合。
+
+![第一个模型 KNN](../../../outputs/sklearn/01_knn.png)
 
 ## 5. 估计器通用方法
 

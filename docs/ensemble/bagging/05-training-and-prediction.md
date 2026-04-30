@@ -208,6 +208,11 @@ if hasattr(model, "predict_proba"):
 - 这条链路里最关键的中间变量是训练后的 `model`、预测类别 `y_pred` 和可选的 `y_scores`。
 - 只要把这条流程走清楚，整个 bagging 分册的工程部分就基本读懂了。
 
+## 训练诊断可视化
+
+![学习曲线](../../../outputs/bagging/learning_curve.png)
+![学习曲线-随机森林](../../../outputs/random_forest/learning_curve.png)
+
 ## 常见坑
 
 1. 把 Bagging 当前流程误写成 boosting 流程，忽略它其实是并行集成。\n+2. 把 ROC 曲线误写成固定输出，忽略当前源码里它是条件性生成。\n+3. 只看测试集图像，不看训练日志里的 `OOB 得分`，错过当前实现最有代表性的工程信号。

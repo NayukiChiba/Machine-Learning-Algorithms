@@ -121,6 +121,10 @@ X_scaled = scaler.fit_transform(X)
 - DBSCAN 看到的是“你周围是否足够密、能否和附近区域连成一片”。
 - 因此 `make_blobs` 更适合 KMeans，而 `make_moons` 更能体现 DBSCAN 的优势。
 
+## 可视化
+
+![聚类结果图](../../../outputs/dbscan/cluster_plot.png)
+
 ## 常见坑
 
 1. 因为当前示例效果很好，就误以为 DBSCAN 适合所有聚类数据。

@@ -90,6 +90,8 @@ sns.heatmap(df.isnull(), cbar=True, ax=axes[0], cmap="YlOrRd")
 左图展示缺失位置，右图展示各列缺失百分比
 ```
 
+![缺失值可视化](../../../outputs/visualization/06_missing.png)
+
 ### 理解重点
 
 - 缺失模式随机与否会决定后续填补方法选择。
@@ -161,6 +163,8 @@ axes[1].axvline(upper, color="red", linestyle="--")
 箱线图显示离群点，直方图标出 IQR 上下界
 ```
 
+![异常值可视化](../../../outputs/visualization/06_outlier.png)
+
 ### 理解重点
 
 - IQR 规则稳健但并非适用于所有分布。
@@ -226,6 +230,8 @@ axes[1, 1].hist(std_data, bins=30, edgecolor="black", alpha=0.7)
 ----------------
 四宫格对比原始分布、对数变换、平方根变换和标准化结果
 ```
+
+![特征变换可视化](../../../outputs/visualization/06_transform.png)
 
 ### 理解重点
 

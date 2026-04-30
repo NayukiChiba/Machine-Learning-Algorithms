@@ -203,6 +203,20 @@ for name, model in models.items():
 - 先切分、后标准化、再训练、再预测、最后画图，这是当前实现的固定主线。
 - 文档后面提到的所有诊断结论，都是建立在这条执行顺序正确的前提下。
 
+## 训练诊断可视化
+
+### ElasticNet
+
+![弹性网络学习曲线](../../../outputs/elasticnet/learning_curve.png)
+
+### Lasso
+
+![Lasso 学习曲线](../../../outputs/lasso/learning_curve.png)
+
+### Ridge
+
+![Ridge 学习曲线](../../../outputs/ridge/learning_curve.png)
+
 ## 常见坑
 
 1. 训练阶段使用 `X_train_s`，预测阶段却误把未标准化的 `X_test` 传给 `predict(...)`。

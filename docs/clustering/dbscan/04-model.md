@@ -146,6 +146,12 @@ n_noise = (labels == -1).sum()
 - 这一层封装把“构建模型”“训练模型”“打印结果”收在一个函数里，方便文档和流水线复用。
 - 从工程角度看，这样的拆分也让 `pipelines/clustering/dbscan.py` 保持简洁。
 
+## 参数诊断可视化
+
+![Eps扫描曲线](../../../outputs/dbscan/eps_sweep_curve.png)
+
+![K距离曲线](../../../outputs/dbscan/k_distance_curve.png)
+
 ## 常见坑
 
 1. 误以为 `train_model(...)` 需要传入 `y_train`。

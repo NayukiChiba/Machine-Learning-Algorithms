@@ -175,6 +175,14 @@ if oob_score:
 - 当前实现的评估重点是混淆矩阵、条件性 ROC 和 OOB 日志，而不是更多分类图表或数值面板。
 - 如果后续扩展这部分，最自然的方向是补数值指标打印、决策边界图或更直接的 OOB / test 对比输出。
 
+## 评估图表
+
+![混淆矩阵](../../../outputs/bagging/confusion_matrix.png)
+![ROC曲线](../../../outputs/bagging/roc_curve.png)
+![混淆矩阵-随机森林](../../../outputs/random_forest/confusion_matrix.png)
+![ROC曲线-随机森林](../../../outputs/random_forest/roc_curve.png)
+![特征重要性-随机森林](../../../outputs/random_forest/feature_importance.png)
+
 ## 常见坑
 
 1. 只看测试集图像，不看 `OOB 得分`，错过当前分册最有代表性的工程信号。

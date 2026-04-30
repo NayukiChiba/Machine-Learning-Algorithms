@@ -109,6 +109,10 @@ X_test_s = scaler.transform(X_test)
 - KNN 更像是在问：当前点周围的邻居大多是什么类别。
 - 当前双月牙数据更适合把 KNN 作为局部分类基线来讲解。
 
+## 可视化
+
+![决策边界](../../../outputs/knn/decision_boundary.png)
+
 ## 常见坑
 
 1. 只知道 KNN 很简单，却说不出它为什么适合当前双月牙数据。

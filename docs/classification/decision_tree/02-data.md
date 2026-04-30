@@ -121,6 +121,14 @@ X_train, X_test, y_train, y_test = train_test_split(
 - 这是因为树模型基于阈值切分，不依赖欧氏距离或梯度优化，因此对尺度不敏感得多。
 - 这也是当前决策树分册在工程流程上与距离型模型显著不同的地方。
 
+## 数据可视化
+
+![数据分布散点图](../../../outputs/decision_tree/data_scatter.png)
+
+![类别分布](../../../outputs/decision_tree/data_class_distribution.png)
+
+![特征相关性](../../../outputs/decision_tree/data_correlation.png)
+
 ## 常见坑
 
 1. 忘记把 `label` 从特征表中剥离出来。

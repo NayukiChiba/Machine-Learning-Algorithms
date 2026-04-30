@@ -81,6 +81,8 @@ ax.grid(True)
 图像内容: 同一坐标轴上展示 sin(x) 与 cos(x) 两条曲线
 ```
 
+![基础图表](../../../outputs/visualization/01_basic.png)
+
 ### 理解重点
 
 - 把 `Figure` 理解为“画布”，`Axes` 理解为“具体图表区域”。
@@ -127,6 +129,8 @@ ax.legend()
 ----------------
 常用线型: - / -- / : / -.
 ```
+
+![线条样式](../../../outputs/visualization/01_line_styles.png)
 
 ### 理解重点
 
@@ -181,6 +185,8 @@ ax.legend(ncol=4)
 ----------------
 图像内容: 8 种 marker 在同一图内对比
 ```
+
+![标记符号](../../../outputs/visualization/01_markers.png)
 
 ### 理解重点
 
@@ -285,6 +291,8 @@ plt.tight_layout()
 ----------------
 图像内容: 2x2 子图分别展示不同函数形态
 ```
+
+![子图布局](../../../outputs/visualization/01_subplots.png)
 
 ### 理解重点
 

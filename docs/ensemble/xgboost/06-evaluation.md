@@ -178,6 +178,11 @@ plot_feature_importance(
 - 当前实现的评估重点是残差图和特征重要性图，而不是数值指标面板或早停训练记录。
 - 如果后续扩展这部分，最自然的方向是补指标打印、学习曲线或验证集早停流程。
 
+## 评估图表
+
+![特征重要性](../../../outputs/xgboost/feature_importance.png)
+![残差分析](../../../outputs/xgboost/residual_plot.png)
+
 ## 常见坑
 
 1. 只看特征重要性图，不看残差图，误把“重要性高”当成“预测一定好”。

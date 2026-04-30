@@ -148,6 +148,16 @@ X_scaled = scaler.fit_transform(X)
 - 由于这里没有 train/test split，因此不存在“只在训练集拟合标准化器”这一监督学习式边界。
 - 对 PCA 来说，标准化尤其重要，否则大尺度特征会直接主导主成分方向。
 
+## 数据可视化
+
+![类别分布图](../../../outputs/pca/data_class_distribution.png)
+
+![特征相关性热力图](../../../outputs/pca/data_correlation.png)
+
+![二维特征空间](../../../outputs/pca/data_feature_space_2d.png)
+
+![三维特征空间](../../../outputs/pca/data_feature_space_3d.png)
+
 ## 常见坑
 
 1. 把 `label` 当成训练标签，误以为当前 PCA 是监督学习流程。

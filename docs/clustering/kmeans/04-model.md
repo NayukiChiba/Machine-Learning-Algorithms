@@ -154,6 +154,10 @@ plot_clusters(
 - 这一层封装把“构建模型”“训练模型”“打印结果”收在一个函数里，方便文档和流水线复用。
 - 从工程角度看，这样的拆分也让 `pipelines/clustering/kmeans.py` 保持简洁。
 
+## 参数诊断可视化
+
+![K值扫描曲线](../../../outputs/kmeans/k_sweep_curve.png)
+
 ## 常见坑
 
 1. 误以为 `train_model(...)` 需要传入 `y_train`。

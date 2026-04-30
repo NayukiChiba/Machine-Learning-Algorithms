@@ -101,6 +101,10 @@ outline: deep
 - GaussianNB 更像是在问：这个样本更像由哪个类别生成出来的。
 - 当前 iris 多分类场景非常适合用这种生成式思路做入门说明。
 
+## 可视化
+
+![决策边界](../../../outputs/naive_bayes/decision_boundary.png)
+
 ## 常见坑
 
 1. 把朴素贝叶斯理解成“低配版分类器”，而忽略它本质上是概率模型。

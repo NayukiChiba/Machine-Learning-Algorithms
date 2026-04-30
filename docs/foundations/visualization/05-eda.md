@@ -88,6 +88,8 @@ for ax, col in zip(axes, df.columns):
 图像内容: age、income、score 三个变量的分布与均值/中位数标记
 ```
 
+![分布分析](../../../outputs/visualization/05_distribution.png)
+
 ### 理解重点
 
 - 均值和中位数差距较大通常意味着偏态或异常值影响。
@@ -151,6 +153,8 @@ sns.heatmap(corr, annot=True, cmap="coolwarm", center=0, ax=ax)
 ----------------
 图像内容: x 与 y_strong 相关性最高，x 与 y_none 接近无关
 ```
+
+![相关性分析](../../../outputs/visualization/05_correlation.png)
 
 ### 理解重点
 
@@ -220,6 +224,8 @@ sns.boxplot(x="category", y="value", data=df, ax=axes[1])
 ----------------
 左图展示类别频数，右图展示各类别数值分布与离群点
 ```
+
+![分类变量分析](../../../outputs/visualization/05_categorical.png)
 
 ### 理解重点
 

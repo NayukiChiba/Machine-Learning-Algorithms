@@ -83,6 +83,8 @@ sns.boxplot(x="day", y="total_bill", hue="sex", data=tips, ax=axes[1])
 左图展示各天平均账单对比，右图展示分布与离散程度
 ```
 
+![分类图](../../../outputs/visualization/03_catplot.png)
+
 ### 理解重点
 
 - 均值对比和分布对比通常应配对展示，避免单一视角误读。
@@ -139,6 +141,8 @@ sns.kdeplot(data, fill=True, ax=axes[1])
 左图为直方图+KDE，右图为独立 KDE 曲线
 ```
 
+![分布图](../../../outputs/visualization/03_distplot.png)
+
 ### 理解重点
 
 - `bins` 与平滑程度共同影响“分布形态”判断。
@@ -183,6 +187,8 @@ sns.regplot(x="total_bill", y="tip", data=tips, ax=ax)
 ----------------
 图像内容: 消费总额与小费呈正相关趋势
 ```
+
+![回归图](../../../outputs/visualization/03_regplot.png)
 
 ### 理解重点
 
@@ -232,6 +238,8 @@ sns.heatmap(data, annot=True, fmt=".2f", cmap="YlOrRd", ax=ax)
 图像内容: 10x10 数值矩阵被映射为颜色强度
 ```
 
+![热力图](../../../outputs/visualization/03_heatmap.png)
+
 ### 理解重点
 
 - 颜色深浅应与数值大小保持单调关系。
@@ -275,6 +283,8 @@ g.fig.suptitle("Pair Plot", y=1.02)
 ----------------
 图像内容: 多特征成对散点图与对角分布图
 ```
+
+![配对图](../../../outputs/visualization/03_pairplot.png)
 
 ### 理解重点
 

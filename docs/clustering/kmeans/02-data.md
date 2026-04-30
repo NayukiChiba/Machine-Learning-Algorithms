@@ -116,6 +116,16 @@ X_scaled = scaler.fit_transform(X)
 - 当前 `x1`、`x2` 都来自同一个数据生成器，尺度问题不一定严重，但流水线仍然保留标准化步骤，体现规范做法。
 - 在更一般的业务数据里，如果不先标准化，数值范围大的特征会主导聚类中心的位置。
 
+## 数据可视化
+
+![原始数据散点图](../../../outputs/kmeans/data_raw_scatter.png)
+
+![真实标签散点图](../../../outputs/kmeans/data_true_label_scatter.png)
+
+![聚类分布图](../../../outputs/kmeans/data_cluster_distribution.png)
+
+![特征相关性热力图](../../../outputs/kmeans/data_correlation.png)
+
 ## 常见坑
 
 1. 把 `true_label` 当成普通特征一起送进模型。

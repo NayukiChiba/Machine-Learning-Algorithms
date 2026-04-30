@@ -122,6 +122,11 @@ X_train, X_test, y_train, y_test = train_test_split(
 - 这一点必须和 `svr`、`regularization` 等分册区分开，因为它们都显式做了标准化。
 - 文档只应描述当前实现真实存在的流程，不能把常见预处理习惯误写成当前代码逻辑。
 
+## 数据可视化
+
+![数据相关性](../../../outputs/xgboost/data_correlation.png)
+![特征与房价关系](../../../outputs/xgboost/data_feature_vs_price.png)
+
 ## 常见坑
 
 1. 把当前数据误认为手工构造数据，忽略它其实来自 California Housing 真实数据集。

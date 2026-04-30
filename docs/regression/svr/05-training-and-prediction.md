@@ -192,6 +192,10 @@ y_pred = model.predict(X_test_s)
 - 这段代码已经覆盖了当前 SVR 流水线中训练与预测的最核心部分。
 - 后续可视化评估完全建立在 `y_test` 和 `y_pred` 之上。
 
+## 训练诊断可视化
+
+![学习曲线](../../../outputs/svr/learning_curve.png)
+
 ## 常见坑
 
 1. 对测试集单独 `fit_transform(...)`，导致训练和预测使用了不同统计量。

@@ -152,6 +152,10 @@ plot_learning_curve(
 - 这是因为学习曲线函数内部会自行克隆和重复训练模型。
 - 当前文档需要把“主模型用于正式预测”和“新模型实例用于曲线诊断”区分清楚。
 
+## 训练诊断可视化
+
+![学习曲线](../../../outputs/decision_tree/learning_curve.png)
+
 ## 常见坑
 
 1. 把 `predict(...)` 和 `predict_proba(...)` 混为一谈。

@@ -182,6 +182,10 @@ print(f"log-likelihood: {model.lower_bound_:.4f}")
 - `lower_bound_` 更像训练收敛信号，而不是直接的聚类质量分数。
 - 这也是为什么后续评估章节要特别区分“训练对数似然”与“聚类效果观察”。
 
+## 可视化
+
+![聚类结果图](../../../outputs/gmm/cluster_plot.png)
+
 ## 常见坑
 
 1. 把 `true_label` 当成训练标签，误以为当前 EM 是监督学习。

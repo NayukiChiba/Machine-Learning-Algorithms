@@ -223,6 +223,10 @@ plot_learning_curve(LinearRegression(), X_train, y_train, scoring="r2", ...)
 - 这条链路里最关键的中间变量是 `model` 和 `y_pred`。
 - 只要把这条流程走清楚，整个 linear_regression 分册的工程部分就基本读懂了。
 
+## 训练诊断可视化
+
+![学习曲线](../../../outputs/linear_regression/learning_curve.png)
+
 ## 常见坑
 
 1. 把其他分册里的标准化流程误套到当前线性回归实现上。

@@ -151,6 +151,10 @@ print(f"criterion: {criterion}")
 - 这一层封装把“构建模型”“训练模型”“打印结果”收在一个函数里，方便文档和流水线复用。
 - 从工程角度看，这样的拆分也让 `pipelines/classification/decision_tree.py` 保持简洁。
 
+## 模型可视化
+
+![树结构](../../../outputs/decision_tree/tree_structure.png)
+
 ## 常见坑
 
 1. 把决策树的 `fit(...)` 理解成和线性模型一样的参数优化过程。

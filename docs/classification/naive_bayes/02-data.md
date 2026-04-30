@@ -124,6 +124,14 @@ X_test_s = scaler.transform(X_test)
 - 当前流水线显式使用 `stratify=y`，说明作者希望训练集和测试集在类别比例上保持稳定。
 - 虽然 GaussianNB 并不像核方法那样强依赖尺度，但当前仓库统一保留标准化步骤，有利于整个分类分册风格一致，也便于后续 PCA 和可视化处理。
 
+## 数据可视化
+
+![类别分布](../../../outputs/naive_bayes/data_class_distribution.png)
+
+![相关性热力图](../../../outputs/naive_bayes/data_correlation.png)
+
+![特征空间二维投影](../../../outputs/naive_bayes/data_feature_space_2d.png)
+
 ## 常见坑
 
 1. 忘记把 `label` 从特征表中剥离出来。

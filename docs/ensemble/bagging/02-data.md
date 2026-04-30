@@ -135,6 +135,15 @@ X_test_s = scaler.transform(X_test)
 - `stratify=y` 对二分类任务依然重要，它能让训练集和测试集的类别比例更稳定。
 - 当前文档中的 `X_train_s`、`X_test_s` 都是源码里真实使用的变量名。
 
+## 数据可视化
+
+![数据类别分布](../../../outputs/bagging/data_class_distribution.png)
+![数据相关性](../../../outputs/bagging/data_correlation.png)
+![数据散点图](../../../outputs/bagging/data_scatter.png)
+![数据类别分布-随机森林](../../../outputs/random_forest/data_class_distribution.png)
+![数据相关性-随机森林](../../../outputs/random_forest/data_correlation.png)
+![数据特征空间-随机森林](../../../outputs/random_forest/data_feature_space_2d.png)
+
 ## 常见坑
 
 1. 把当前 Bagging 数据误写成低噪声或线性可分数据，忽略它其实是高噪声双月牙。

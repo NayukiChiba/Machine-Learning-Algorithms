@@ -146,6 +146,26 @@ X_test_s = scaler.transform(X_test)
 - 标准化必须发生在切分之后，否则会把测试集信息泄露到训练过程里。
 - 当前文档中的 `X_train_s`、`X_test_s` 都是源码里真实使用的变量名。
 
+## 数据可视化
+
+### ElasticNet
+
+![弹性网络特征相关性热力图](../../../outputs/elasticnet/data_correlation.png)
+
+![弹性网络特征与目标变量关系](../../../outputs/elasticnet/data_feature_vs_price.png)
+
+### Lasso
+
+![Lasso 特征相关性热力图](../../../outputs/lasso/data_correlation.png)
+
+![Lasso 特征与目标变量关系](../../../outputs/lasso/data_feature_vs_price.png)
+
+### Ridge
+
+![Ridge 特征相关性热力图](../../../outputs/ridge/data_correlation.png)
+
+![Ridge 特征与目标变量关系](../../../outputs/ridge/data_feature_vs_price.png)
+
 ## 常见坑
 
 1. 忘记把 `target` 已被重命名为 `price`，导致拆分标签列时写错字段名。

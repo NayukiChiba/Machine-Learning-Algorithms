@@ -143,6 +143,12 @@ X_train, X_test, y_train, y_test = train_test_split(
 - 这不是决策树算法本身的硬性要求，而是当前实现选择的一种输入形式。
 - 因为后续还要单独保存 `feature_names`，所以即使转成数组，也不会丢失特征名信息。
 
+## 数据可视化
+
+![特征相关性热力图](../../../outputs/decision_tree_regression/data_correlation.png)
+
+![特征与目标变量关系](../../../outputs/decision_tree_regression/data_feature_vs_price.png)
+
 ## 常见坑
 
 1. 把当前数据误认为手工构造数据，忽略它其实来自 California Housing 真实数据集。

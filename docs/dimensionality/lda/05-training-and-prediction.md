@@ -189,6 +189,10 @@ plot_dimensionality(..., mode="2d")
 - 这条链路里最关键的中间变量是 `X_scaled`、训练后的 `model`、二维投影结果 `X_transformed` 和标签 `y`。
 - 只要把这条流程走清楚，整个 lda 分册的工程部分就基本读懂了。
 
+## 训练诊断可视化
+
+![学习曲线](../../../outputs/lda/learning_curve.png)
+
 ## 常见坑
 
 1. 把 LDA 当前流程误写成 PCA 那种“标签只用于着色”的无监督流程。

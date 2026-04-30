@@ -221,6 +221,12 @@ plot_learning_curve(
 - 当前实现的评估重点是四类图像，而不是数值指标面板。
 - 如果后续扩展这部分，最自然的方向是补指标打印或更一致的学习曲线配置说明。
 
+## 评估图表
+
+![混淆矩阵](../../../outputs/gbdt/confusion_matrix.png)
+![ROC曲线](../../../outputs/gbdt/roc_curve.png)
+![特征重要性](../../../outputs/gbdt/feature_importance.png)
+
 ## 常见坑
 
 1. 只看 ROC 曲线，不看混淆矩阵，错过具体类别混淆情况。

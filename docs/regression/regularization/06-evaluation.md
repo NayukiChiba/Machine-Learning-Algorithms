@@ -155,9 +155,27 @@ for f, c in zip(feature_names, coef):
 - 如果后续要扩展这部分，最自然的方向是补数值指标和交叉验证，而不是重写现有残差图逻辑。
 - 这也是为什么本章反复强调“当前实现真实存在什么”。
 
+### ElasticNet
+
+![弹性网络残差图](../../../outputs/elasticnet/residual_plot.png)
+
+![弹性网络系数](../../../outputs/elasticnet/coefficients.png)
+
+### Lasso
+
+![Lasso 残差图](../../../outputs/lasso/residual_plot.png)
+
+![Lasso 系数](../../../outputs/lasso/coefficients.png)
+
+### Ridge
+
+![Ridge 残差图](../../../outputs/ridge/residual_plot.png)
+
+![Ridge 系数](../../../outputs/ridge/coefficients.png)
+
 ## 常见坑
 
-1. 只看 `near_zero` 数量，不看残差图，误把“更稀疏”当成“更准确”。
+1. 只看 `near_zero` 数量，不看残差图，误把”更稀疏”当成”更准确”。
 2. 只看残差图，不看 `noise_*` 和 `*_corr` 的系数分布，错过正则化分册最核心的观察点。
 3. 误以为当前流水线已经输出了完整数值指标，实际源码并没有这一步。
 

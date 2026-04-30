@@ -149,6 +149,12 @@ X_test_s = scaler.transform(X_test)
 - `stratify=y` 对多分类任务很重要，它能让训练集和测试集的类别分布更稳定。
 - 当前文档中的 `X_train_s`、`X_test_s` 都是源码里真实使用的变量名。
 
+## 数据可视化
+
+![数据类别分布](../../../outputs/lightgbm/data_class_distribution.png)
+![数据相关性](../../../outputs/lightgbm/data_correlation.png)
+![数据特征空间](../../../outputs/lightgbm/data_feature_space_2d.png)
+
 ## 常见坑
 
 1. 把当前 LightGBM 数据误写成回归数据，忽略它其实是 4 分类任务。

@@ -184,6 +184,8 @@ python -m pipelines.regression.linear_regression
 - 一旦这些中间变量理解清楚，整个 linear_regression 分册的代码结构就基本串起来了。
 - 文档中的各章节，其实就是在拆解这条执行链上的不同环节。
 
+![运行结果](../../../outputs/linear_regression/result_display.png)
+
 ## 常见坑
 
 1. 把 `pipelines` 层和 `model_training` 层职责混在一起，误以为训练函数负责全部工程流程。

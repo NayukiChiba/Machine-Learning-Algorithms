@@ -139,6 +139,14 @@ X_scaled = scaler.fit_transform(X)
 - 这和 PCA 可以继续训练 3D 模型的逻辑不同。
 - 文档必须把这个数学和工程上的一致性明确写出来。
 
+## 数据可视化
+
+![类别分布图](../../../outputs/lda/data_class_distribution.png)
+
+![特征相关性热力图](../../../outputs/lda/data_correlation.png)
+
+![二维特征空间](../../../outputs/lda/data_feature_space_2d.png)
+
 ## 常见坑
 
 1. 把 `label` 当成像 PCA 那样只用于着色的辅助列，忽略它其实参与训练。

@@ -141,6 +141,12 @@ plot_learning_curve(...)
 - 文档可以提到它们是常见扩展方向，但不能写成“当前源码已经在计算”。
 - 现阶段最准确的表述是：当前实现以混淆矩阵、ROC 曲线、决策边界图和学习曲线为主要诊断手段。
 
+## 评估图表
+
+![混淆矩阵](../../../outputs/knn/confusion_matrix.png)
+
+![ROC 曲线](../../../outputs/knn/roc_curve.png)
+
 ## 常见坑
 
 1. 把 `predict(...)` 和 `predict_proba(...)` 的用途混为一谈。

@@ -92,6 +92,8 @@ disp.plot(ax=ax, cmap="Blues")
 图像内容: 2x2 混淆矩阵展示每类预测正确与错误数量
 ```
 
+![混淆矩阵](../../../outputs/visualization/08_confusion.png)
+
 ### 理解重点
 
 - 误报和漏报的业务代价不同，混淆矩阵是阈值调优依据。
@@ -161,6 +163,8 @@ ax.plot([0, 1], [0, 1], "r--", label="Random")
 图像内容: 模型 ROC 曲线位于随机基线之上并给出 AUC
 ```
 
+![ROC 曲线](../../../outputs/visualization/08_roc.png)
+
 ### 理解重点
 
 - ROC 关注排序能力，不直接反映阈值下的精确率。
@@ -224,6 +228,8 @@ ax.plot(train_sizes, test_mean, "o-", label="Validation")
 ----------------
 图像内容: 训练曲线与验证曲线随样本增加逐步收敛
 ```
+
+![学习曲线](../../../outputs/visualization/08_learning.png)
 
 ### 理解重点
 

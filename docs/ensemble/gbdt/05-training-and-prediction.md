@@ -230,6 +230,10 @@ plot_learning_curve(...)
 - 这条链路里最关键的中间变量是 `feature_names`、训练后的 `model`、`y_pred` 和 `y_scores`。
 - 只要把这条流程走清楚，整个 gbdt 分册的工程部分就基本读懂了。
 
+## 训练诊断可视化
+
+![学习曲线](../../../outputs/gbdt/learning_curve.png)
+
 ## 常见坑
 
 1. 把 GBDT 当前流程误写成回归任务流程，忽略它其实是多分类任务。

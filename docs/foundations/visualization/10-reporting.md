@@ -86,6 +86,8 @@ ax.legend(frameon=True, fancybox=True, shadow=True)
 图像内容: 统一网格风格、标题层级和图例外观
 ```
 
+![专业样式](../../../outputs/visualization/10_professional.png)
+
 ### 理解重点
 
 - 风格一致性比单图复杂度更能提升报告专业感。
@@ -141,6 +143,8 @@ ax5 = fig.add_subplot(gs[1, 2])
 ----------------
 图像内容: 上方主图 + 右上分布图 + 下方三图组合布局
 ```
+
+![多面板布局](../../../outputs/visualization/10_multipanel.png)
 
 ### 理解重点
 

@@ -123,6 +123,8 @@ MaxAbsScaler:
 - 存在强异常值时，优先比较 `RobustScaler` 与其他方案。
 - 缩放器选择本质是分布假设选择，不是固定套路。
 
+![缩放器对比](../../../outputs/sklearn/02_scalers.png)
+
 ## 2. StandardScaler 详解
 
 ### 方法重点
@@ -329,6 +331,8 @@ Box-Cox lambda: [0.264]
 - 若数据含 0 或负值，优先使用 Yeo-Johnson。
 - 文本中的偏度改善建议配合可视化直方图一起判断。
 
+![幂变换](../../../outputs/sklearn/02_power_transform.png)
+
 ## 5. 类别编码
 
 ### 方法重点
@@ -403,6 +407,8 @@ OneHotEncoder:
 - `LabelEncoder` 产生整数顺序，可能引入虚假大小关系。
 - `OneHotEncoder` 会增加维度，需关注稀疏性与内存开销。
 - 面向生产环境时，未知类别处理策略必须提前设计。
+
+![类别编码](../../../outputs/sklearn/02_encoding.png)
 
 ## 6. 缺失值处理
 

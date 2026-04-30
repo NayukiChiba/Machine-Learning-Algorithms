@@ -79,6 +79,8 @@ axes[1].barh(categories, values, color="coral", edgecolor="black")
 左图为垂直柱状图，右图为水平柱状图
 ```
 
+![柱状图](../../../outputs/visualization/02_bar.png)
+
 ### 理解重点
 
 - 类别比较优先柱状图，趋势比较优先折线图。
@@ -140,6 +142,8 @@ plt.colorbar(sc, ax=ax, label="Color Value")
 图像内容: 点的颜色和大小分别编码额外变量
 ```
 
+![散点图](../../../outputs/visualization/02_scatter.png)
+
 ### 理解重点
 
 - 当点重叠严重时，`alpha` 与采样策略要一起调整。
@@ -198,6 +202,8 @@ ax.legend()
 图像内容: 正态近似分布并标注均值位置
 ```
 
+![直方图](../../../outputs/visualization/02_histogram.png)
+
 ### 理解重点
 
 - 直方图不是概率密度，除非额外进行归一化。
@@ -246,6 +252,8 @@ ax.pie(sizes, labels=labels, explode=explode, autopct="%1.1f%%", startangle=90)
 图像内容: Product A 扇区被突出显示
 ```
 
+![饼图](../../../outputs/visualization/02_pie.png)
+
 ### 理解重点
 
 - 类别超过 5~6 个时建议改用条形图。
@@ -293,6 +301,8 @@ ax.set_xticklabels(["σ=1", "σ=2", "σ=3", "σ=4"])
 ----------------
 图像内容: 四组不同标准差分布的中位数和离散度对比
 ```
+
+![箱线图](../../../outputs/visualization/02_boxplot.png)
 
 ### 理解重点
 

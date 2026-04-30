@@ -160,6 +160,12 @@ lengths = [len(obs)]
 - 当前数据是离散观测符号，不像连续特征那样需要标准化。
 - 文档必须如实描述当前实现，不能把监督学习或连续特征处理习惯误套到这里。
 
+## 数据可视化
+
+![数据分布图](../../../outputs/hmm/data_distribution.png)
+
+![数据序列图](../../../outputs/hmm/data_sequence.png)
+
 ## 常见坑
 
 1. 把 `state_true` 当成训练标签，误以为当前 HMM 是监督学习。

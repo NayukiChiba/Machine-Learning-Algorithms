@@ -170,6 +170,8 @@ def train_model(...):
 - 这些包装不改变 EM 算法行为，但有助于观察训练入口和收敛耗时。
 - 和监督学习分册相比，这里更强调模型设定和似然下界，而不是标签预测指标。
 
+![分量数扫描曲线](../../../outputs/gmm/component_sweep_curve.png)
+
 ## 常见坑
 
 1. 误以为 `train_model(...)` 手写实现了 E 步和 M 步，实际上它只是对 `GaussianMixture` 的薄封装。

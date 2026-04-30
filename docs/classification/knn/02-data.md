@@ -128,6 +128,14 @@ X_test_s = scaler.transform(X_test)
 - 当前流水线显式使用 `stratify=y`，说明作者希望训练集和测试集在类别比例上保持稳定。
 - 对 KNN 来说，标准化尤其关键，因为距离关系会直接决定邻居集合和最终投票结果。
 
+## 数据可视化
+
+![类别分布](../../../outputs/knn/data_class_distribution.png)
+
+![相关性热力图](../../../outputs/knn/data_correlation.png)
+
+![散点图矩阵](../../../outputs/knn/data_scatter.png)
+
 ## 常见坑
 
 1. 忘记把 `label` 从特征表中剥离出来。

@@ -139,6 +139,18 @@ python -m pipelines.regression.regularization
 - 一旦这三个中间变量理解清楚，整个 regularization 分册的代码结构就基本串起来了。
 - 文档中的各章节，其实就是在拆解这条执行链上的不同环节。
 
+### ElasticNet
+
+![弹性网络运行结果](../../../outputs/elasticnet/result_display.png)
+
+### Lasso
+
+![Lasso 运行结果](../../../outputs/lasso/result_display.png)
+
+### Ridge
+
+![Ridge 运行结果](../../../outputs/ridge/result_display.png)
+
 ## 常见坑
 
 1. 把 `pipelines` 层和 `model_training` 层的职责混在一起，误以为训练函数负责全部工程流程。

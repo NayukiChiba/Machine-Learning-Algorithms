@@ -141,6 +141,12 @@ X_train, X_test, y_train, y_test = train_test_split(
 - 这一点必须和 `svr`、`regularization` 分册区分开，因为它们都显式做了 `StandardScaler`。
 - 文档只应描述当前实现真实存在的流程，不能把常见预处理习惯误写成现有代码逻辑。
 
+## 数据可视化
+
+![特征相关性热力图](../../../outputs/linear_regression/data_correlation.png)
+
+![特征与目标变量关系](../../../outputs/linear_regression/data_feature_vs_price.png)
+
 ## 常见坑
 
 1. 把当前数据误认为真实房价数据集，忽略它其实是按显式公式合成的教学数据。

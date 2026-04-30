@@ -114,6 +114,16 @@ X_scaled = scaler.fit_transform(X)
 - 如果特征尺度差异明显，同样的 `eps` 在不同维度上的意义会被扭曲。
 - 因此即使当前示例只有二维，流水线仍保留标准化步骤，体现规范做法。
 
+## 数据可视化
+
+![原始数据散点图](../../../outputs/dbscan/data_raw_scatter.png)
+
+![真实标签散点图](../../../outputs/dbscan/data_true_label_scatter.png)
+
+![聚类分布图](../../../outputs/dbscan/data_cluster_distribution.png)
+
+![特征相关性热力图](../../../outputs/dbscan/data_correlation.png)
+
 ## 常见坑
 
 1. 把 `true_label` 当成普通特征一起送进模型。

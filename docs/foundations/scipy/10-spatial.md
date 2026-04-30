@@ -103,6 +103,8 @@ print(f"\n4个点的距离矩阵:\n{np.round(dist_matrix, 4)}")
 - 余弦距离 ≈ 0.025，两向量方向几乎一致（余弦相似度 ≈ 0.975）。
 - 距离矩阵是对称的，对角线为 0（自身到自身距离）。(0,0) 到 (1,1) 的距离为 √2 ≈ 1.414。
 
+![距离计算](../../../outputs/scipy/10_distance.png)
+
 ## 2. KD 树
 
 ### 方法重点
@@ -176,6 +178,8 @@ for d, i in zip(dists, idxs):
 - KD 树构建时间 O(n log n)，查询时间 O(log n)，适合反复查询的场景。
 - `query_ball_point(x, r)` 可查询半径 r 内的所有点，用于范围搜索。
 
+![KD 树](../../../outputs/scipy/10_kdtree.png)
+
 ## 3. 凸包
 
 ### 方法重点
@@ -230,6 +234,8 @@ print(f"凸包面积: {hull.volume:.4f}")
 - 凸包面积接近 1（因为点在 [0,1]×[0,1] 内均匀分布，凸包几乎覆盖整个正方形）。
 - 凸包是计算几何的基础结构，用于碰撞检测、形状分析、最小包围区域等。
 - `ConvexHull` 基于 Qhull 库实现，时间复杂度 O(n log n)。
+
+![凸包](../../../outputs/scipy/10_hull.png)
 
 ## 4. Voronoi 图
 
@@ -297,6 +303,8 @@ Voronoi 区域数: 11
 - Voronoi 图广泛用于：最近邻区域划分、选址问题、地理信息系统、晶体结构分析。
 - `voronoi_plot_2d(vor, ax)` 是便捷的可视化函数。
 
+![Voronoi 图](../../../outputs/scipy/10_voronoi.png)
+
 ## 5. Delaunay 三角剖分
 
 ### 方法重点
@@ -353,6 +361,8 @@ for i, simplex in enumerate(tri.simplices[:3]):
 - 与 Voronoi 图的对偶关系：Delaunay 中两点相连，当且仅当它们的 Voronoi 区域共享一条边。
 - 应用场景：有限元网格生成、地形建模、三维重建、路径规划。
 - `tri.find_simplex(point)` 可查找某个点位于哪个三角形内，用于点定位问题。
+
+![Delaunay 三角剖分](../../../outputs/scipy/10_delaunay.png)
 
 ## 常见坑
 

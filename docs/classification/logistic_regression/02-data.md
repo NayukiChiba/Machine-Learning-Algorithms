@@ -141,6 +141,14 @@ X_test_s = scaler.transform(X_test)
 - 当前流水线显式使用 `stratify=y`，说明作者希望训练集和测试集在类别比例上保持稳定。
 - 对逻辑回归来说，标准化不仅有利于优化器稳定收敛，也有利于后续系数解释与 PCA 可视化。
 
+## 数据可视化
+
+![类别分布](../../../outputs/logistic_regression/data_class_distribution.png)
+
+![相关性热力图](../../../outputs/logistic_regression/data_correlation.png)
+
+![特征空间二维投影](../../../outputs/logistic_regression/data_feature_space_2d.png)
+
 ## 常见坑
 
 1. 忘记把 `label` 从特征表中剥离出来。

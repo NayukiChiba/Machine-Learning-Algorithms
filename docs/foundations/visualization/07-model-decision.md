@@ -95,6 +95,8 @@ ax.scatter(X[:, 0], X[:, 1], c=y, cmap="RdYlBu", edgecolors="black")
 图像内容: 背景为模型分类区域，散点为真实样本标签
 ```
 
+![决策边界](../../../outputs/visualization/07_boundary.png)
+
 ### 理解重点
 
 - 边界越曲折通常表示模型复杂度越高，过拟合风险也更高。
@@ -152,6 +154,8 @@ plot_tree(clf, ax=ax, filled=True, rounded=True,
 ----------------
 图像内容: 每个节点展示分裂条件、样本数和类别分布
 ```
+
+![决策树可视化](../../../outputs/visualization/07_tree.png)
 
 ### 理解重点
 
@@ -219,6 +223,8 @@ ax.set_yticklabels([feature_names[i] for i in indices])
 ----------------
 图像内容: 特征按重要性从高到低排序展示
 ```
+
+![特征重要性](../../../outputs/visualization/07_importance.png)
 
 ### 理解重点
 

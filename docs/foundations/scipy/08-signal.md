@@ -95,6 +95,8 @@ Butterworth 低通滤波器:
 - `filtfilt` 比 `lfilter` 多了一次反向滤波，消除了相位延迟，但不能用于实时处理。
 - 滤波器阶数越高，过渡带越陡峭，但可能引入更多振铃效应。
 
+![滤波器设计](../../../outputs/scipy/08_filter.png)
+
 ## 2. 卷积运算
 
 ### 方法重点
@@ -149,6 +151,8 @@ print(f"卷积结果 (same): {y_same}")
 - `full` 模式输出长度为 5 + 3 - 1 = 7，包含边界效应。
 - `same` 模式输出长度与输入信号相同（5），截取中间部分。
 - 卷积满足交换律和结合律：`convolve(x, h)` = `convolve(h, x)`。
+
+![卷积运算](../../../outputs/scipy/08_conv.png)
 
 ## 3. 傅里叶变换
 
@@ -212,6 +216,8 @@ print(f"检测到的频率峰值: {peak_freqs} Hz")
 - 频率分辨率 = fs / N = 1000 / 1000 = 1Hz，即能区分相差 1Hz 的频率成分。
 - FFT 结合 `find_peaks` 可以自动提取信号中的频率成分，广泛用于音频分析、振动诊断等。
 
+![傅里叶变换](../../../outputs/scipy/08_fft.png)
+
 ## 4. 峰值检测
 
 ### 方法重点
@@ -266,6 +272,8 @@ print(f"峰值高度: {np.round(properties['peak_heights'], 4)}")
 - `height=0.5` 过滤掉了小于 0.5 的峰值（负峰值不会被检测到）。
 - `distance=10` 确保检测到的峰值之间至少间隔 10 个采样点，避免噪声导致的虚假峰。
 - `peak_prominences` 和 `peak_widths` 可进一步分析峰值的突出度和半高宽。
+
+![峰值检测](../../../outputs/scipy/08_peaks.png)
 
 ## 常见坑
 

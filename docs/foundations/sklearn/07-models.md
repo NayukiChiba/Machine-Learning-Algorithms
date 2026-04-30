@@ -168,6 +168,8 @@ class_weight='balanced': 准确率 = 1.0000
 - 类别不平衡下，建议配合 [指标](/foundations/sklearn/06-metrics) 章节的召回与 F1 联合评估。
 - 若线性边界不足，再考虑核方法或树模型。
 
+![线性模型](../../../outputs/sklearn/07_linear_models.png)
+
 ## 3. 决策树
 
 ### 方法重点
@@ -307,6 +309,8 @@ HistGradientBoosting: 1.0000
 - 参数调优建议结合 [模型选择](/foundations/sklearn/05-model-selection) 系统进行。
 - 小样本下 boosting 更易过拟合，需关注验证曲线。
 
+![集成模型](../../../outputs/sklearn/07_ensemble.png)
+
 ## 5. SVM
 
 ### 方法重点
@@ -376,6 +380,8 @@ LinearSVC: 0.9778
 - 先做标准化再训练 SVM 几乎是默认最佳实践。
 - RBF 核在非线性任务中常见，但需调节 `C` 与 `gamma`。
 - 边界更复杂不一定更好，需用验证曲线判断。
+
+![SVM](../../../outputs/sklearn/07_svm.png)
 
 ## 6. 朴素贝叶斯
 
@@ -539,6 +545,8 @@ DBSCAN 聚类数: 4
 - DBSCAN 的 `eps` 和 `min_samples` 对结果非常敏感。
 - 聚类结果应结合业务可解释性检验，不只看内部指标。
 
+![聚类模型](../../../outputs/sklearn/07_clustering.png)
+
 ## 9. 降维模型
 
 ### 方法重点
@@ -600,6 +608,8 @@ t-SNE 输出形状: (150, 2)
 - PCA 可用于降噪和压缩，t-SNE 更适合可视化探索。
 - t-SNE 的空间距离不宜直接做定量解释。
 - 降维后建模时应验证性能是否受损。
+
+![降维模型](../../../outputs/sklearn/07_dimensionality_reduction.png)
 
 ## 常见坑
 

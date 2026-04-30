@@ -116,6 +116,10 @@ SVC(C=1.0, kernel="rbf", gamma="scale", random_state=42)
 - 当前同心圆数据更像是在测试“模型是否能形成弯曲边界”。
 - 因此 SVC 在这个示例里不是简单替代逻辑回归，而是展示另一类问题的解法。
 
+## 可视化
+
+![决策边界](../../../outputs/svc/decision_boundary.png)
+
 ## 常见坑
 
 1. 只知道 SVC 很强，却说不出它为什么适合当前同心圆数据。

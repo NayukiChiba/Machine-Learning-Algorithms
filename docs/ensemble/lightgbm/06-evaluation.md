@@ -189,6 +189,12 @@ plot_feature_importance(
 - 当前实现的评估重点是三类图像，而不是数值指标面板或训练过程监控曲线。
 - 如果后续扩展这部分，最自然的方向是补指标打印、学习曲线或验证集早停流程。
 
+## 评估图表
+
+![混淆矩阵](../../../outputs/lightgbm/confusion_matrix.png)
+![ROC曲线](../../../outputs/lightgbm/roc_curve.png)
+![特征重要性](../../../outputs/lightgbm/feature_importance.png)
+
 ## 常见坑
 
 1. 只看 ROC 曲线，不看混淆矩阵，错过具体类别混淆情况。

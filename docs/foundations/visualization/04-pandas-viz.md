@@ -91,6 +91,8 @@ df.plot(kind="box", ax=axes[1, 1], title="Box Plot")
 图像内容: 线图、面积图、条形图、箱线图四宫格对比
 ```
 
+![DataFrame 绘图](../../../outputs/visualization/04_df_plot.png)
+
 ### 理解重点
 
 - `DataFrame.plot` 适合快速探索，不必每次手写 Matplotlib 底层语句。
@@ -146,6 +148,8 @@ s.plot(kind="hist", bins=20, ax=axes[1], title="Histogram")
 ----------------
 左图展示累计走势，右图展示取值分布
 ```
+
+![Series 绘图](../../../outputs/visualization/04_series_plot.png)
 
 ### 理解重点
 
@@ -207,6 +211,8 @@ df.groupby("Category")["Value"].mean().plot(kind="bar", ax=ax, color=["red", "gr
 ----------------
 图像内容: A/B/C 三个类别的均值对比柱状图
 ```
+
+![分组绘图](../../../outputs/visualization/04_groupby.png)
 
 ### 理解重点
 

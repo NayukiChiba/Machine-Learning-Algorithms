@@ -125,6 +125,12 @@ X_test_s = scaler.transform(X_test)
 - 标准化必须发生在切分之后，否则会造成数据泄露。
 - 当前文档中的 `X_train_s`、`X_test_s` 都是源码里真实使用的变量名。
 
+## 数据可视化
+
+![特征相关性热力图](../../../outputs/svr/data_correlation.png)
+
+![特征与目标变量关系](../../../outputs/svr/data_feature_vs_price.png)
+
 ## 常见坑
 
 1. 把 `price` 当成普通特征一起送进模型。
