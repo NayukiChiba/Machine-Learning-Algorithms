@@ -7,10 +7,10 @@ outline: deep
 
 ## 本章目标
 
-1. 理解 Pandas 的两大核心数据结构：`Series` 和 `DataFrame`。
-2. 掌握从列表、字典创建 `Series` 和 `DataFrame` 的方法。
-3. 学会使用 `head`、`tail`、`info`、`describe` 等基本查看方法。
-4. 掌握 `shape`、`ndim`、`size`、`dtypes` 等常用属性。
+1. 理解 Pandas 的两大核心数据结构：`Series` 和 `DataFrame`
+2. 掌握从列表、字典、NumPy 数组创建 `Series` 和 `DataFrame`
+3. 学会用 `head`、`tail`、`info`、`describe` 快速探查数据
+4. 掌握 `shape`、`dtypes`、`columns`、`index` 等常用属性
 
 ## 重点方法与概念速览
 
@@ -23,41 +23,40 @@ outline: deep
 | `df.info(...)` | 方法 | 列类型、非空计数、内存占用 |
 | `df.describe(...)` | 方法 | 数值列统计摘要 |
 | `df.shape` | 属性 | `(行数, 列数)` 元组 |
-| `df.ndim` | 属性 | 维度数量（`DataFrame` 恒为 2） |
-| `df.size` | 属性 | 元素总数 = 行 × 列 |
+| `df.dtypes` | 属性 | 各列数据类型 |
 | `df.columns` | 属性 | 列名 `Index` 对象 |
-| `df.index` | 属性 | 行索引 `Index` 对象 |
-| `df.values` | 属性 | 底层 NumPy 数组 |
-| `df.dtypes` | 属性 | 各列数据类型 `Series` |
+| `df.index` | 属性 | 行索引对象 |
+| `df.values` | 属性 | 底层 NumPy 数组（推荐用 `df.to_numpy()`） |
 
-## Series 数据结构
+## 1. Series 数据结构
 
 ### `pd.Series`
 
 #### 作用
 
-创建一维**带索引标签**的数组。可看作一列 Excel 数据，索引赋予了数据标签语义。可从列表、字典、标量、NumPy 数组等多种来源创建。
+创建一维**带索引标签**的数组，可看作一列 Excel 数据。索引赋予数据标签语义——可通过标签而非位置访问元素。支持从列表、字典、标量、NumPy 数组创建。
 
 #### 重点方法
 
 ```python
-pd.Series(data=None, index=None, dtype=None, name=None, copy=None, fastpath=False)
+pd.Series(data=None, index=None, dtype=None, name=None, copy=None)
 ```
 
 #### 参数
 
-| 参数名   | 本例取值                            | 说明                                                                     |
-| -------- | ----------------------------------- | ------------------------------------------------------------------------ |
-| `data`   | `[1, 2, 3, 4, 5]`、`dict`           | 输入数据，可为列表、元组、字典、标量、`ndarray` 等                       |
-| `index`  | `None`（默认）、`["a", "b", "c"]`   | 自定义索引标签；`None` 时默认为 `RangeIndex(0, ..., n)`；字典键自动用作索引 |
-| `dtype`  | `None`（默认）                      | 元素数据类型；`None` 时自动推断                                          |
-| `name`   | `None`（默认）、`"prices"`          | Series 的名称，会显示在输出底部                                          |
-| `copy`   | `None`（默认）                      | 是否复制输入数据；`None` 时按源类型决定                                  |
+| 参数名 | 类型 | 说明 | 示例取值 |
+|---|---|---|---|
+| `data` | `array_like`、`dict`、标量 | 输入数据，可为列表、元组、字典、标量、`ndarray` | `[1, 2, 3]`、`{"a": 1}`、`5` |
+| `index` | `array_like` 或 `None` | 自定义索引标签；`None` 时默认为 `RangeIndex` | `["a", "b", "c"]` |
+| `dtype` | `dtype` 或 `None` | 元素数据类型，默认为 `None`（自动推断） | `np.int64`、`"float32"` |
+| `name` | `str` 或 `None` | Series 的名称，显示在输出底部，默认为 `None` | `"prices"` |
+| `copy` | `bool` 或 `None` | 是否复制输入数据，默认为 `None`（按源类型决定） | `True` |
 
 #### 示例代码
 
 ```python
 import pandas as pd
+import numpy as np
 
 # 从列表创建
 s1 = pd.Series([1, 2, 3, 4, 5])
@@ -70,7 +69,7 @@ s2 = pd.Series([10, 20, 30], index=["a", "b", "c"])
 print(f"\ns2:\n{s2}")
 print(f"访问 s2['b']: {s2['b']}")
 
-# 从字典创建（键自动成为索引）
+# 从字典创建（键 → 索引，值 → 数据）
 s3 = pd.Series({"apple": 100, "banana": 200, "orange": 150})
 print(f"\ns3:\n{s3}")
 ```
@@ -104,17 +103,17 @@ dtype: int64
 
 #### 理解重点
 
-- `Series` = 值 + 索引。索引可以是任意可哈希对象（整数、字符串、日期）。
-- 字典创建最直观：键 → 索引，值 → 数据。
-- `s.values` 返回底层 NumPy 数组；`s.index` 返回 `Index` 对象。
+- `Series` = 值 + 索引——索引是数据的一部分，不只是行号
+- 字典创建最直观：键自动成为索引，值成为数据
+- `s.values` 返回底层 NumPy 数组；`s.index` 返回 `Index` 对象——两者是 Series 与 NumPy 互操作的桥梁
 
-## DataFrame 数据结构
+## 2. DataFrame 数据结构
 
 ### `pd.DataFrame`
 
 #### 作用
 
-创建二维带标签的表格，可类比 Excel 工作表或 SQL 表。每列可以是不同 dtype。
+创建二维带标签的表格，可类比 Excel 工作表或 SQL 表。每列可以是不同 `dtype`——这是与 NumPy 二维数组最本质的区别。
 
 #### 重点方法
 
@@ -124,13 +123,13 @@ pd.DataFrame(data=None, index=None, columns=None, dtype=None, copy=None)
 
 #### 参数
 
-| 参数名    | 本例取值                                        | 说明                                                                   |
-| --------- | ----------------------------------------------- | ---------------------------------------------------------------------- |
-| `data`    | `{"Name": [...], "Age": [...], "City": [...]}` | 输入数据，可为字典、二维数组、Series 列表、另一个 DataFrame 等         |
-| `index`   | `None`（默认）                                  | 行索引；`None` 时默认为 `RangeIndex`                                   |
-| `columns` | `None`（默认）                                  | 列名；字典创建时会自动用字典键；二维数组创建时必须显式指定才有列名     |
-| `dtype`   | `None`（默认）                                  | 为所有列统一设置 dtype；`None` 时按列自动推断                          |
-| `copy`    | `None`（默认）                                  | 是否复制输入数据                                                       |
+| 参数名 | 类型 | 说明 | 示例取值 |
+|---|---|---|---|
+| `data` | `dict`、`ndarray`、`list[Series]` 等 | 输入数据；字典的键自动成为列名 | `{"Name": [...], "Age": [...]}` |
+| `index` | `array_like` 或 `None` | 行索引，默认为 `None`（`RangeIndex`） | `["r1", "r2", "r3"]` |
+| `columns` | `array_like` 或 `None` | 列名；字典创建时自动取键名，默认为 `None` | `["col1", "col2"]` |
+| `dtype` | `dtype` 或 `None` | 统一设置所有列的数据类型，默认为 `None`（按列推断） | `np.float64` |
+| `copy` | `bool` 或 `None` | 是否复制输入数据，默认为 `None` | `True` |
 
 #### 示例代码
 
@@ -171,53 +170,37 @@ dtype: object
 
 #### 理解重点
 
-- 从字典创建：**键 → 列名**，值 → 列数据。
-- 字符串列默认 dtype 是 `object`（底层是 Python 对象指针）。
-- `shape` 返回 `(行数, 列数)`，是做数据探索第一步的检查点。
+- 从字典创建：**键 → 列名**，值列表 → 列数据，所有值长度必须一致
+- 字符串列默认 `dtype=object`（底层存 Python 对象指针），内存效率不如 `category` 类型
+- `shape` 返回 `(行数, 列数)`——拿到数据后先查 shape 是最基本的健全检查
 
-## 数据查看
+## 3. 数据查看
 
-### `DataFrame.head`
+### `head` / `tail`
 
 #### 作用
 
-查看 DataFrame 的前 `n` 行。拿到新数据后的**第一步**操作。
+- `head(n)`：查看前 `n` 行，默认 5。拿到新数据后的第一步操作
+- `tail(n)`：查看后 `n` 行，默认 5。检查数据尾部是否完整
 
 #### 重点方法
 
 ```python
 df.head(n=5)
-```
-
-#### 参数
-
-| 参数名 | 本例取值     | 说明                                           |
-| ------ | ------------ | ---------------------------------------------- |
-| `n`    | `3`、`5`（默认） | 返回的行数；为负数时返回"除末尾 \|n\| 行外"   |
-
-### `DataFrame.tail`
-
-#### 作用
-
-查看 DataFrame 的后 `n` 行。
-
-#### 重点方法
-
-```python
 df.tail(n=5)
 ```
 
 #### 参数
 
-| 参数名 | 本例取值     | 说明                                           |
-| ------ | ------------ | ---------------------------------------------- |
-| `n`    | `3`、`5`（默认） | 返回的行数；为负数时返回"除开头 \|n\| 行外"   |
+| 参数名 | 类型 | 说明 | 示例取值 |
+|---|---|---|---|
+| `n` | `int` | 返回的行数，默认为 `5`；负数返回除末尾 `|n|` 行外的全部 | `3`、`10` |
 
 ### `DataFrame.info`
 
 #### 作用
 
-打印 DataFrame 的摘要信息，包括列类型、非空计数、内存占用。快速发现缺失值的首选工具。
+打印 DataFrame 的摘要信息：列名、非空计数、dtype、内存占用。快速发现缺失值和类型问题的首选工具。**直接 print 到 stdout，不返回值**。
 
 #### 重点方法
 
@@ -227,19 +210,19 @@ df.info(verbose=None, buf=None, max_cols=None, memory_usage=None, show_counts=No
 
 #### 参数
 
-| 参数名         | 本例取值        | 说明                                                                   |
-| -------------- | --------------- | ---------------------------------------------------------------------- |
-| `verbose`      | `None`（默认）  | 是否显示完整列信息；列数很多时可设 `False` 简化输出                    |
-| `buf`          | `None`（默认）  | 输出缓冲区；`None` 写到 `sys.stdout`                                   |
-| `max_cols`     | `None`（默认）  | 显示列数上限                                                           |
-| `memory_usage` | `None`（默认）  | 是否显示内存占用；`'deep'` 精确计算 object 列占用                      |
-| `show_counts`  | `None`（默认）  | 是否显示非空计数（仅当行数 < 1,690,785 时默认开启）                    |
+| 参数名 | 类型 | 说明 | 示例取值 |
+|---|---|---|---|
+| `verbose` | `bool` 或 `None` | 是否显示完整列信息，默认为 `None`（列少时自动开启） | `False` |
+| `buf` | `file-like` 或 `None` | 输出缓冲区，默认为 `None`（`sys.stdout`） | `open("log.txt", "w")` |
+| `max_cols` | `int` 或 `None` | 显示列数上限，默认为 `None`（自动适配终端宽度） | `10` |
+| `memory_usage` | `bool`、`str` 或 `None` | 是否显示内存占用；`'deep'` 精确计算 object 列，默认为 `None` | `"deep"` |
+| `show_counts` | `bool` 或 `None` | 是否显示非空计数，默认为 `None`（行数 < 阈值时自动开启） | `True` |
 
 ### `DataFrame.describe`
 
 #### 作用
 
-生成数值列的统计摘要：计数、均值、标准差、最小值、四分位数、最大值。是 EDA（探索性数据分析）的标准第一步。
+生成数值列的统计摘要：计数、均值、标准差、最小值、四分位数、最大值。EDA（探索性数据分析）的标准第一步。默认只统计数值列。
 
 #### 重点方法
 
@@ -249,11 +232,11 @@ df.describe(percentiles=None, include=None, exclude=None)
 
 #### 参数
 
-| 参数名        | 本例取值                    | 说明                                                                   |
-| ------------- | --------------------------- | ---------------------------------------------------------------------- |
-| `percentiles` | `None`（默认 `[.25, .5, .75]`）| 要计算的分位数列表，值应在 `[0, 1]`                                  |
-| `include`     | `None`（默认数值）、`'all'`、`[np.number, 'object']` | 要统计的 dtype；`'all'` 同时包含数值和字符串 |
-| `exclude`     | `None`（默认）              | 要排除的 dtype                                                         |
+| 参数名 | 类型 | 说明 | 示例取值 |
+|---|---|---|---|
+| `percentiles` | `list[float]` 或 `None` | 要计算的分位数，默认为 `None`（即 `[.25, .5, .75]`） | `[.1, .5, .9]` |
+| `include` | `str`、`list[str]` 或 `None` | 要统计的 dtype；`'all'` 包含数值和字符串列，默认为 `None`（只数值） | `"all"`、`[np.number]` |
+| `exclude` | `str`、`list[str]` 或 `None` | 要排除的 dtype，默认为 `None` | `[np.object]` |
 
 ### 综合示例
 
@@ -269,6 +252,7 @@ df = pd.DataFrame({
     "B": np.random.randint(0, 100, 10),
     "C": ["cat", "dog", "bird", "cat", "dog",
           "bird", "cat", "dog", "bird", "cat"],
+    "D": [1.2, np.nan, 3.4, 4.5, np.nan, 6.7, 7.8, 8.9, np.nan, 10.0],
 })
 
 print(f"head(3):\n{df.head(3)}")
@@ -276,69 +260,86 @@ print(f"\ntail(3):\n{df.tail(3)}")
 print("\ninfo():")
 df.info()
 print(f"\ndescribe():\n{df.describe()}")
+print(f"\ndescribe(include='all'):\n{df.describe(include='all')}")
 ```
 
 #### 输出
 
 ```text
 head(3):
-          A   B     C
-0  0.496714  63   cat
-1 -0.138264  59   dog
-2  0.647689  20  bird
+          A   B     C    D
+0  0.496714  63   cat  1.2
+1 -0.138264  59   dog  NaN
+2  0.647689  20  bird  3.4
 
 tail(3):
-          A   B     C
-7  0.767435  88   dog
-8 -0.469474  48  bird
-9  0.542560  90   cat
+          A   B     C    D
+7  0.767435  88   dog  8.9
+8 -0.469474  48  bird  NaN
+9  0.542560  90   cat  10.0
 
 info():
 <class 'pandas.core.frame.DataFrame'>
 RangeIndex: 10 entries, 0 to 9
-Data columns (total 3 columns):
+Data columns (total 4 columns):
  #   Column  Non-Null Count  Dtype
 ---  ------  --------------  -----
  0   A       10 non-null     float64
  1   B       10 non-null     int32
  2   C       10 non-null     object
-dtypes: float64(1), int32(1), object(1)
-memory usage: 332.0+ bytes
+ 3   D       7 non-null      float64
+dtypes: float64(2), int32(1), object(1)
+memory usage: 412.0+ bytes
 
 describe():
-               A          B
-count  10.000000  10.000000
-mean    0.448061  55.300000
-std     0.723008  25.289655
-min    -0.469474  20.000000
-25%    -0.210169  36.000000
-50%     0.519637  58.000000
-75%     0.737498  72.000000
-max     1.579213  90.000000
+               A          B         D
+count  10.000000  10.000000   7.00000
+mean    0.448061  55.300000   6.07143
+std     0.723008  25.289655   3.18927
+min    -0.469474  20.000000   1.20000
+25%    -0.210169  36.000000   3.40000
+50%     0.519637  58.000000   6.70000
+75%     0.737498  72.000000   8.05000
+max     1.579213  90.000000  10.00000
+
+describe(include='all'):
+          A         B     C         D
+count   10.000  10.0000    10    7.000
+unique    NaN      NaN      3      NaN
+top       NaN      NaN    cat      NaN
+freq      NaN      NaN      4      NaN
+mean      0.448   55.300   NaN    6.071
+std       0.723   25.290   NaN    3.189
+min      -0.469   20.000   NaN    1.200
+25%      -0.210   36.000   NaN    3.400
+50%       0.519   58.000   NaN    6.700
+75%       0.738   72.000   NaN    8.050
+max       1.579   90.000   NaN   10.000
 ```
 
 #### 理解重点
 
-- **数据探索三板斧**：`head` → `info` → `describe`。
-- `info` 最关键的是"Non-Null Count"——立即发现哪些列有缺失值。
-- `describe` 默认只看数值列；要看字符串列用 `df.describe(include='all')`。
+- **数据探索三板斧**：`head` → `info` → `describe`——拿到数据的标准流程
+- `info` 最关键的信息是 **Non-Null Count**——立即暴露哪些列有缺失值
+- `describe` 默认只看数值列；`include='all'` 同时显示字符串列的 unique/top/freq
+- `info()` 不返回字符串——不要写 `s = df.info()`，需要捕获时用 `buf` 参数
 
-## DataFrame 常用属性
+## 4. 常用属性
 
 ### 属性速览
 
-| 属性       | 返回类型                 | 含义                               |
-| ---------- | ------------------------ | ---------------------------------- |
-| `shape`    | `tuple[int, int]`        | `(行数, 列数)`                     |
-| `ndim`     | `int`                    | 维度数；DataFrame 恒为 2           |
-| `size`     | `int`                    | 元素总数 = 行数 × 列数             |
-| `columns`  | `Index`                  | 列名 `Index` 对象                  |
-| `index`    | `RangeIndex` / `Index`   | 行索引对象                         |
-| `values`   | `numpy.ndarray`          | 底层 NumPy 二维数组                |
-| `dtypes`   | `Series`                 | 各列数据类型                       |
-| `T`        | `DataFrame`              | 转置（行列交换）                   |
-| `empty`    | `bool`                   | 是否为空 DataFrame                 |
-| `axes`     | `list[Index, Index]`     | `[index, columns]`                 |
+| 属性 | 返回类型 | 含义 |
+|---|---|---|
+| `df.shape` | `tuple[int, int]` | `(行数, 列数)` |
+| `df.ndim` | `int` | 维度数；DataFrame 恒为 `2` |
+| `df.size` | `int` | 元素总数 = 行数 × 列数 |
+| `df.columns` | `Index` | 列名 `Index` 对象 |
+| `df.index` | `Index` | 行索引对象 |
+| `df.dtypes` | `Series` | 各列数据类型 |
+| `df.values` | `numpy.ndarray` | 底层 NumPy 二维数组（推荐用 `df.to_numpy()` 替代） |
+| `df.T` | `DataFrame` | 转置（行列交换） |
+| `df.empty` | `bool` | 是否为空 DataFrame |
+| `df.axes` | `list[Index]` | `[行索引, 列索引]` |
 
 ### 示例代码
 
@@ -356,8 +357,9 @@ print(f"ndim: {df.ndim}")
 print(f"size: {df.size}")
 print(f"columns: {df.columns.tolist()}")
 print(f"index: {df.index.tolist()}")
-print(f"values:\n{df.values}")
 print(f"dtypes:\n{df.dtypes}")
+print(f"values:\n{df.values}")
+print(f"empty: {df.empty}")
 ```
 
 ### 输出
@@ -368,35 +370,37 @@ ndim: 2
 size: 9
 columns: ['A', 'B', 'C']
 index: [0, 1, 2]
-values:
-[[1 4.0 'x']
- [2 5.0 'y']
- [3 6.0 'z']]
 dtypes:
 A      int64
 B    float64
 C     object
 dtype: object
+values:
+[[1 4.0 'x']
+ [2 5.0 'y']
+ [3 6.0 'z']]
+empty: False
 ```
 
 ### 理解重点
 
-- `shape` 与 `dtypes` 是所有数据探索任务的起点。
-- `values` 将混合类型统一为 `object` 数组，可能丢失数值效率；**纯数值列**才建议用 `values`。
-- 现代代码中，`df.to_numpy()` 比 `df.values` 更推荐（明确语义、更可控）。
+- `shape` 和 `dtypes` 是所有数据探索任务的起点
+- `values` 对混合类型 DataFrame 返回 `object` 数组，数值计算会变慢——纯数值列才用它
+- 现代代码推荐用 `df.to_numpy()` 替代 `df.values`（语义更明确，参数更可控）
+- `empty` 在读取文件后做健全检查很有用：`if df.empty: raise ValueError(...)`
 
 ## 常见坑
 
-1. **单列选取的返回类型**：`df["col"]` 返回 `Series`，`df[["col"]]` 返回**单列 `DataFrame`**，形状和方法集都不同。
-2. `describe()` 默认忽略非数值列；要看字符串列分布用 `include='all'` 或 `include=[object]`。
-3. `values` 属性对混合类型 DataFrame 返回 `object` 数组，参与 NumPy 运算会变慢甚至失败。
-4. `df.info()` 不返回字符串，而是直接 print；不要写 `s = df.info()`。
-5. 字典创建 DataFrame 时，所有值的长度必须一致，否则抛 `ValueError`。
-6. `RangeIndex` 看起来像整数列表，但它是一个特殊对象；要强制转 list 用 `df.index.tolist()`。
+1. 单列选取 `df["col"]` 返回 `Series`，`df[["col"]]` 返回单列 `DataFrame`——形状和方法集都不同，容易在后续操作中踩坑
+2. `describe()` 默认忽略非数值列；看字符串列分布用 `include='all'` 或 `include=[object]`
+3. `values` 对混合类型 DataFrame 返回 `object` 数组，参与 NumPy 运算会变慢甚至失败——纯数值列才用它
+4. `df.info()` 不返回字符串而是直接 print——不要写 `s = df.info()` 试图赋值
+5. 字典创建 DataFrame 时所有值列表长度必须一致，否则抛 `ValueError`
+6. `RangeIndex` 不是普通列表——需要转 list 时用 `df.index.tolist()`
 
 ## 小结
 
-- Pandas 的核心是 **`Series`（一维带标签）** 和 **`DataFrame`（二维表格）**。
-- 拿到数据后的标准流程：`head` → `info` → `describe` → `shape` / `dtypes`。
-- `Series` 和 `DataFrame` 都建立在 NumPy 之上，但**多了标签**和**更丰富的方法**。
-- 时刻关注 `shape` 和 `dtypes`——它们决定了后续操作的正确性。
+- Pandas 的两大核心是 **`Series`**（一维带标签）和 **`DataFrame`**（二维表格）
+- 拿到数据的标准流程：`head` → `info` → `describe` → `shape` / `dtypes`
+- `Series` 和 `DataFrame` 都建立在 NumPy 之上，但多了**标签索引**和**丰富的数据处理方法**
+- 时刻关注 `shape` 和 `dtypes`——它们决定了后续操作的正确性

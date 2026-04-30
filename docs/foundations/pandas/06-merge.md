@@ -7,135 +7,138 @@ outline: deep
 
 ## 本章目标
 
-1. 掌握 `pd.concat` 的行 / 列拼接。
-2. 掌握数据库风格连接 `pd.merge` 的四种 `how` 模式（inner / left / right / outer）。
-3. 学会用 `left_on` / `right_on` 合并不同列名的键。
-4. 掌握 `DataFrame.join` 按索引的快捷连接。
-5. 熟悉 `indicator` 参数用于诊断合并质量。
+1. 掌握 `pd.concat` 的行拼接与列拼接
+2. 掌握 `pd.merge` 的四种连接模式（inner / left / right / outer）
+3. 学会用 `left_on` / `right_on` 合并不同列名的键
+4. 掌握 `df.join` 按索引的快捷连接
+5. 学会用 `indicator` 参数诊断合并质量
 
 ## 重点方法与概念速览
 
 | 名称 | 类型 | 作用 |
 |---|---|---|
 | `pd.concat(...)` | 函数 | 按行或列拼接多个 DataFrame |
-| `pd.merge(...)` | 函数 | 数据库风格连接（按列键） |
-| `df.merge(...)` | 方法 | 同 `pd.merge`，以 `self` 为左表 |
-| `df.join(...)` | 方法 | 按**索引**连接（快捷写法） |
-| `df.combine_first(...)` | 方法 | 用另一 DataFrame 的值补齐 `NaN` |
-| `indicator` | 参数 | 合并结果中标记来源（`left_only` / `right_only` / `both`） |
+| `pd.merge(...)` | 函数 | 数据库风格连接（类似 SQL JOIN） |
+| `df.join(...)` | 方法 | 按索引连接（`merge` 的索引版快捷方式） |
+| `df.combine_first(...)` | 方法 | 用另一个 DataFrame 填充缺失值 |
 
-## 按行 / 列拼接
+## 1. 行列拼接
 
 ### `pd.concat`
 
 #### 作用
 
-沿**现有轴**将多个 DataFrame / Series 拼接起来。与 NumPy 的 `concatenate` 类似，但会保留索引对齐。
+沿指定轴将多个 DataFrame 或 Series 拼接在一起。`axis=0` 纵向堆叠（加行），`axis=1` 横向拼接（加列）。
 
 #### 重点方法
 
 ```python
-pd.concat(objs, axis=0, join='outer', ignore_index=False,
-          keys=None, levels=None, names=None, verify_integrity=False,
-          sort=False, copy=True)
+pd.concat(objs, *, axis=0, join='outer', ignore_index=False, keys=None,
+          verify_integrity=False, sort=False, copy=True)
 ```
 
 #### 参数
 
-| 参数名             | 本例取值                     | 说明                                                                   |
-| ------------------ | ---------------------------- | ---------------------------------------------------------------------- |
-| `objs`             | `[df1, df2]`                 | 待拼接的序列（列表或字典）                                             |
-| `axis`             | `0`（默认）、`1`             | `0` 纵向（叠行），`1` 横向（拼列）                                     |
-| `join`             | `'outer'`（默认）、`'inner'` | 非拼接轴的合并方式；`'outer'` 保留所有列，`'inner'` 只保留共有列       |
-| `ignore_index`     | `False`（默认）、`True`      | 是否重置索引为 `RangeIndex`                                            |
-| `keys`             | `None`（默认）、`['A', 'B']` | 给每个对象加一个顶层标签，生成 MultiIndex                              |
-| `verify_integrity` | `False`（默认）              | 是否验证拼接后的索引没有重复                                           |
-| `sort`             | `False`（默认）              | 当 `join='outer'` 且列不同时，是否对列排序                             |
+| 参数名 | 类型 | 说明 | 示例取值 |
+|---|---|---|---|
+| `objs` | `list[DataFrame]`、`dict` | 待拼接对象序列；`dict` 时键用作多层索引 | `[df1, df2]` |
+| `axis` | `int` | `0` 按行拼接（上下堆叠）、`1` 按列拼接（左右拼接），默认为 `0` | `1` |
+| `join` | `str` | 非拼接轴上索引对齐方式：`'outer'` 并集 / `'inner'` 交集，默认为 `'outer'` | `"inner"` |
+| `ignore_index` | `bool` | `True` 时重置索引，默认为 `False` | `True` |
+| `keys` | `list` | 为每组数据添加标签（形成多层索引的顶层），默认为 `None` | `["df1", "df2"]` |
+| `verify_integrity` | `bool` | `True` 时检查结果索引是否有重复，默认为 `False` | `True` |
+| `sort` | `bool` | `axis=1` 时是否对非拼接轴排序，默认为 `False` | `True` |
 
 #### 示例代码
 
 ```python
 import pandas as pd
 
-df1 = pd.DataFrame({"A": [1, 2], "B": [3, 4]})
-df2 = pd.DataFrame({"A": [5, 6], "B": [7, 8]})
+df1 = pd.DataFrame({
+    "Name": ["Alice", "Bob"],
+    "Age": [25, 30],
+    "City": ["Beijing", "Shanghai"],
+})
 
-print(f"纵向:\n{pd.concat([df1, df2], axis=0, ignore_index=True)}")
-print(f"\n横向:\n{pd.concat([df1, df2], axis=1)}")
+df2 = pd.DataFrame({
+    "Name": ["Charlie", "David"],
+    "Age": [35, 28],
+    "City": ["Guangzhou", "Shenzhen"],
+})
 
-df3 = pd.DataFrame({"A": [1, 2], "C": [5, 6]})
-print(f"\n不同列 outer:\n{pd.concat([df1, df3], ignore_index=True)}")
+# 按行拼接
+rows = pd.concat([df1, df2], axis=0, ignore_index=True)
+print(f"axis=0 按行拼接:\n{rows}")
+
+# 按列拼接
+left = pd.DataFrame({"Name": ["Alice", "Bob"], "Age": [25, 30]})
+right = pd.DataFrame({"City": ["Beijing", "Shanghai"], "Score": [85, 92]})
+cols = pd.concat([left, right], axis=1)
+print(f"\naxis=1 按列拼接:\n{cols}")
 ```
 
 #### 输出
 
 ```text
-纵向:
-   A  B
-0  1  3
-1  2  4
-2  5  7
-3  6  8
+axis=0 按行拼接:
+      Name  Age       City
+0    Alice   25    Beijing
+1      Bob   30   Shanghai
+2  Charlie   35  Guangzhou
+3    David   28   Shenzhen
 
-横向:
-   A  B  A  B
-0  1  3  5  7
-1  2  4  6  8
-
-不同列 outer:
-   A    B    C
-0  1  3.0  NaN
-1  2  4.0  NaN
-2  1  NaN  5.0
-3  2  NaN  6.0
+axis=1 按列拼接:
+    Name  Age      City  Score
+0  Alice   25   Beijing     85
+1    Bob   30  Shanghai     92
 ```
 
 #### 理解重点
 
-- 纵向拼接用 `ignore_index=True` 重置行索引，否则会保留原索引（可能重复）。
-- 横向拼接要求**索引对齐**；不对齐的行会出现 `NaN`（相当于 outer join）。
-- 列不同时，缺失列会填 `NaN`；想只保留共有列用 `join='inner'`。
+- `ignore_index=True` 重置为连续整数索引——避免拼接后出现重复索引
+- `keys` 参数可标记每组数据来源：`pd.concat([df1, df2], keys=["A", "B"])` 创建 MultiIndex
+- `join='inner'` 只保留所有 DataFrame 共有的列（按列拼接时）或行（按行拼接时）
 
-## 数据库风格连接
+## 2. 数据库风格合并
 
 ### `pd.merge`
 
 #### 作用
 
-按**列键**做数据库风格连接。支持 inner / left / right / outer 四种模式。
+类似 SQL JOIN，按指定列（键）将两个 DataFrame 的行对齐合并。支持 inner / left / right / outer 四种连接模式。
 
 #### 重点方法
 
 ```python
 pd.merge(left, right, how='inner', on=None, left_on=None, right_on=None,
-         left_index=False, right_index=False, sort=False,
-         suffixes=('_x', '_y'), copy=True, indicator=False, validate=None)
+         left_index=False, right_index=False, sort=False, suffixes=('_x', '_y'),
+         indicator=False, validate=None)
 ```
 
 #### 参数
 
-| 参数名           | 本例取值                                         | 说明                                                   |
-| ---------------- | ------------------------------------------------ | ------------------------------------------------------ |
-| `left` / `right` | 两个 DataFrame                                   | 左表和右表                                             |
-| `how`            | `'inner'`（默认）、`'left'`、`'right'`、`'outer'`、`'cross'` | 连接类型                                    |
-| `on`             | `'dept_id'`                                      | 两表**共有**的连接键列名                               |
-| `left_on`        | `'id'`                                           | 左表连接键                                             |
-| `right_on`       | `'key'`                                          | 右表连接键                                             |
-| `left_index`     | `False`（默认）                                  | 是否用左表索引作为连接键                               |
-| `right_index`    | `False`（默认）                                  | 是否用右表索引作为连接键                               |
-| `suffixes`       | `('_x', '_y')`（默认）                           | 同名非连接列的后缀                                     |
-| `indicator`      | `False`（默认）、`True`、`'_merge'`              | 是否添加 `_merge` 列标记来源                           |
-| `validate`       | `None`、`'1:1'`、`'1:m'`、`'m:1'`、`'m:m'`        | 验证连接键的基数关系（不符则抛错）                     |
+| 参数名 | 类型 | 说明 | 示例取值 |
+|---|---|---|---|
+| `left` | `DataFrame` | 左侧 DataFrame | `df1` |
+| `right` | `DataFrame` | 右侧 DataFrame | `df2` |
+| `how` | `str` | 连接方式：`'inner'` / `'left'` / `'right'` / `'outer'`，默认为 `'inner'` | `"left"` |
+| `on` | `str`、`list[str]` | 两侧同名的连接键列名；`None` 时自动用交集列名 | `"ID"`、`["A", "B"]` |
+| `left_on` | `str`、`list[str]` | 左侧连接键（两侧列名不同时使用） | `"left_id"` |
+| `right_on` | `str`、`list[str]` | 右侧连接键（与 `left_on` 配合） | `"right_id"` |
+| `left_index` | `bool` | `True` 时用左侧索引作为连接键，默认为 `False` | `True` |
+| `right_index` | `bool` | `True` 时用右侧索引作为连接键，默认为 `False` | `True` |
+| `suffixes` | `tuple[str, str]` | 同名列（非键）的后缀，默认为 `('_x', '_y')` | `('_L', '_R')` |
+| `indicator` | `bool`、`str` | `True` 时新增 `_merge` 列标记每行的来源，默认为 `False` | `True` |
+| `validate` | `str` 或 `None` | 验证连接键的唯一性：`'one_to_one'` / `'one_to_many'` / `'many_to_one'` / `'many_to_many'`，默认为 `None` | `"one_to_one"` |
 
 ### 四种 `how` 模式
 
-| `how`      | 含义                            | 结果行数                          |
-| ---------- | ------------------------------- | --------------------------------- |
-| `'inner'`  | 只保留两表**共有**键            | 两表交集                          |
-| `'left'`   | 保留**左表**所有行，右表匹配    | 左表 + 右表匹配（不匹配填 `NaN`） |
-| `'right'`  | 保留**右表**所有行，左表匹配    | 右表 + 左表匹配                   |
-| `'outer'`  | 保留**两表**所有行              | 并集                              |
-| `'cross'`  | 笛卡儿积（Pandas 1.2+）          | `len(left) × len(right)`          |
+| `how` | 行为 | SQL 类比 |
+|---|---|---|
+| `"inner"` | 只保留两侧都匹配的行 | `INNER JOIN` |
+| `"left"` | 保留左侧所有行，右侧无匹配的填充 NaN | `LEFT JOIN` |
+| `"right"` | 保留右侧所有行，左侧无匹配的填充 NaN | `RIGHT JOIN` |
+| `"outer"` | 保留两侧所有行，无匹配的填充 NaN | `FULL OUTER JOIN` |
 
 ### 综合示例
 
@@ -145,115 +148,100 @@ pd.merge(left, right, how='inner', on=None, left_on=None, right_on=None,
 import pandas as pd
 
 employees = pd.DataFrame({
-    "emp_id": [1, 2, 3, 4],
-    "name": ["Alice", "Bob", "Charlie", "David"],
-    "dept_id": [10, 20, 10, 30],
+    "ID": [1, 2, 3, 4],
+    "Name": ["Alice", "Bob", "Charlie", "David"],
+    "Dept": ["Sales", "IT", "IT", "HR"],
 })
 
-departments = pd.DataFrame({
-    "dept_id": [10, 20, 40],
-    "dept_name": ["Sales", "IT", "HR"],
+salaries = pd.DataFrame({
+    "ID": [1, 2, 3, 5],
+    "Salary": [8000, 12000, 15000, 9000],
 })
 
-print(f"inner:\n{pd.merge(employees, departments, on='dept_id')}")
-print(f"\nleft:\n{pd.merge(employees, departments, on='dept_id', how='left')}")
-print(f"\nright:\n{pd.merge(employees, departments, on='dept_id', how='right')}")
-print(f"\nouter:\n{pd.merge(employees, departments, on='dept_id', how='outer')}")
+print("员工表:")
+print(employees)
+print(f"\n薪资表:")
+print(salaries)
+
+# inner：只保留两边都有的 ID
+print(f"\ninner merge (交集):")
+print(pd.merge(employees, salaries, on="ID", how="inner"))
+
+# left：保留所有员工，缺薪资的填 NaN
+print(f"\nleft merge (保留所有员工):")
+print(pd.merge(employees, salaries, on="ID", how="left"))
+
+# outer：保留所有 ID
+print(f"\nouter merge (全外连接):")
+print(pd.merge(employees, salaries, on="ID", how="outer"))
+
+# 带 indicator 的 outer
+print(f"\nouter + indicator:")
+print(pd.merge(employees, salaries, on="ID", how="outer", indicator=True))
 ```
 
 #### 输出
 
 ```text
-inner:
-   emp_id     name  dept_id dept_name
-0       1    Alice       10     Sales
-1       3  Charlie       10     Sales
-2       2      Bob       20        IT
+员工表:
+   ID     Name  Dept
+0   1    Alice Sales
+1   2      Bob    IT
+2   3  Charlie    IT
+3   4    David    HR
 
-left:
-   emp_id     name  dept_id dept_name
-0       1    Alice       10     Sales
-1       2      Bob       20        IT
-2       3  Charlie       10     Sales
-3       4    David       30       NaN
+薪资表:
+   ID  Salary
+0   1    8000
+1   2   12000
+2   3   15000
+3   5    9000
 
-right:
-   emp_id     name  dept_id dept_name
-0     1.0    Alice       10     Sales
-1     3.0  Charlie       10     Sales
-2     2.0      Bob       20        IT
-3     NaN      NaN       40        HR
+inner merge (交集):
+   ID     Name  Dept  Salary
+0   1    Alice Sales    8000
+1   2      Bob    IT   12000
+2   3  Charlie    IT   15000
 
-outer:
-   emp_id     name  dept_id dept_name
-0     1.0    Alice       10     Sales
-1     3.0  Charlie       10     Sales
-2     2.0      Bob       20        IT
-3     4.0    David       30       NaN
-4     NaN      NaN       40        HR
+left merge (保留所有员工):
+   ID     Name  Dept   Salary
+0   1    Alice Sales   8000.0
+1   2      Bob    IT  12000.0
+2   3  Charlie    IT  15000.0
+3   4    David    HR      NaN
+
+outer merge (全外连接):
+   ID     Name  Dept   Salary
+0   1    Alice Sales   8000.0
+1   2      Bob    IT  12000.0
+2   3  Charlie    IT  15000.0
+3   4    David    HR      NaN
+4   5      NaN   NaN   9000.0
+
+outer + indicator:
+   ID     Name  Dept   Salary      _merge
+0   1    Alice Sales   8000.0        both
+1   2      Bob    IT  12000.0        both
+2   3  Charlie    IT  15000.0        both
+3   4    David    HR      NaN   left_only
+4   5      NaN   NaN   9000.0  right_only
 ```
 
-### 不同列名的键：`left_on` / `right_on`
+#### 理解重点
 
-#### 示例代码
+- `how='left'` 是最常用的合并模式——以主表为基准，补充辅助信息
+- `left_on` / `right_on` 在两侧键列名不同时使用——列名无需统一
+- `indicator=True` 生成 `_merge` 列标记每行来源——用于合并质量诊断
+- `validate` 在预期一对一/一对多时加验证——防止意外的多对多产生重复行
+- 多键合并：`on=["A", "B"]` 同时按两列匹配
 
-```python
-df1 = pd.DataFrame({"id": [1, 2, 3], "value1": ["a", "b", "c"]})
-df2 = pd.DataFrame({"key": [1, 2, 4], "value2": ["x", "y", "z"]})
-
-result = pd.merge(df1, df2, left_on="id", right_on="key", how="outer")
-print(result)
-```
-
-#### 输出
-
-```text
-    id value1  key value2
-0  1.0      a  1.0      x
-1  2.0      b  2.0      y
-2  3.0      c  NaN    NaN
-3  NaN    NaN  4.0      z
-```
-
-### 合并诊断：`indicator`
-
-#### 示例代码
-
-```python
-df1 = pd.DataFrame({"key": [1, 2, 3], "value": ["a", "b", "c"]})
-df2 = pd.DataFrame({"key": [2, 3, 4], "value": ["x", "y", "z"]})
-
-result = pd.merge(
-    df1, df2, on="key", how="outer",
-    suffixes=("_left", "_right"),
-    indicator=True,
-)
-print(result)
-```
-
-#### 输出
-
-```text
-   key value_left value_right      _merge
-0    1          a         NaN   left_only
-1    2          b           x        both
-2    3          c           y        both
-3    4        NaN           z  right_only
-```
-
-### 理解重点
-
-- `indicator=True` 添加 `_merge` 列：`left_only` / `right_only` / `both`，用于快速定位缺失匹配。
-- `suffixes=('_left', '_right')` 区分两表同名列；默认 `('_x', '_y')` 不够直观。
-- `validate='1:1'` 等参数会在不满足时抛错，用于保证数据质量。
-
-## 按索引连接
+## 3. 按索引连接
 
 ### `DataFrame.join`
 
 #### 作用
 
-按**索引**（或左表的列 + 右表的索引）连接两个 DataFrame。是 `merge(..., left_index=True, right_index=True)` 的快捷写法。
+按索引连接两个 DataFrame，是 `pd.merge(left_index=True, right_index=True)` 的便捷封装。可同时按索引+列连接。
 
 #### 重点方法
 
@@ -264,67 +252,141 @@ df.join(other, on=None, how='left', lsuffix='', rsuffix='',
 
 #### 参数
 
-| 参数名    | 本例取值                                          | 说明                                                                |
-| --------- | ------------------------------------------------- | ------------------------------------------------------------------- |
-| `other`   | 另一个 DataFrame / Series / DataFrame 列表        | 待连接对象                                                          |
-| `on`      | `None`（默认）、左表列名                          | 用左表的列匹配 `other` 的索引                                       |
-| `how`     | `'left'`（默认）、`'right'`、`'outer'`、`'inner'` | 连接类型；**默认是左连接**（与 `merge` 默认 `'inner'` 不同）        |
-| `lsuffix` | `''`（默认）                                      | 同名列的左表后缀                                                    |
-| `rsuffix` | `''`（默认）                                      | 同名列的右表后缀                                                    |
-| `sort`    | `False`（默认）                                   | 是否按连接键排序                                                    |
+| 参数名 | 类型 | 说明 | 示例取值 |
+|---|---|---|---|
+| `other` | `DataFrame`、`Series`、`list` | 要连接的 DataFrame | `df2` |
+| `on` | `str`、`list[str]` 或 `None` | 主表用列键（从表仍用索引），默认为 `None` | `"ID"` |
+| `how` | `str` | 连接方式，同 `merge`，默认为 `'left'` | `"inner"`、`"outer"` |
+| `lsuffix` | `str` | 左侧同名列的后缀，默认为 `''` | `"_L"` |
+| `rsuffix` | `str` | 右侧同名列的后缀，默认为 `''` | `"_R"` |
+| `validate` | `str` 或 `None` | 同 `merge` 的键验证，默认为 `None` | `"one_to_one"` |
 
-### 示例代码
+#### 示例代码
 
 ```python
-df1 = pd.DataFrame({"A": [1, 2, 3]}, index=["a", "b", "c"])
-df2 = pd.DataFrame({"B": [4, 5, 6]}, index=["a", "b", "d"])
+import pandas as pd
 
-print(f"join（默认 left）:\n{df1.join(df2)}")
-print(f"\njoin(how='outer'):\n{df1.join(df2, how='outer')}")
+df1 = pd.DataFrame({
+    "Name": ["Alice", "Bob", "Charlie"],
+    "Age": [25, 30, 35],
+}, index=["a", "b", "c"])
+
+df2 = pd.DataFrame({
+    "City": ["Beijing", "Shanghai", "Guangzhou"],
+    "Score": [85, 92, 78],
+}, index=["a", "b", "d"])
+
+# join 按索引（默认 left）
+print(f"df1.join(df2):\n{df1.join(df2)}")
+
+# inner join
+print(f"\ndf1.join(df2, how='inner'):\n{df1.join(df2, how='inner')}")
 ```
 
-### 输出
+#### 输出
 
 ```text
-join（默认 left）:
-   A    B
-a  1  4.0
-b  2  5.0
-c  3  NaN
+df1.join(df2):
+      Name  Age       City  Score
+a    Alice   25    Beijing   85.0
+b      Bob   30   Shanghai   92.0
+c  Charlie   35        NaN    NaN
 
-join(how='outer'):
-     A    B
-a  1.0  4.0
-b  2.0  5.0
-c  3.0  NaN
-d  NaN  6.0
+df1.join(df2, how='inner'):
+    Name  Age      City  Score
+a  Alice   25   Beijing     85
+b    Bob   30  Shanghai     92
 ```
 
-### 理解重点
+#### 理解重点
 
-- `join` 默认 `how='left'`，与 `merge` 默认 `'inner'` 不同，容易踩坑。
-- 多表同时按索引连接：`df.join([df2, df3, df4])` 比多次 `merge` 更简洁。
+- `join` 的核心场景：主表用普通列，从表已经把键设为了索引
+- `on` + `join` 组合可比 `merge` 更简洁：`df.set_index("key").join(other.set_index("key"))`
 
-## `concat` vs `merge` vs `join`
+## 4. 缺失值补齐
 
-| 方法       | 连接依据                | 默认方式  | 典型场景                             |
-| ---------- | ----------------------- | --------- | ------------------------------------ |
-| `concat`   | **轴方向**（索引 / 列） | `outer`   | 拼接多批相同结构的数据               |
-| `merge`    | **列键**（或索引）      | `inner`   | 按业务键关联两个表（SQL join）       |
-| `join`     | **索引**                | `left`    | 按索引快速合并（`merge` 的快捷写法） |
+### `DataFrame.combine_first`
+
+#### 作用
+
+用另一个 DataFrame 的值填充当前 DataFrame 的缺失值（NaN）。按索引和列名对齐，只在当前值为 NaN 时填充。
+
+#### 重点方法
+
+```python
+df.combine_first(other)
+```
+
+#### 示例代码
+
+```python
+import pandas as pd
+import numpy as np
+
+df1 = pd.DataFrame({
+    "A": [1, np.nan, 3],
+    "B": [np.nan, 5, np.nan],
+}, index=[0, 1, 2])
+
+df2 = pd.DataFrame({
+    "A": [10, 20, 30],
+    "B": [40, 50, 60],
+}, index=[0, 1, 2])
+
+print(f"df1 (有缺失):\n{df1}")
+print(f"\ndf2 (备用值):\n{df2}")
+print(f"\ncombine_first:\n{df1.combine_first(df2)}")
+```
+
+#### 输出
+
+```text
+df1 (有缺失):
+     A    B
+0  1.0  NaN
+1  NaN  5.0
+2  3.0  NaN
+
+df2 (备用值):
+    A   B
+0  10  40
+1  20  50
+2  30  60
+
+combine_first:
+     A    B
+0  1.0  40.0
+1  20.0  5.0
+2  3.0  60.0
+```
+
+#### 理解重点
+
+- `combine_first` 只在单元格为 NaN 时才填充——已有值不会被覆盖
+- 按索引和列名同时对齐——两侧行列标签不必完全相同（多余的行列会保留）
+
+## 连接方法选择指南
+
+| 场景 | 推荐方法 |
+|---|---|
+| 多个相同结构数据上下堆叠 | `pd.concat(axis=0)` |
+| 左右拼接（按位置对齐） | `pd.concat(axis=1)` |
+| 按列值匹配合并 | `pd.merge(on=...)` |
+| 按索引匹配合并 | `df.join(...)` |
+| 用备用数据填充 NaN | `df.combine_first(...)` |
 
 ## 常见坑
 
-1. `concat` 默认 `ignore_index=False`，结果行索引会有重复；数据拼接时**一律加 `ignore_index=True`**。
-2. `merge` 的默认 `how='inner'` 会**丢弃不匹配的行**，要小心数据量意外减少；关键链路用 `how='left'` + `indicator=True` 诊断。
-3. 合并后同名列自动加 `_x` / `_y` 后缀，可读性差——用 `suffixes=('_left', '_right')` 明确区分。
-4. 多对多（`m:m`）合并会产生**笛卡儿积**，数据量急剧膨胀；用 `validate='1:m'` 等显式验证。
-5. `join` 和 `merge` 的默认 `how` 不同（`'left'` vs `'inner'`），写代码时显式指定更安全。
-6. `left_on` / `right_on` 合并后会**保留两个键列**，可能需要 `drop`。
+1. `pd.merge` 不指定 `on` 时自动用所有共同列名作为键——可能无意中将多列合并导致结果行数爆炸
+2. 多对多合并会产生笛卡尔积——用 `validate` 参数提前验证键的唯一性
+3. `concat` 默认保留原始索引——行拼接后可能出现重复索引，用 `ignore_index=True` 重置
+4. `join` 默认 `how='left'`，而 `merge` 默认 `how='inner'`——行为不一致，容易误用
+5. 合并后同名列（非键）被加后缀 `_x` / `_y`——用 `suffixes` 自定义有意义的后缀
+6. `combine_first` 要求索引和列名对齐——数据来源结构不同时需先调整
 
 ## 小结
 
-- **`concat`** 拼接结构相同的数据（训练集 / 验证集 / 测试集合并）。
-- **`merge`** 是 SQL 风格连接，业务场景最常用；必考参数 `how` / `on` / `suffixes` / `indicator`。
-- **`join`** 索引合并的快捷写法，多表同时合并尤其方便。
-- 合并前后**务必检查行数**，用 `indicator=True` 可视化地看清匹配情况。
+- 纯堆叠用 `concat`；按键匹配用 `merge`；按索引匹配用 `join`
+- `merge` 的四种 `how` 对应 SQL 四种 JOIN——`'left'` 最常用，以主表为基准
+- `indicator` 和 `validate` 是合并质量诊断的两个关键参数
+- 合并后务必检查行数——意外的笛卡尔积是最常见的合并 bug
