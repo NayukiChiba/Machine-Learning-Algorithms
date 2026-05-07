@@ -5,10 +5,6 @@ outline: deep
 
 # KNN K 近邻分类
 
-> 对应代码：`pipelines/classification/knn.py`、`model_training/classification/knn.py`
->
-> 运行方式：`python -m pipelines.classification.knn`
-
 ## 本章目标
 
 1. 明确本分册对应的 KNN 源码入口与运行方式。
@@ -34,9 +30,9 @@ outline: deep
 |---|---|
 | 训练模型 | `KNeighborsClassifier(n_neighbors=5, weights='uniform', metric='minkowski')` |
 | 数据切分 | `train_test_split(..., test_size=0.2, random_state=42, stratify=y)` |
-| 特征预处理 | `StandardScaler` 仅在训练集 `fit`，测试集 `transform` |
+| 特征预处理 | `StandardScaler` 仅在训练集 `fit`，测试集 `transform`——KNN 依赖距离度量，标准化是必需的 |
 | 正式预测输出 | `y_pred = model.predict(X_test_s)` |
-| 概率输出 | `y_scores = model.predict_proba(X_test_s)`（当前代码做接口存在性检查） |
+| 概率输出 | `y_scores = model.predict_proba(X_test_s)`（当前源码做接口存在性检查） |
 | 评估方式 | 混淆矩阵 + ROC 曲线 + PCA 2D 决策边界 + 学习曲线 |
 
 ## 阅读路线
@@ -61,7 +57,7 @@ python -m pipelines.classification.knn
 ### 理解重点
 
 - 这个命令会串起当前 KNN 分册中最核心的工程流程。
-- 运行后会训练一个 KNN 模型，并输出混淆矩阵、ROC 曲线、决策边界图和学习曲线。
+- 运行后会训练一个 KNN 模型（懒惰学习，本质是存储训练样本），并输出混淆矩阵、ROC 曲线、决策边界图和学习曲线。
 - 当前任务是监督二分类，因此 `label` 会真实参与模型拟合与测试集预测。
 
 ## 先修
@@ -74,5 +70,5 @@ python -m pipelines.classification.knn
 ## 小结
 
 - 本分册严格对应当前仓库中的 KNN 源码实现。
-- 阅读时建议始终把文档内容与 `pipelines/classification/knn.py` 和 `model_training/classification/knn.py` 对照起来看。
-- 如果已经熟悉整体入口，可以直接从“数据构成”“模型构建”或“训练与预测”章节开始阅读。
+- KNN 与其他分类算法（逻辑回归、SVC、决策树）的核心区别在于：它是懒惰学习，不对数据做显式参数拟合，预测时才计算邻域关系。
+- 如果已经熟悉整体入口，可以直接从"数据构成""模型构建"或"训练与预测"章节开始阅读。
