@@ -5,9 +5,6 @@ outline: deep
 
 # DecisionTreeClassifier 决策树分类
 
-> 对应代码：`pipelines/classification/decision_tree.py`、`model_training/classification/decision_tree.py`
->
-> 运行方式：`python -m pipelines.classification.decision_tree`
 
 ## 本章目标
 
@@ -35,7 +32,7 @@ outline: deep
 |---|---|
 | 训练模型 | `DecisionTreeClassifier(max_depth=6, min_samples_split=4, min_samples_leaf=2, criterion='gini', random_state=42)` |
 | 数据切分 | `train_test_split(..., test_size=0.2, random_state=42, stratify=y)` |
-| 特征预处理 | 当前主模型流程不显式做标准化 |
+| 特征预处理 | 当前主模型流程不显式做标准化（树模型基于阈值切分，不依赖距离尺度） |
 | 正式预测输出 | `y_pred = model.predict(X_test.values)` |
 | 概率输出 | `y_scores = model.predict_proba(X_test.values)` |
 | 评估方式 | 混淆矩阵 + ROC 曲线 + 特征重要性 + PCA 2D 决策边界 + 学习曲线 |
@@ -75,4 +72,4 @@ python -m pipelines.classification.decision_tree
 
 - 本分册严格对应当前仓库中的 Decision Tree 源码实现。
 - 阅读时建议始终把文档内容与 `pipelines/classification/decision_tree.py` 和 `model_training/classification/decision_tree.py` 对照起来看。
-- 如果已经熟悉整体入口，可以直接从“数据构成”“模型构建”或“训练与预测”章节开始阅读。
+- 如果已经熟悉整体入口，可以直接从"数据构成""模型构建"或"训练与预测"章节开始阅读。
