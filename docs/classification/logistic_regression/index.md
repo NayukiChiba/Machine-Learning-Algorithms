@@ -5,10 +5,6 @@ outline: deep
 
 # LogisticRegression 逻辑回归分类
 
-> 对应代码：`pipelines/classification/logistic_regression.py`、`model_training/classification/logistic_regression.py`
->
-> 运行方式：`python -m pipelines.classification.logistic_regression`
-
 ## 本章目标
 
 1. 明确本分册对应的 Logistic Regression 源码入口与运行方式。
@@ -34,9 +30,9 @@ outline: deep
 |---|---|
 | 训练模型 | `LogisticRegression(penalty='l2', C=1.0, solver='lbfgs', max_iter=1000, class_weight=None, random_state=42)` |
 | 数据切分 | `train_test_split(..., test_size=0.2, random_state=42, stratify=y)` |
-| 特征预处理 | `StandardScaler` 仅在训练集 `fit`，测试集 `transform` |
+| 特征预处理 | `StandardScaler` 仅在训练集 `fit`，测试集 `transform`——逻辑回归基于梯度优化，标准化有助于收敛稳定和系数可比性 |
 | 正式预测输出 | `y_pred = model.predict(X_test_s)` |
-| 概率输出 | `y_scores = model.predict_proba(X_test_s)` |
+| 概率输出 | `y_scores = model.predict_proba(X_test_s)`——Sigmoid 映射后的正类概率 |
 | 评估方式 | 混淆矩阵 + ROC 曲线 + PCA 2D 决策边界 + 学习曲线 |
 
 ## 阅读路线
@@ -61,7 +57,7 @@ python -m pipelines.classification.logistic_regression
 ### 理解重点
 
 - 这个命令会串起当前 Logistic Regression 分册中最核心的工程流程。
-- 运行后会训练一个逻辑回归模型，并输出混淆矩阵、ROC 曲线、决策边界图和学习曲线。
+- 运行后会训练一个逻辑回归模型（通过 `lbfgs` 优化器最小化交叉熵损失），并输出混淆矩阵、ROC 曲线、决策边界图和学习曲线。
 - 当前任务是监督二分类，因此 `label` 会真实参与模型拟合与测试集预测。
 
 ## 先修
@@ -74,5 +70,5 @@ python -m pipelines.classification.logistic_regression
 ## 小结
 
 - 本分册严格对应当前仓库中的 Logistic Regression 源码实现。
-- 阅读时建议始终把文档内容与 `pipelines/classification/logistic_regression.py` 和 `model_training/classification/logistic_regression.py` 对照起来看。
-- 如果已经熟悉整体入口，可以直接从“数据构成”“模型构建”或“训练与预测”章节开始阅读。
+- 逻辑回归的核心特点：线性打分 + Sigmoid 概率映射 + 交叉熵优化——天然兼具分类能力与概率解释。
+- 与 KNN（懒惰学习、局部投票）和决策树（递归轴对齐切分）不同，逻辑回归学习的是全局线性概率边界 $\mathbf{w}^T\mathbf{x} + b = 0$。
