@@ -5,216 +5,136 @@ outline: deep
 
 # 训练与预测
 
-> 对应代码：`pipelines/ensemble/xgboost.py`、`model_training/ensemble/xgboost.py`
->  
-> 运行方式：`python -m pipelines.ensemble.xgboost`
-
 ## 本章目标
 
-1. 明确当前流水线从取数到生成两类图像的完整执行顺序。
-2. 理解训练阶段、预测阶段、残差图和特征重要性图分别由哪个函数负责。
-3. 明确当前 XGBoost 实现没有标准化步骤，也没有学习曲线。
+1. 理解 `pipelines/ensemble/xgboost.py` 的 `run()` 流水线——回归任务下的端到端流程（无标准化、无分层抽样）。
+2. 理解 XGBoost 的 `fit()` 训练过程——二阶目标近似 + 显式正则化 + 加权分位数草图。
+3. 理解回归预测的输出——连续房价预测值与残差分析。
 
 ## 重点方法与概念速览
 
 | 名称 | 类型 | 作用 |
 |---|---|---|
-| `run()` | 函数 | XGBoost 端到端流水线入口 |
-| `train_test_split(...)` | 函数 | 拆分训练集与测试集 |
-| `train_model(...)` | 函数 | 训练 XGBoost 回归模型 |
-| `model.predict(X_test)` | 方法 | 对测试集做回归预测 |
-| `plot_residuals(...)` | 函数 | 绘制残差分析图 |
-| `plot_feature_importance(...)` | 函数 | 绘制特征重要性图 |
+| `run()` | 函数 | 回归流水线编排——6 步串联数据拆分、训练、预测和两项评估 |
+| `model.fit(X_train, y_train)` | 方法 | 训练 300 棵二阶近似正则化回归树——列块并行 + 加权分位数草图 |
+| `model.predict(X_test)` | 方法 | 300 棵树加权累加——输出连续房价预测值 |
+| `plot_residuals(y_test, y_pred, ...)` | 函数 | 绘制预测残差散点图和分布图——回归专用评估 |
+| `plot_feature_importance(model, feature_names, ...)` | 函数 | 绘制特征重要性柱状图 |
 
-## 1. 端到端入口 `run()`
+## 1. 完整流水线流程
 
-### 参数速览（本节）
+### 流程概述
 
-适用函数：`run()`
-
-| 项目 | 当前实现 |
-|---|---|
-| 数据源 | `xgboost_data.copy()` |
-| 标签列 | `price` |
-| 切分方式 | `test_size=0.2, random_state=42` |
-| 训练入口 | `train_model(X_train, y_train)` |
-| 预测入口 | `model.predict(X_test)` |
-| 可视化入口 | `plot_residuals(...)`、`plot_feature_importance(...)` |
-
-### 示例代码
-
-```python
-def run():
-    data = xgboost_data.copy()
-    X = data.drop(columns=["price"])
-    y = data["price"]
-    feature_names = list(X.columns)
 ```
+xgboost_data.copy()
+    │
+    ├─ ① X = data.drop(columns=["price"]), y = data["price"]
+    ├─ ② feature_names = list(X.columns)
+    ├─ ③ X_train, X_test, y_train, y_test = train_test_split(test_size=0.2)
+    ├─ ④ model = train_model(X_train, y_train)  # 无标准化，含 ImportError 检查
+    ├─ ⑤ y_pred = model.predict(X_test)
+    └─ ⑥ 两项评估可视化
+```
+
+### 参数速览
+
+| 步骤 | 操作 | 输入 | 输出 | 说明 |
+|---|---|---|---|---|
+| 复制数据 | `xgboost_data.copy()` | 全局 `DataFrame` | 本地 `DataFrame`，`(20640, 9)` | 避免修改全局变量 |
+| 分离 X/y | `data.drop(columns=["price"])` + `data["price"]` | `DataFrame` | `(DataFrame, Series)` | 特征 8 列 + 连续目标 1 列 |
+| 提取特征名 | `list(X.columns)` | `DataFrame` | `list[str]`，长度 8 | 供特征重要性图表使用 |
+| 切分数据 | `train_test_split(test_size=0.2)` | `(X, y)` | `(X_train, X_test, y_train, y_test)` | 16512 训练 / 4128 测试 |
+| 训练 | `train_model(X_train, y_train)` | `(DataFrame, Series)` | `XGBRegressor` | 300 棵二阶正则化树 |
+| 预测 | `model.predict(X_test)` | `DataFrame`，`(4128, 8)` | `ndarray`，`(4128,)` | 连续房价预测值 |
+| 残差图 | `plot_residuals(y_test, y_pred, ...)` | `(Series, ndarray)` | PNG 文件 | 残差散点图 + 分布图 |
+| 特征重要性 | `plot_feature_importance(model, feature_names, ...)` | `(model, list)` | PNG 文件 | 8 个特征排序柱状图 |
 
 ### 理解重点
 
-- 整个分册的运行入口就是 `pipelines/ensemble/xgboost.py` 里的 `run()`。
-- 这个函数不负责实现 boosting 本身，而是把取数、训练、预测和评估图输出串成一条流程。
-- `feature_names` 会在这里提前保存下来，后续供特征重要性图使用。
+- 这是四个集成模型中最简洁的流水线——6 步（vs Bagging 7 步、GBDT 9 步、LightGBM 7 步），少了标准化步骤。
+- 与分类集成流水线的关键差异：无 `StandardScaler`、无 `stratify`、无 `predict_proba`、无混淆矩阵、无 ROC。
+- 目标列名为 `price`（不是 `label`）——这是回归任务与分类任务在命名上的明确区分。
 
-## 2. 训练前的数据准备顺序
+## 2. 训练细节：`model.fit(X_train, y_train)`
 
-### 参数速览（本节）
+### 训练过程（300 棵树串行，含列块并行）
 
-适用 API（分项）：
+1. **第 1 棵树**：在原始房价标签上训练——初始预测为训练集均值
+2. **第 $m$ 棵树**（$m = 2, \dots, 300$）：计算一阶梯度 $g_i$ 和二阶 Hessian $h_i$（回归下 $h_i=1$），对目标函数做二阶泰勒展开
+3. **分裂点搜索**：对 8 个特征分别用加权分位数草图找候选分裂点，计算分裂增益 $\text{Gain} = \frac{1}{2}[\dots] - \gamma$，选最大增益分裂
+4. **列采样**：`colsample_bytree=0.9`——每棵树随机选约 7 个特征
+5. **行采样**：`subsample=0.9`——每轮随机保留 90% 样本
+6. **正则化约束**：$w_j^* = -\frac{G_j}{H_j + \lambda}$（叶子权重 L2 压缩）+ $\gamma$ 门槛检查
+7. **学习率收缩**：每棵树的输出乘以 `learning_rate=0.05`
 
-1. `train_test_split(X, y, test_size=0.2, random_state=42)`
+### 参数速览
 
-| 参数名 | 本例取值 | 说明 |
+| 参数名 | 当前取值 | 训练中的作用 |
 |---|---|---|
-| `test_size` | `0.2` | 测试集占比 |
-| `random_state` | `42` | 保证可复现划分 |
-| 返回值 | `X_train`、`X_test`、`y_train`、`y_test` | 训练/测试集拆分结果 |
-
-### 示例代码
-
-```python
-X_train, X_test, y_train, y_test = train_test_split(
-    X, y, test_size=0.2, random_state=42
-)
-```
-
-### 理解重点
-
-- 当前流水线在数据切分后直接进入训练，没有额外的标准化步骤。
-- 这一点和 `svr`、`regularization` 分册不同，文档里必须明确区分。
-- 当前实现更强调树模型在原始表格特征上的拟合流程。
-
-## 3. 训练阶段：调用 `train_model(...)`
-
-### 参数速览（本节）
-
-适用函数：`train_model(X_train, y_train)`
-
-| 参数名 | 本例取值 | 说明 |
-|---|---|---|
-| `X_train` | 训练特征 | 当前直接传入原始训练特征 |
-| `y_train` | 训练标签 | 连续值目标 |
-| 返回值 | `model` | 已训练好的 `XGBRegressor` 模型 |
-
-### 示例代码
-
-```python
-model = train_model(X_train, y_train)
-```
+| `n_estimators` | `300` | 串行训练的弱学习器数量 |
+| `learning_rate` | `0.05` | 每棵树输出的收缩乘数 |
+| `max_depth` | `6` | 每棵树的最大深度——可以分裂 6 次（最多 64 个叶子） |
+| `min_child_weight` | `1` | 叶子节点的最小 Hessian 和——回归下等价于最小样本数 1 |
+| `subsample` | `0.9` | 行采样比例——每轮随机保留 90% 训练样本 |
+| `colsample_bytree` | `0.9` | 列采样比例——每棵树随机选 90% 特征（≈7/8） |
+| `gamma` | `0.0` | 分裂最低增益——当前不设门槛 |
+| `reg_lambda` | `1.0` | L2 正则化——压缩叶子权重 |
+| `reg_alpha` | `0.0` | L1 正则化——当前不启用 |
+| `n_jobs` | `-1` | 列块并行——各特征分裂点搜索可并行 |
 
 ### 理解重点
 
-- 当前实现没有把训练和预测揉成同一个函数，而是先得到训练好的模型，再单独调用 `predict(...)`。
-- 训练阶段最重要的副产物，不只是 `model` 对象，还有控制台中打印出来的超参数信息。
-- 这些日志帮助你确认当前 boosting 配置到底是什么。
+- XGBoost 的训练**在概念上**仍是串行 Boosting——但每棵树内部的列块分裂搜索是并行的（`n_jobs=-1`）。
+- `reg_lambda=1.0` 使得每片叶子的权重被压缩——$w_j^* = -\frac{G_j}{H_j + 1}$，分母恒加 1 防止权重过大。
+- 在回归任务中 $h_i=1$，Hessian 恒为常数——二阶展开的信息增量为零，但闭式解和正则化仍有效。
 
-## 4. 预测阶段：直接调用 `predict(...)`
+## 3. 预测细节
 
-### 参数速览（本节）
+### `model.predict(X_test)` — 输出连续值
 
-适用流程（分项）：
-
-1. `y_pred = model.predict(X_test)`
-
-| 参数名 | 本例取值 | 说明 |
-|---|---|---|
-| `model` | 已训练完成模型 | 来自 `train_model(...)` 返回值 |
-| `X_test` | 测试特征 | 当前直接传入未标准化测试集 |
-| `y_pred` | 预测值数组 | 用于残差分析 |
-
-### 示例代码
-
-```python
-y_pred = model.predict(X_test)
 ```
+300 棵树加权累加（每棵 × learning_rate）
+    → 连续实数（房价预测值，单位：10 万美元）
+```
+
+### 参数速览
+
+| 方法 | 输入形状 | 输出形状 | 输出含义 |
+|---|---|---|---|
+| `predict(X)` | `(n, 8)` | `(n,)` | 连续房价预测值——$\in \mathbb{R}$ |
 
 ### 理解重点
 
-- 当前仓库没有额外封装 `predict_model(...)`，而是直接使用 XGBoost 回归器统一的 `predict(...)` 接口。
-- 由于本分册没有标准化步骤，所以预测阶段也直接使用原始测试特征。
-- 这让训练和预测流程与当前源码保持完全一致。
+- 与分类模型的根本不同：`predict()` 返回连续实数，不是类别标号。
+- 没有 `predict_proba()`——回归模型只输出一个标量预测值。
+- 预测值 = 训练集初始均值 + $\sum_{m=1}^{300} 0.05 \times f_m(\mathbf{x})$。
 
-## 5. 预测后的残差图与特征重要性图输出
+## 4. 与 Bagging/GBDT/LightGBM 流水线对比
 
-### 参数速览（本节）
-
-适用函数（分项）：
-
-1. `plot_residuals(...)`
-2. `plot_feature_importance(...)`
-
-| 参数名 | 本例取值 | 说明 |
-|---|---|---|
-| `title`（残差图） | `"XGBoost 残差分析"` | 图标题 |
-| `title`（重要性图） | `"XGBoost 特征重要性"` | 图标题 |
-| `dataset_name` | `"xgboost"` | 输出目录名 |
-| `model_name` | `"xgboost"` | 输出文件名前缀 |
-| `feature_names` | `list(X.columns)` | 给特征重要性图提供真实列名 |
-
-### 示例代码
-
-```python
-plot_residuals(
-    y_test,
-    y_pred,
-    title="XGBoost 残差分析",
-    dataset_name=DATASET,
-    model_name=MODEL,
-)
-
-plot_feature_importance(
-    model,
-    feature_names=feature_names,
-    title="XGBoost 特征重要性",
-    dataset_name=DATASET,
-    model_name=MODEL,
-)
-```
+| 步骤 | Bagging | GBDT | LightGBM | XGBoost |
+|---|---|---|---|---|
+| 标准化 | 有 | 有 | 有 | **无** |
+| 分层抽样 | 有 | 有 | 有 | **无** |
+| `predict_proba` | 有（条件检查） | 有 | 有 | **无** |
+| 混淆矩阵 | 有 | 有 | 有 | **无** |
+| ROC 曲线 | 有（条件可用） | 有 | 有 | **无** |
+| 残差图 | 无 | 无 | 无 | **有** |
+| 学习曲线 | 无 | 有 | 无 | 无 |
 
 ### 理解重点
 
-- 残差图负责观察预测误差分布。
-- 特征重要性图负责观察 boosting 模型更依赖哪些特征。
-- 当前分册之所以提前保存 `feature_names`，就是为了把重要性值和真实列名对应起来。
-
-## 6. 用伪代码看完整流程
-
-### 示例代码
-
-```python
-data = xgboost_data.copy()
-X = data.drop(columns=["price"])
-y = data["price"]
-feature_names = list(X.columns)
-
-X_train, X_test, y_train, y_test = train_test_split(...)
-
-model = train_model(X_train, y_train)
-y_pred = model.predict(X_test)
-
-plot_residuals(...)
-plot_feature_importance(model, feature_names=feature_names, ...)
-```
-
-### 理解重点
-
-- 当前 XGBoost 流水线的主线非常清楚：取数、切分、训练、预测、画残差图、画特征重要性图。
-- 这条链路里最关键的中间变量是 `feature_names`、训练后的 `model` 和预测结果 `y_pred`。
-- 只要把这条流程走清楚，整个 xgboost 分册的工程部分就基本读懂了。
-
-## 训练诊断可视化
-
-![学习曲线](../../../outputs/xgboost/learning_curve.png)
+- XGBoost 流水线与其他集成模型的差异根源于任务类型——回归 vs 分类导致评估手段完全不同。
+- 残差图是回归模型的标准诊断——它回答"预测值和真实值的偏差在哪些区域较大、有没有系统偏差"。
 
 ## 常见坑
 
-1. 把其他分册里的标准化流程误套到当前 XGBoost 实现上。
-2. 误以为当前流水线还有学习曲线或数值指标打印，实际源码并没有这些步骤。
-3. 只看模型训练成功，没有继续看残差图和特征重要性图这两类输出。
+1. 在回归场景下调用 `model.predict_proba()`——`XGBRegressor` 没有此方法，只有 `predict()`。
+2. 误以为需要标准化——树模型基于分裂点比较，对特征尺度不变，标准化既非必须也无帮助。
+3. 在 `train_test_split` 中传入 `stratify=y`——回归任务的连续目标没有类别可分层。
+4. 在缺少 `xgboost` 的环境中直接运行流水线——会触发 `ImportError`。
 
 ## 小结
 
-- 当前流水线把数据准备、单模型训练、测试集预测和两种可视化输出串成了一条完整路径。
-- 训练函数负责“得到 XGBoost 模型”，流水线函数负责“组织执行和产出结果”。
-- 把这一层执行顺序读清楚，后续看评估与工程实现章节就会更顺。
+- XGBoost 流水线是最简洁的集成模型流水线——6 步完成数据拆分、训练、预测和两项评估，无标准化、无分层。
+- `fit()` 的核心流程：二阶泰勒展开 $g_i + \frac{1}{2}h_i f^2$ → 正则化目标 + 叶子权重闭式解 $w_j^* = -\frac{G_j}{H_j+\lambda}$ → 加权分位数草图 + 列块并行 → 300 棵树串行累加。
+- `predict()` 输出连续实数——与分类集成模型的 softmax + argmax 预测路径在本质上不同。

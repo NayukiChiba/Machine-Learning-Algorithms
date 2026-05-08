@@ -5,28 +5,106 @@ outline: deep
 
 # 工程实现
 
-> 对应代码：`data_generation/ensemble.py`、`model_training/ensemble/xgboost.py`、`pipelines/ensemble/xgboost.py`、`result_visualization/residual_plot.py`、`result_visualization/feature_importance.py`
->  
-> 运行方式：`python -m pipelines.ensemble.xgboost`
-
 ## 本章目标
 
-1. 看清当前 XGBoost 分册在仓库中的模块分层与调用关系。
-2. 理解从命令行入口到两类结果图落盘，中间依次发生了什么。
-3. 明确哪些逻辑属于数据层、训练层、流水线层和可视化层。
+1. 理解 XGBoost 流水线的模块分层——数据生成层、模型训练层、流水线编排层、可视化层。
+2. 理清 `run()` 内部的函数调用链和数据流动路径——注意回归任务的无标准化、无分层特点。
+3. 理解 XGBoost 与其他集成模型在工程实现上的关键差异——可选依赖、回归评估、无数据预处理。
 
-## 对应代码速览
+## 重点方法与概念速览
 
-| 组件 | 路径 | 说明 |
+| 名称 | 类型 | 作用 |
 |---|---|---|
-| 数据生成层 | `data_generation/ensemble.py` | `EnsembleData.xgboost()` 加载数据 |
-| 数据导出层 | `data_generation/__init__.py` | 提供 `xgboost_data` 给外部导入 |
-| 训练层 | `model_training/ensemble/xgboost.py` | 定义 `train_model(...)` 并训练 XGBoost 模型 |
-| 流水线层 | `pipelines/ensemble/xgboost.py` | 负责切分、训练、预测、画图 |
-| 残差可视化层 | `result_visualization/residual_plot.py` | 负责残差图绘制与保存 |
-| 特征重要性层 | `result_visualization/feature_importance.py` | 负责特征重要性图绘制与保存 |
+| `EnsembleData.xgboost()` | 静态方法 | 返回加州房价真实数据集——`fetch_california_housing` |
+| `train_model(...)` | 函数 | 构建并训练 `XGBRegressor`——含可选依赖检查和 12 个可配置参数 |
+| `run()` | 函数 | 回归流水线编排——6 步串联数据拆分、训练、预测和两项评估 |
+| `plot_residuals(...)` | 函数 | 绘制残差散点图和分布图——回归专用 |
+| `plot_feature_importance(...)` | 函数 | 绘制特征重要性柱状图 |
 
-## 1. 入口命令如何触发整条链路
+## 1. 模块分层总览
+
+### 参数速览
+
+| 层 | 文件 | 职责 | 输出 |
+|---|---|---|---|
+| 数据生成层 | `data_generation/ensemble.py` → `data_generation/__init__.py` | 加载加州房价真实数据并导出 `xgboost_data` | 全局 `DataFrame`（20640 行 × 9 列） |
+| 模型训练层 | `model_training/ensemble/xgboost.py` | 封装 `XGBRegressor` 训练——含 `ImportError` 处理 + 装饰器 | `XGBRegressor` 模型对象 |
+| 流水线编排层 | `pipelines/ensemble/xgboost.py` | 串联数据拆分、训练、预测和两项评估——端到端入口 | 终端日志 + 调用两个可视化函数 |
+| 可视化层 | `result_visualization/residual_plot.py`、`feature_importance.py` | 生成两项评估图表 | 2 个 PNG 文件 |
+
+### 理解重点
+
+- XGBoost 的可视化层使用 `residual_plot.py`（回归专用）替代了 `confusion_matrix.py` 和 `roc_curve.py`（分类专用）。
+- 训练层有三重保护：`try/except ImportError`（可选依赖）+ `@print_func_info`（调用日志）+ `@timeit`（耗时日志）。
+- 与其他集成模型的核心工程差异：（1）无标准化步骤；（2）无分层抽样；（3）使用残差图替代混淆矩阵/ROC。
+
+## 2. `run()` 内部的函数调用链
+
+### 参数速览
+
+| 序号 | 调用 | 输入 | 输出 | 目的 |
+|---|---|---|---|---|
+| 1 | `xgboost_data.copy()` | — | `DataFrame`，形状 `(20640, 9)` | 避免修改全局变量 |
+| 2 | `data.drop(columns=["price"])` | `DataFrame` | `DataFrame`，形状 `(20640, 8)` | 分离 8 维特征 X |
+| 3 | `data["price"]` | `DataFrame` | `Series`，形状 `(20640,)` | 分离连续回归目标 y |
+| 4 | `list(X.columns)` | `DataFrame` | `list[str]`，长度 8 | 提取特征名——供特征重要性图表使用 |
+| 5 | `train_test_split(X, y, test_size=0.2)` | `(DataFrame, Series)` | `(X_train, X_test, y_train, y_test)` | 训练/测试切分（无 stratification） |
+| 6 | `train_model(X_train, y_train)` | `(DataFrame, Series)` | `XGBRegressor` | 训练 300 棵二阶正则化树 |
+| 7 | `model.predict(X_test)` | `DataFrame`，`(4128, 8)` | `ndarray`，`(4128,)` | 连续房价预测值 |
+| 8 | `plot_residuals(y_test, y_pred, ...)` | `(Series, ndarray)` | PNG 文件 | 残差散点图 + 分布图 |
+| 9 | `plot_feature_importance(model, feature_names, ...)` | `(model, list)` | PNG 文件 | 8 个特征重要性排序柱状图 |
+
+### 理解重点
+
+- 步骤 5 无 `stratify=y` 参数——回归任务的连续目标没有类别可分层。
+- 步骤 6 无标准化——树模型天然对特征缩放不敏感，跳过预处理环节。
+- 步骤 8 使用残差分析替代分类的混淆矩阵/ROC——回归评估的根本差异。
+- XGBoost 的流水线是最简洁的——6 步 vs Bagging 7 步、GBDT 9 步、LightGBM 7 步。
+
+## 3. 数据依赖关系
+
+```
+xgboost_data (全局 DataFrame)
+    │
+    ├─→ X = data.drop(columns=["price"])  ──→ feature_names = list(X.columns) ──┐
+    ├─→ y = data["price"]                                                        │
+    │                                                                             │
+    ├─→ train_test_split(X, y, test_size=0.2)                                    │
+    │   ├─→ X_train (16512, 8) ──────────────────────────────────────┐          │
+    │   ├─→ y_train (16512,) ────────────────────────┐               │          │
+    │   │                                             │               │          │
+    │   ├─→ X_test (4128, 8) ────────────────────┐   │               │          │
+    │   └─→ y_test (4128,) ───────────────┐      │   │               │          │
+    │                                       │      │   │               │          │
+    │   ┌───────────────────────────────────┘      │   │               │          │
+    │   │                                          │   │               │          │
+    │   │  train_model(X_train, y_train) ──→ model │   │               │          │
+    │   │      │                                    │   │               │          │
+    │   │      ├─→ model.predict(X_test) ──→ y_pred─┘   │               │          │
+    │   │      │                                         │               │          │
+    │   │      ├─→ model.feature_importances_ ──→ + feature_names ──────┘          │
+    │   │      │                                         │                         │
+    │   │      plot_residuals(y_test, y_pred, ...) ←─────┘                         │
+    │   │      plot_feature_importance(model, feature_names, ...) ←────────────────┘
+    │   │
+    │   └──────────────────────────────────────────────────────────────────────────┘
+```
+
+### 理解重点
+
+- XGBoost 的数据依赖图是最简洁的——无 `StandardScaler` 分支、无 `plot_learning_curve` 分支、无 `predict_proba` 分支。
+- `y_train` 仅参与训练，`y_test` 仅参与残差分析——没有混淆矩阵和 ROC 的数据需求。
+- `feature_names` 与 `feature_importances_` 交汇于特征重要性可视化——流程清晰。
+
+## 4. 输出文件一览
+
+### 参数速览
+
+| 输出项 | 路径 | 格式 | 说明 |
+|---|---|---|---|
+| 残差分析图 | `outputs/xgboost/residual_plot.png` | PNG | 残差散点图（预测值 vs 残差）+ 残差分布直方图 |
+| 特征重要性 | `outputs/xgboost/feature_importance.png` | PNG | 8 个特征的重要性排序柱状图 |
+| 终端日志 | 标准输出 | 文本 | 9 项训练超参数 + 运行耗时 |
 
 ### 示例代码
 
@@ -34,155 +112,72 @@ outline: deep
 python -m pipelines.ensemble.xgboost
 ```
 
-### 理解重点
+### 输出
 
-- 这个命令会执行 `pipelines/ensemble/xgboost.py` 中的 `run()`。
-- `run()` 是真正的工程入口，其他模块都被它按顺序调用。
-- 所以理解工程实现时，最清晰的方式也是先从入口脚本往下追踪。
+```text
+============================================================
+XGBoost 回归流水线
+============================================================
+模型训练完成
+n_estimators: 300
+learning_rate: 0.05
+max_depth: 6
+min_child_weight: 1
+subsample: 0.9
+colsample_bytree: 0.9
+gamma: 0.0
+reg_alpha: 0.0
+reg_lambda: 1.0
+模型训练耗时: 3.11s
 
-## 2. 模块之间的调用关系
-
-### 示例代码
-
-```python
-from data_generation import xgboost_data
-from model_training.ensemble.xgboost import train_model
-from result_visualization.residual_plot import plot_residuals
-from result_visualization.feature_importance import plot_feature_importance
+============================================================
+XGBoost 流水线完成！
+============================================================
 ```
 
 ### 理解重点
 
-- `pipelines` 层不自己造数据、不自己实现模型，也不自己画图，而是扮演调度者角色。
-- 这种分层使每个文件职责单一：数据文件只关心数据，训练文件只关心模型，画图文件只关心结果展示。
-- 当前 XGBoost 分册虽然没有学习曲线，但整体工程分层依然很清楚。
+- XGBoost 输出 2 个 PNG 文件——四个集成模型中最少（Bagging 2 个、GBDT 4 个、LightGBM 3 个）。
+- 训练耗时比 GBDT（~2s）长——因为 20640 个样本远多于 GBDT 的 500 个，但 `n_jobs=-1` 列块并行在一定程度上抵消了数据规模增长。
+- 终端日志打印 9 项超参数——四个模型中最多，体现 XGBoost 参数体系的丰富程度。
 
-## 3. 流水线层真正负责什么
+## 5. 训练层细节：与其他集成模型的对比
 
-### 参数速览（本节）
-
-适用逻辑（分项）：
-
-1. 复制数据
-2. 拆分特征与标签
-3. 保存 `feature_names`
-4. 切分训练/测试集
-5. 调用训练函数
-6. 预测测试集
-7. 输出残差图与特征重要性图
-
-| 步骤 | 所在文件 | 当前职责 |
-|---|---|---|
-| 读取 `xgboost_data` | `pipelines/ensemble/xgboost.py` | 拿到统一数据入口 |
-| `X` / `y` 拆分 | `pipelines/ensemble/xgboost.py` | 明确特征与标签 |
-| 保存 `feature_names` | `pipelines/ensemble/xgboost.py` | 供重要性图使用 |
-| 训练/测试切分 | `pipelines/ensemble/xgboost.py` | 生成训练和评估输入 |
-| 调用 `train_model(...)` | `pipelines/ensemble/xgboost.py` | 获得训练好的 XGBoost 模型 |
-| `predict(...)` + 两种画图函数 | `pipelines/ensemble/xgboost.py` | 完成结果输出 |
+| 工程维度 | Bagging | GBDT | LightGBM | XGBoost |
+|---|---|---|---|---|
+| 任务 | 分类 | 分类 | 分类 | **回归** |
+| 模型类 | `BaggingClassifier` | `GradientBoostingClassifier` | `LGBMClassifier` | **`XGBRegressor`** |
+| 依赖 | sklearn 内置 | sklearn 内置 | `pip install lightgbm` | **`pip install xgboost`** |
+| 导入保护 | `try/except TypeError` | 无 | `try/except ImportError` | `try/except ImportError` |
+| 装饰器 | 无 | `timer` | `@print_func_info` + `@timeit` + `timer` | `@print_func_info` + `@timeit` + `timer` |
+| 标准化 | 有 | 有 | 有 | **无** |
+| 分层抽样 | 有 | 有 | 有 | **无** |
+| 评估项 | 混淆矩阵 + ROC | 混淆矩阵 + ROC + 特征重要性 + 学习曲线 | 混淆矩阵 + ROC + 特征重要性 | **残差图 + 特征重要性** |
+| 超参数数 | 5 | 4 | 6 | **9** |
 
 ### 理解重点
 
-- 当前仓库没有使用 `Pipeline` 类，也没有显式验证集和早停流程。
-- 这种显式写法更适合教学，因为每一步都能直接看到变量名和执行顺序。
-- XGBoost 分册最容易被误读的地方，是把“真实存在的训练流程”和“理论上常见的高级工程技巧”混为一谈，因此这里要特别明确当前实现边界。
+- XGBoost 的训练层参数是四个模型中最丰富的——从 `gamma` 到 `reg_lambda`，体现更精细的控制粒度。
+- 无标准化和无分层的设计使得 XGBoost 的流水线最简洁——树模型的工程便利性在此充分体现。
+- XGBoost 与 LightGBM 共享可选的依赖处理模式——两者都不是 sklearn 原生，需要 `try/except` 保护。
 
-## 4. 训练层真正负责什么
+## 阅读顺序
 
-### 参数速览（本节）
-
-适用函数：`train_model(...)`
-
-| 输出项 | 作用 |
-|---|---|
-| `model` | 返回已训练好的 `XGBRegressor` 模型 |
-| 控制台日志 | 打印关键 boosting 超参数和训练耗时 |
-
-### 理解重点
-
-- 训练层并不负责切分数据，也不负责绘制残差图或特征重要性图。
-- 它的核心任务是构建 XGBoost 模型、拟合训练数据，并回显当前超参数配置。
-- 和线性回归、决策树相比，这里日志的重点是超参数集合而不是单个结构性指标。
-
-## 5. 可视化层真正负责什么
-
-### 参数速览（本节）
-
-适用函数（分项）：
-
-1. `plot_residuals(...)`
-2. `plot_feature_importance(...)`
-
-| 函数 | 当前作用 |
-|---|---|
-| `plot_residuals(...)` | 看预测误差分布 |
-| `plot_feature_importance(...)` | 看特征贡献分布 |
-
-### 理解重点
-
-- 残差图函数只关心真实值和预测值。
-- 特征重要性函数只关心模型的重要性属性与特征名映射。
-- 这种分层让当前 XGBoost 分册的训练逻辑与结果展示逻辑保持清晰分离。
-
-## 6. 常量 `DATASET` 和 `MODEL` 的作用
-
-### 参数速览（本节）
-
-适用常量：
-
-1. `DATASET = "xgboost"`
-2. `MODEL = "xgboost"`
-
-| 常量 | 当前作用 |
-|---|---|
-| `DATASET` | 决定图片输出的上层目录 |
-| `MODEL` | 决定图片文件名前缀 |
-
-### 理解重点
-
-- 这两个常量的作用，不是影响模型训练，而是统一结果文件的命名和归档。
-- 这样当前 XGBoost 分册生成的图像会被稳定保存到固定位置。
-- 这也是为什么当前工程结构适合后续继续扩展更多评估图表。
-
-## 7. 缺少 `xgboost` 依赖时会发生什么
-
-### 理解重点
-
-- 当前训练模块会先尝试导入 `XGBRegressor`。
-- 如果导入失败，`train_model(...)` 会抛出明确的 `ImportError`，提醒当前环境缺少 `xgboost` 依赖。
-- 这说明当前工程实现已经考虑到了外部依赖边界，但没有在流水线中内置自动安装逻辑。
-
-## 8. 从命令到结果图的执行链
-
-### 示例代码
-
-```python
-python -m pipelines.ensemble.xgboost
-    -> run()
-    -> xgboost_data.copy()
-    -> train_test_split(...)
-    -> train_model(...)
-    -> model.predict(...)
-    -> plot_residuals(...)
-    -> plot_feature_importance(...)
-    -> savefig(...)
-```
-
-### 理解重点
-
-- 这条链里最关键的中间产物有三个：`feature_names`、训练后的 `model`、测试集预测 `y_pred`。
-- 一旦这些中间变量理解清楚，整个 xgboost 分册的代码结构就基本串起来了。
-- 文档中的各章节，其实就是在拆解这条执行链上的不同环节。
-
-![结果展示](../../../outputs/xgboost/result_display.png)
+1. `data_generation/ensemble.py` — 了解 `xgboost()` 的数据加载逻辑（加州房价真实数据）
+2. `model_training/ensemble/xgboost.py` — 理解 `XGBRegressor` 的构建、可选依赖和二阶训练
+3. `pipelines/ensemble/xgboost.py` — 看清端到端回归流程和两项评估的串联
+4. `result_visualization/residual_plot.py` — 了解残差分析图实现
+5. `result_visualization/feature_importance.py` — 了解特征重要性图表实现
 
 ## 常见坑
 
-1. 把 `pipelines` 层和 `model_training` 层职责混在一起，误以为训练函数负责全部工程流程。
-2. 不理解为什么当前分册没有学习曲线或早停流程，从而误读当前实现能力边界。
-3. 忽略 `feature_names`、`DATASET` 和 `MODEL` 的作用，看不懂特征重要性图和输出目录为什么能稳定生成。
+1. 在不含 `xgboost` 的环境中直接 `from model_training.ensemble.xgboost import train_model`——会触发 `ImportError`，需先 `pip install xgboost`。
+2. 在回归数据上传递 `stratify=y`——回归无类别可分层，会直接报错。
+3. 直接修改 `xgboost_data` 而不先 `copy()`——会污染其他模块引用的同一全局变量。
+4. 期望 XGBoost 流水线输出混淆矩阵——回归任务没有混淆矩阵概念。
 
 ## 小结
 
-- 当前 XGBoost 实现采用了清晰的分层结构：数据层、训练层、流水线层、可视化层各司其职。
-- 入口脚本负责调度，训练模块负责模型，画图模块负责结果呈现。
-- 这种结构既方便阅读，也方便后续继续补指标打印、学习曲线、验证集或早停实验。
+- XGBoost 工程实现遵循本仓库标准四层架构：数据生成层 → 模型训练层 → 流水线编排层 → 可视化层（含 2 个模块）。
+- `run()` 是四个集成模型中最简洁的编排函数——6 步完成数据拆分、训练、预测和两项评估，无预处理步骤。
+- 与其他集成模型的三个关键工程差异：（1）回归任务——无分类评估；（2）真实数据——无需标准化；（3）参数体系最丰富——9 项可配置超参数。

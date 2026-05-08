@@ -5,47 +5,43 @@ outline: deep
 
 # 模型构建
 
-> 对应代码：`model_training/ensemble/xgboost.py`
->  
-> 运行方式：`python -m model_training.ensemble.xgboost`
-
 ## 本章目标
 
-1. 明确 `train_model(...)` 如何构建并训练 `XGBRegressor`。
-2. 理解当前源码中关键超参数的默认值与作用。
-3. 看清训练函数除了 `fit(...)` 之外还做了哪些工程封装和错误处理。
+1. 明确 `train_model(...)` 如何构建并训练 `XGBRegressor`——注意这是回归模型，非分类。
+2. 理解 `XGBRegressor` 的核心构造器参数（`n_estimators`、`max_depth`、`gamma`、`reg_lambda`、`min_child_weight`）及其与 GBDT/LightGBM 的差异。
+3. 看清训练完成后最重要的模型属性——`feature_importances_`（特征重要性）、`n_estimators_`（实际树数）。
 
 ## 重点方法与概念速览
 
 | 名称 | 类型 | 作用 |
 |---|---|---|
-| `train_model(...)` | 函数 | 构建并训练一个 `xgboost.XGBRegressor` 模型 |
-| `XGBRegressor(...)` | 类 | XGBoost 提供的回归器实现 |
-| `model.fit(X_train, y_train)` | 方法 | 在训练数据上执行 boosting 训练 |
-| `@print_func_info` / `@timeit` / `timer(...)` | 工程包装 | 打印入口信息与训练耗时 |
-| `ImportError` 逻辑 | 错误处理 | 当未安装 `xgboost` 时给出明确报错 |
+| `train_model(...)` | 函数 | 构建并训练一个 `xgboost.XGBRegressor` 回归模型——含可选依赖检查 |
+| `XGBRegressor(...)` | 类 | XGBoost 的 scikit-learn 兼容回归接口——二阶泰勒展开 + 显式正则化 |
+| `model.fit(X_train, y_train)` | 方法 | 训练 300 棵回归树——二阶目标近似 + 加权分位数草图 + 列块并行 |
+| `model.feature_importances_` | 属性 | 8 个特征的重要性分数——基于分裂增益累加 |
+| `model.predict(X)` | 方法 | 300 棵树加权累加——输出连续房价预测值 |
 
 ## 1. `train_model(...)` 的函数签名
 
-### 参数速览（本节）
+### 参数速览
 
 适用函数：`train_model(X_train, y_train, n_estimators=300, learning_rate=0.05, max_depth=6, min_child_weight=1, subsample=0.9, colsample_bytree=0.9, gamma=0.0, reg_alpha=0.0, reg_lambda=1.0, random_state=42)`
 
-| 参数名 | 本例取值 | 说明 |
-|---|---|---|
-| `X_train` | 训练特征 | 输入给 `XGBRegressor.fit(...)` 的训练矩阵 |
-| `y_train` | 训练标签 | 连续值目标 |
-| `n_estimators` | `300` | boosting 轮数，也可理解为树数量 |
-| `learning_rate` | `0.05` | 每轮新树贡献的缩放系数 |
-| `max_depth` | `6` | 单棵树最大深度 |
-| `min_child_weight` | `1` | 子节点最小样本权重和约束 |
-| `subsample` | `0.9` | 行采样比例 |
-| `colsample_bytree` | `0.9` | 列采样比例 |
-| `gamma` | `0.0` | 分裂所需的最小损失减少 |
-| `reg_alpha` | `0.0` | L1 正则化系数 |
-| `reg_lambda` | `1.0` | L2 正则化系数 |
-| `random_state` | `42` | 随机种子 |
-| 返回值 | `XGBRegressor` | 已训练完成的模型对象 |
+| 参数名 | 类型 | 说明 | 示例取值 |
+|---|---|---|---|
+| `X_train` | `array_like`，形状 `(16512, 8)` | 训练特征矩阵（**无标准化**——树模型天然尺度不敏感） | `X_train` |
+| `y_train` | `array_like`，形状 `(16512,)` | 连续回归目标——房屋中位价 | `y_train` |
+| `n_estimators` | `int` | 弱学习器数量。当前 `300`——与 LightGBM 一致 | `100`、`300`、`500` |
+| `learning_rate` | `float` | 学习率（收缩因子）。`0.05`——每次只修正残差的 5% | `0.01`、`0.05`、`0.1` |
+| `max_depth` | `int` | 树的最大深度。`6`——深于 GBDT（3），浅于完全生长 | `3`、`6`、`10` |
+| `min_child_weight` | `int` | 叶子节点的最小 Hessian 和。`1`——MSE 下等价于最小样本数 | `1`、`5`、`10` |
+| `subsample` | `float` | 行采样比例。`0.9`——每轮迭代随机保留 90% 训练样本 | `0.5`、`0.9`、`1.0` |
+| `colsample_bytree` | `float` | 列采样比例。`0.9`——每棵树随机选择 90% 的特征（≈7/8） | `0.3`、`0.9`、`1.0` |
+| `gamma` | `float` | 分裂所需的最小损失下降。`0.0`——不设最低增益门槛 | `0.0`、`0.1`、`1.0` |
+| `reg_alpha` | `float` | L1 正则化系数。`0.0`——不启用 L1 稀疏 | `0.0`、`0.1`、`1.0` |
+| `reg_lambda` | `float` | L2 正则化系数。`1.0`——**默认开启**，抑制叶子权重过大 | `0.0`、`1.0`、`10.0` |
+| `random_state` | `int` | 随机种子。`42` | `42` |
+| 返回值 | `XGBRegressor` | 已完成 `fit()` 的回归模型对象 | — |
 
 ### 示例代码
 
@@ -57,130 +53,133 @@ model = train_model(X_train, y_train)
 
 ### 理解重点
 
-- 当前训练入口返回的是单个 XGBoost 回归模型，而不是多模型集合。
-- 和线性回归、决策树相比，这里的关键点是超参数更多，而且它们会共同影响 boosting 训练行为。
-- 默认参数直接来自源码，是后续调参与阅读日志的基线。
+- `train_model(...)` 是有监督回归训练——`y_train` 是连续值房价，不是离散类别标签。
+- XGBoost 的 `max_depth=6` 深于 GBDT（3）但远浅于 Bagging 的完全生长树——在偏差和方差间取平衡。
+- `reg_lambda=1.0` 是 XGBoost 独有的默认值——其他 Boosting 实现默认不开启 L2 正则化。
+- `min_child_weight=1` 在回归中等于"每个叶子至少 1 个样本"——因为 Hessian 恒为 1。实际上相当于 `min_samples_leaf=1`。
 
-## 2. `XGBRegressor(...)` 的实际构建方式
+## 2. `XGBRegressor` 构造器参数
 
-### 参数速览（本节）
+### 参数速览
 
-适用 API（分项）：
+适用 API：`XGBRegressor(n_estimators=300, learning_rate=0.05, max_depth=6, min_child_weight=1, subsample=0.9, colsample_bytree=0.9, gamma=0.0, reg_alpha=0.0, reg_lambda=1.0, random_state=42, n_jobs=-1)`
 
-1. `XGBRegressor(...)`
-2. `model.fit(X_train, y_train)`
-
-| 参数名 | 本例取值 | 说明 |
-|---|---|---|
-| `n_estimators` | `300` | 叠加 300 棵弱学习器 |
-| `learning_rate` | `0.05` | 控制每轮更新步长 |
-| `max_depth` | `6` | 控制单棵树复杂度 |
-| `n_jobs` | `-1` | 使用全部可用 CPU 核心 |
+| 参数名 | 类型 | 说明 | 示例取值 |
+|---|---|---|---|
+| `n_estimators` | `int` | 弱学习器数量。`300`——步数更多但每步更小 | `100`、`300`、`500` |
+| `learning_rate` | `float` | 学习率。`0.05`——越小越需更多树 | `0.01`、`0.05`、`0.1` |
+| `max_depth` | `int` | 树的最大深度。`6`——适中深度，防止过拟合 | `3`、`6`、`10` |
+| `min_child_weight` | `int` | 叶子节点的最小 Hessian 和。`1` | `1`、`5`、`10` |
+| `subsample` | `float` | 行采样比例。`0.9` | `0.5`、`0.8`、`0.9` |
+| `colsample_bytree` | `float` | 列采样比例。`0.9`——8 个特征中约 7 个用于每棵树 | `0.3`、`0.8`、`0.9` |
+| `gamma` | `float` | 分裂最小增益。`0.0`——不设门槛 | `0.0`、`0.1`、`1.0` |
+| `reg_alpha` | `float` | L1 正则化。`0.0`——不启用 L1 稀疏 | `0.0`、`0.1` |
+| `reg_lambda` | `float` | L2 正则化。`1.0`——**默认开启**，抑制大权重 | `0.0`、`1.0` |
+| `random_state` | `int` | 随机种子。`42` | `42` |
+| `n_jobs` | `int` | 并行线程数。`-1` 使用所有 CPU——列块并行 | `-1`、`1`、`4` |
+| `verbosity` | `int` | 日志级别。默认 `1`（warning） | `0`、`1`、`2` |
 
 ### 示例代码
 
 ```python
+try:
+    from xgboost import XGBRegressor
+except ImportError:
+    raise ImportError("请先 pip install xgboost")
+
 model = XGBRegressor(
-    n_estimators=n_estimators,
-    learning_rate=learning_rate,
-    max_depth=max_depth,
-    min_child_weight=min_child_weight,
-    subsample=subsample,
-    colsample_bytree=colsample_bytree,
-    gamma=gamma,
-    reg_alpha=reg_alpha,
-    reg_lambda=reg_lambda,
-    random_state=random_state,
+    n_estimators=300,
+    learning_rate=0.05,
+    max_depth=6,
+    min_child_weight=1,
+    subsample=0.9,
+    colsample_bytree=0.9,
+    gamma=0.0,
+    reg_alpha=0.0,
+    reg_lambda=1.0,
+    random_state=42,
     n_jobs=-1,
 )
-
 model.fit(X_train, y_train)
 ```
 
 ### 理解重点
 
-- 仓库没有自己实现 boosting 过程，而是直接调用 XGBoost 官方库提供的 `XGBRegressor`。
-- 当前文档的重点，不是重写内部算法，而是理解这组高层参数如何约束训练过程。
-- `n_jobs=-1` 体现了当前实现偏工程化的一面：默认尽可能利用并行资源。
+- XGBoost 的参数列表是四个集成模型中最长的——体现了它在正则化和精确控制上的设计理念。
+- `gamma` 是 XGBoost 独有的预剪枝参数——区别于 `max_depth`（硬深度限制）和 `min_child_weight`（叶子样本数限制）。
+- 三重正则化（gamma + reg_lambda + reg_alpha）作用于不同层级——gamma 控分裂是否发生，lambda 控叶子权重是否过大，alpha 控无关权重是否置零。
 
-## 3. 三组最关键超参数分别控制什么
+## 3. 训练完成后的关键属性
 
-### 参数速览（本节）
+### 参数速览
 
-适用分组（本节）：
-
-1. boosting 强度参数
-2. 树复杂度参数
-3. 采样与正则化参数
-
-| 分组 | 代表参数 | 当前作用 |
+| 属性名 | 类型 | 说明 |
 |---|---|---|
-| boosting 强度 | `n_estimators`、`learning_rate` | 控制累计学习能力与更新步长 |
-| 树复杂度 | `max_depth`、`min_child_weight`、`gamma` | 控制单棵树能切多细、多复杂 |
-| 采样与正则化 | `subsample`、`colsample_bytree`、`reg_alpha`、`reg_lambda` | 控制随机性和复杂度约束 |
-
-### 理解重点
-
-- `n_estimators` 和 `learning_rate` 通常需要配合看，不能只盯一个参数。
-- `max_depth`、`min_child_weight`、`gamma` 更偏单棵树层面的复杂度约束。
-- `subsample`、`colsample_bytree`、`reg_alpha`、`reg_lambda` 则更偏泛化控制和工程稳定性。
-
-## 4. 训练阶段的工程封装
-
-除了 `XGBRegressor(...).fit(...)` 之外，`train_model(...)` 还做了多层工程包装。
-
-### 参数速览（本节）
-
-适用装饰与上下文（分项）：
-
-1. `@print_func_info`
-2. `@timeit`
-3. `with timer(name='模型训练耗时')`
-
-| 包装项 | 作用 |
-|---|---|
-| `@print_func_info` | 打印函数调用入口 |
-| `@timeit` | 打印整个函数耗时 |
-| `timer(...)` | 打印模型 `fit(...)` 阶段耗时 |
-
-### 理解重点
-
-- 当前训练函数会同时打印“模型训练耗时”和整个函数耗时，因此终端里会看到两层计时信息。
-- 这些包装不改变 XGBoost 训练行为，但有助于观察训练入口和耗时表现。
-- 和线性回归、决策树相比，这里更强调训练配置回显和工程执行信息。
-
-## 5. 依赖缺失时会发生什么
-
-### 参数速览（本节）
-
-适用逻辑：`ImportError` 处理
-
-| 情况 | 当前行为 |
-|---|---|
-| 已安装 `xgboost` | 正常构建 `XGBRegressor` |
-| 未安装 `xgboost` | 抛出明确的 `ImportError` |
+| `feature_importances_` | `ndarray`，形状 `(8,)` | 8 个特征的重要性分数——基于分裂增益累加（`gain`） |
+| `n_estimators_` | `int` | 实际训练的树数量——等于 `n_estimators=300` |
+| `n_features_in_` | `int` | 特征维度——当前为 `8` |
+| `best_iteration_` | `int` | 早停最优迭代轮次（启用 `early_stopping_rounds` 时可用） |
 
 ### 示例代码
 
 ```python
-if XGBRegressor is None:
-    raise ImportError("未安装 xgboost，请先安装后再运行该模块。") from _IMPORT_ERROR
+print(f"n_estimators: {n_estimators}")
+print(f"learning_rate: {learning_rate}")
+print(f"max_depth: {max_depth}")
+print(f"min_child_weight: {min_child_weight}")
+print(f"subsample: {subsample}")
+print(f"colsample_bytree: {colsample_bytree}")
+print(f"gamma: {gamma}")
+print(f"reg_alpha: {reg_alpha}")
+print(f"reg_lambda: {reg_lambda}")
+print(f"特征重要性: {model.feature_importances_}")
 ```
 
 ### 理解重点
 
-- 当前训练代码不是默认假设依赖一定存在，而是显式处理了缺包场景。
-- 这说明分册文档必须如实写清依赖边界。
-- 但也要注意，当前源码只负责报错提示，并没有内置安装流程。
+- `feature_importances_` 默认使用 `gain`（分裂增益累加）——与 LightGBM 一致，不同于 sklearn GBDT 的 impurity 下降量。
+- 在加州房价数据上，`MedInc`（收入中位数）通常是最重要的特征——收入是房价的主要驱动力，符合直觉。
+- XGBoost 没有 `predict_proba`——回归输出为连续值，不是概率分布。
+
+## 4. `predict()` — 预测连续值
+
+### 参数速览
+
+| 方法 | 输入 | 输出 | 说明 |
+|---|---|---|---|
+| `predict(X)` | `array_like`，形状 `(n, 8)` | `ndarray`，形状 `(n,)`，连续值 | 300 棵树加权累加——直接输出房价预测值 |
+
+### 理解重点
+
+- `predict()` 返回连续实数——即房屋中位价的预测值（单位：10 万美元）。
+- 与分类集成模型不同——没有 `predict_proba`，没有 softmax，没有 argmax。
+- 预测值 = $\sum_{m=1}^{300} \eta \cdot f_m(\mathbf{x})$——300 棵树的加权累加。
+
+## 5. XGBoost vs GBDT vs LightGBM 参数对比
+
+| 参数 | GBDT (sklearn) | LightGBM | XGBoost |
+|---|---|---|---|
+| 任务 | 分类 | 分类 | **回归** |
+| `n_estimators` | 200 | 300 | 300 |
+| `learning_rate` | 0.1 | 0.05 | 0.05 |
+| 复杂度控制 | `max_depth=3` | `num_leaves=31` | **`max_depth=6`** |
+| 最小叶子 | — | `min_child_samples=20` | **`min_child_weight=1`** |
+| 行采样 | `subsample=1.0` | `subsample=0.9` | `subsample=0.9` |
+| 列采样 | 无 | `colsample_bytree=0.9` | `colsample_bytree=0.9` |
+| 分裂门槛 | — | — | **`gamma=0.0`** |
+| L1 正则化 | — | — | **`reg_alpha=0.0`** |
+| L2 正则化 | — | — | **`reg_lambda=1.0`** |
+| 依赖 | sklearn 内置 | `pip install lightgbm` | `pip install xgboost` |
 
 ## 常见坑
 
-1. 只调 `n_estimators`，忽略 `learning_rate`、`gamma`、`reg_alpha`、`reg_lambda` 等参数也在共同影响结果。
-2. 把 XGBoost 当成“参数更多的单棵树”，忽略它本质是 boosting 集成模型。
-3. 忽略依赖包边界，没安装 `xgboost` 就直接运行训练模块。
+1. 把 `min_child_weight=1` 理解成"最小样本数为 1"——对非 MSE 损失函数，Hessian 不是常数，两者不等价。
+2. 忘记 `reg_lambda=1.0` 默认开启——如果感觉模型欠拟合，尝试降为 0.0。
+3. 把 `gamma` 和 `reg_alpha` 功能混淆——gamma 做分裂级剪枝，alpha 做权重级稀疏化。
+4. 在新环境中直接 `from model_training.ensemble.xgboost import train_model`——需先 `pip install xgboost`。
 
 ## 小结
 
-- `train_model(...)` 是本仓库 XGBoost 的核心训练入口。
-- 它本质上是对 `xgboost.XGBRegressor` 的薄封装，重点在于超参数传递、耗时统计、日志输出和依赖边界处理。
-- 读懂这一层之后，再看流水线中的训练、预测和评估过程会更清晰。
+- `train_model(...)` 是本仓库 XGBoost 的核心训练入口，是对 `xgboost.XGBRegressor` 的薄封装——含可选依赖检查和 12 个可配置参数。
+- `XGBRegressor` 的核心参数体系是四个集成模型中最丰富的——`n_estimators`（树数量）、`learning_rate`（学习率）、`max_depth`（深度）、`min_child_weight`（最小 Hessian 和）、`gamma`（分裂门槛）、`reg_lambda`（L2）、`reg_alpha`（L1）——构成三层正则化体系。
+- 训练完成后核心属性：`feature_importances_`（8 个特征按增益排序）——是回归场景下理解特征贡献的关键诊断工具。
