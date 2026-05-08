@@ -1,19 +1,15 @@
 ---
-title: LDA — 总览
+title: LDA 线性判别分析 — 总览
 outline: deep
 ---
 
-# LDA
-
-> 对应代码：`pipelines/dimensionality/lda.py`、`model_training/dimensionality/lda.py`
->  
-> 运行方式：`python -m pipelines.dimensionality.lda`
+# LDA 线性判别分析
 
 ## 本章目标
 
 1. 明确本分册对应的 LDA 源码入口与运行方式。
 2. 理解当前 LDA 文档各章节分别负责解释什么内容。
-3. 建立从数据、模型、训练到降维可视化的整体阅读路线。
+3. 建立从数据、模型、训练到降维可视化的整体阅读路线——注意这是有监督降维，`label` 参与训练而非仅用于着色。
 
 ## 对应代码速览
 
@@ -22,18 +18,19 @@ outline: deep
 | 数据生成 | `data_generation/dimensionality.py` | `DimensionalityData.lda()` 加载 Wine 真实数据集 |
 | 数据导出 | `data_generation/__init__.py` | 导出 `lda_data` |
 | 训练封装 | `model_training/dimensionality/lda.py` | `train_model(...)` 封装 `sklearn.discriminant_analysis.LinearDiscriminantAnalysis` 训练 |
-| 端到端流水线 | `pipelines/dimensionality/lda.py` | 完成标准化、LDA 训练、投影和 2D 可视化 |
-| 降维可视化 | `result_visualization/dimensionality_plot.py` | 绘制降维后的 2D 散点图 |
+| 端到端流水线 | `pipelines/dimensionality/lda.py` | 完成标准化、LDA 训练、投影和 2D 判别可视化 |
+| 降维可视化 | `result_visualization/dimensionality_plot.py` | 绘制降维后的 2D 散点图（按类别着色） |
 
 ## 默认配置速览（来自源码）
 
 | 项目 | 当前实现 |
 |---|---|
 | 训练模型 | `LinearDiscriminantAnalysis(n_components=2, solver='svd')` |
-| 特征预处理 | `StandardScaler().fit_transform(X)` |
-| 数据来源 | `load_wine(as_frame=True)`，标签列重命名为 `label` |
-| 可视化输出 | 2D LDA 图 |
-| 训练方式 | 全量数据直接训练，无 train/test split |
+| 数据来源 | `load_wine(as_frame=True)`，标签列重命名为 `label`，178 样本 × 13 特征 × 3 类别 |
+| 特征预处理 | `StandardScaler().fit_transform(X)`——使各特征同等贡献于散度矩阵计算 |
+| 训练方式 | `model.fit(X_scaled, y)`——有监督，标签参与判别方向学习 |
+| 投影方式 | `model.transform(X_scaled)`——将 13 维特征投影到 2 维判别子空间 |
+| 评估呈现 | 2D 判别散点图（按类别着色）+ `explained_variance_ratio_` 日志（若求解器支持） |
 
 ## 阅读路线
 
@@ -57,8 +54,8 @@ python -m pipelines.dimensionality.lda
 ### 理解重点
 
 - 这个命令会串起当前 LDA 分册中最核心的工程流程。
-- 运行后会训练一个 2D LDA 模型，并生成带类别着色的判别投影图。
-- 当前实现重点在于展示类间可分性如何通过监督降维方向被强化。
+- 运行后会训练一个 2D LDA 模型（学习最大化类间/类内散度比的判别方向），并生成按类别着色的判别投影图。
+- 当前流程是有监督降维——`label` 既参与训练（定义类间/类内散度），也用于可视化着色。这与 PCA 无监督降维有本质区别。
 
 ## 先修
 
@@ -70,5 +67,5 @@ python -m pipelines.dimensionality.lda
 ## 小结
 
 - 本分册严格对应当前仓库中的 LDA 源码实现。
-- 阅读时建议始终把文档内容与 `pipelines/dimensionality/lda.py` 和 `model_training/dimensionality/lda.py` 对照起来看。
-- 如果已经熟悉整体入口，可以直接从“模型构建”或“训练与预测”章节开始阅读。
+- LDA 的核心特点：有监督降维 + 最大化类间/类内散度比 + 判别方向最多 $K-1$ 个 + 广义特征值求解——与 PCA（无监督、最大化方差、维数无类别限制）在建模目标上有本质区别。
+- 当前使用 Wine 真实数据集（3 类 13 特征）+ `LinearDiscriminantAnalysis(n_components=2, solver='svd')`，是展示有监督判别式降维最经典的教学配置。
