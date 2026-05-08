@@ -1,93 +1,77 @@
 ---
-title: PCA — 数据构成
+title: PCA 主成分分析 — 数据构成
 outline: deep
 ---
 
 # 数据构成
 
-> 对应代码：`data_generation/dimensionality.py`、`data_generation/__init__.py`、`pipelines/dimensionality/pca.py`
->  
-> 相关对象：`DimensionalityData.pca()`、`pca_data`
-
 ## 本章目标
 
-1. 明确本仓库 PCA 数据来自 `DimensionalityData.pca()` 的低秩高维构造逻辑。
-2. 明确特征列、可视化标签列以及它们在流水线中的边界。
-3. 明确当前流程的标准化顺序，以及当前实现没有 train/test split 这一事实。
+1. 明确本仓库 PCA 数据来自 `DimensionalityData.pca()` 构造的低秩高维合成数据。
+2. 理解数据的低秩结构——10 维表面特征中仅隐藏 3 个真实维度——这正是 PCA 的价值所在。
+3. 明确 `label` 的角色——它是数据生成时构造的伪标签，仅用于可视化着色，不参与 PCA 训练。
 
 ## 重点方法与概念速览
 
 | 名称 | 类型 | 作用 |
 |---|---|---|
-| `DimensionalityData.pca()` | 方法 | 生成 PCA 使用的高维合成数据 |
-| `pca_data` | 变量 | 在 `data_generation/__init__.py` 中导出的数据对象 |
-| `x1` ~ `x10` | 列名 | 当前流水线中的原始高维特征 |
-| `label` | 列名 | 仅用于可视化着色的伪标签 |
+| `DimensionalityData.pca()` | 方法 | 生成 PCA 使用的低秩高维合成数据 |
+| `base @ projection + noise` | 数据构造 | 3 维真实结构经随机投影映射到 10 维 + 高斯噪声——模拟"表面维度假高"的真实场景 |
+| `pca_data` | 变量 | 在 `data_generation/__init__.py` 中导出的 DataFrame |
+| `label` | 列名 | 由 `(base[:,0]>0) + (base[:,1]>0)` 生成的伪标签（3 类）——仅用于可视化着色，不参与 `fit()` |
+| `StandardScaler` | 类 | 对特征做 Z-score 标准化——协方差矩阵计算的前置条件 |
 
-## 1. 本仓库数据入口
+## 1. 数据生成：`DimensionalityData.pca()`
 
-- 数据变量：`data_generation/__init__.py` 中导出的 `pca_data`
-- 生成来源：`data_generation/dimensionality.py` 中的 `DimensionalityData.pca()`
-- 流水线使用：`pipelines/dimensionality/pca.py` 中的 `data = pca_data.copy()`
+当前 PCA 数据来自 `DimensionalityData.pca()`，底层纯手工构造，不依赖 scikit-learn 的现成数据生成器。
 
-### 理解重点
+### 参数速览
 
-- `pca_data` 在导入时就已经生成完成，因此流水线里直接 `.copy()` 使用即可。
-- 使用 `.copy()` 的目的，是避免后续标准化、投影或调试过程意外修改原始数据对象。
+适用方法：`DimensionalityData.pca()` 内部使用的参数（来自 `DimensionalityData` 数据类的属性）
 
-## 2. 数据生成函数 `DimensionalityData.pca()`
-
-### 参数速览（本节）
-
-适用参数（本节）：
-
-1. `n_samples`
-2. `pca_n_features`
-3. `pca_n_informative`
-4. `pca_noise_std`
-
-| 参数名 | 本例取值 | 说明 |
-|---|---|---|
-| `n_samples` | `400` | 样本总数 |
-| `pca_n_features` | `10` | 原始特征维度 |
-| `pca_n_informative` | `3` | 真正有信息的独立方向数 |
-| `pca_noise_std` | `0.5` | 各向同性高斯噪声标准差 |
-| `random_state` | `42` | 随机种子，保证可复现 |
-| 返回值 | `DataFrame` | 含 `x1` ~ `x10` 与 `label` 的数据表 |
+| 参数名 | 类型 | 说明 | 示例取值 |
+|---|---|---|---|
+| `n_samples` | `int` | 总样本数。默认 `400` | `400`、`500` |
+| `pca_n_features` | `int` | 表面特征维度——数据的"表观维数"。默认 `10` | `10`、`20` |
+| `pca_n_informative` | `int` | 真实信息维度——数据真正的固有秩。默认 `3` | `3`、`5` |
+| `pca_noise_std` | `float` | 高斯噪声的标准差。`0.5` 在"可识别结构"和"适度干扰"间取得平衡 | `0.1`、`0.5`、`1.0` |
+| `random_state` | `int` | 随机种子，保证数据可复现。默认 `42` | `42` |
+| 返回值 | `DataFrame` | 含 10 个特征列（`x1`–`x10`）和 1 个伪标签列（`label`）的 DataFrame，形状 $(400, 11)$ | — |
 
 ### 示例代码
 
 ```python
-base = rng.randn(self.n_samples, self.pca_n_informative)
-projection = rng.randn(self.pca_n_informative, self.pca_n_features)
-X = base @ projection
-X += rng.randn(self.n_samples, self.pca_n_features) * self.pca_noise_std
+rng = np.random.default_rng(random_state)
+
+# 1. 生成 3 维真实结构
+base = rng.standard_normal((n_samples, pca_n_informative))  # (400, 3)
+
+# 2. 随机投影矩阵将 3 维映射到 10 维
+projection = rng.standard_normal((pca_n_informative, pca_n_features))  # (3, 10)
+
+# 3. 低秩信号 + 高斯噪声
+X = base @ projection  # (400, 10) — 秩为 3
+X += rng.standard_normal((n_samples, pca_n_features)) * pca_noise_std
+
+# 4. 构造伪标签（仅用于着色）
+label = (base[:, 0] > 0).astype(int) + (base[:, 1] > 0).astype(int)  # {0, 1, 2}
 ```
 
 ### 理解重点
 
-- 当前数据不是普通随机高维点，而是“低秩结构先生成，再映射到高维空间”的合成数据。
-- 这样做的目的，是让数据虽然表面上有 10 维，但真正有信息的方向只有 3 个左右。
-- 这正好非常适合演示 PCA 如何通过主成分提取主要方差结构。
+- 数据有 10 个表面特征，但真正变化的维度只有 3 个（加噪声）——这正是 PCA 最擅长处理的场景。
+- `base @ projection` 产生的信号矩阵秩为 $\min(3, 10) = 3$——前 3 个主成分应捕获几乎全部信号，后续主成分仅贡献噪声方差。
+- `pca_noise_std=0.5` 在"结构清晰可辨识"和"不显得过于人工"之间取得了教学平衡。
+- 这种构造方式直观展示了 PCA 的核心价值——从 10 维中提取 3 个真正有意义的方向。
 
-## 3. `label` 的语义与边界
+## 2. 特征列与 `label` 的角色
 
-当前数据表结构如下：
+### 参数速览
 
-- 特征列：`x1` ~ `x10`
-- 可视化标签列：`label`
-
-### 参数速览（本节）
-
-适用列组（本节）：
-
-1. 原始特征列
-2. 伪标签列
-
-| 列名 | 当前作用 |
-|---|---|
-| `x1` ~ `x10` | 真正参与 PCA 训练的高维特征 |
-| `label` | 仅用于降维图着色，帮助观察结构 |
+| 参数名 | 类型 | 说明 | 示例取值 |
+|---|---|---|---|
+| `X` | `DataFrame`，形状 $(400, 10)$ | 含 10 个连续特征的特征矩阵，列名 `x1`–`x10` | `data.drop(columns=["label"])` |
+| `label` | `ndarray`，形状 $(400,)$ | 伪标签 $\{0, 1, 2\}$——由真实低维结构的前两个维度符号决定，**仅用于可视化着色** | `data["label"].values` |
 
 ### 示例代码
 
@@ -98,42 +82,21 @@ y = data["label"].values
 
 ### 理解重点
 
-- `label` 不是监督学习里的训练标签，它只用于降维图着色和结构观察。
-- 当前训练函数 `train_model(...)` 只接收标准化后的特征矩阵，不会使用 `label`。
-- 这一点必须反复区分清楚，否则很容易把当前 PCA 流程误读成监督学习。
+- `label` 不传入 `model.fit()`——PCA 是无监督算法，`fit(X)` 只接收特征。
+- `label` 的唯一目的是在 `plot_dimensionality(...)` 中为散点着色——帮助读者观察降维后数据的几何结构，而非评估分类效果。
+- `label` 由 `base[:,0] > 0` 和 `base[:,1] > 0` 共同决定——这意味着 2D PCA 投影图上的类别分布恰好与真实低维结构的两个主方向相关，但 PCA 本身并不知道这一点。
+- 与 LDA 的关键区别：LDA 的 `label` 参与训练，PCA 的 `label` 只用于着色。
 
-## 4. 为什么当前数据特别适合讲解释方差比
+## 3. 标准化
 
-### 参数速览（本节）
+### 参数速览
 
-适用结构（本节）：
+适用 API：`StandardScaler().fit_transform(X)`
 
-1. 低秩主方向
-2. 噪声维度
-
-| 结构 | 当前含义 |
-|---|---|
-| 主方向 | 3 个真正有信息的独立方向 |
-| 其余维度 | 被投影扩展出来并掺杂噪声的高维表现 |
-
-### 理解重点
-
-- 如果数据每个维度都同样重要，PCA 的主成分解释就不会特别集中。
-- 当前数据故意让信息主要集中在少数方向上，因此解释方差比会更有教学意义。
-- 这也是为什么当前分册会把 `explained_variance_ratio_` 和累计解释方差作为重要输出。
-
-## 5. 标准化与当前流程边界
-
-### 参数速览（本节）
-
-适用 API（分项）：
-
-1. `StandardScaler().fit_transform(X)`
-
-| 参数名 | 本例取值 | 说明 |
-|---|---|---|
-| `X` | `x1` ~ `x10` 组成的特征矩阵 | 参与标准化的原始特征 |
-| 返回值 | `X_scaled` | 标准化后的高维特征 |
+| 参数名 | 类型 | 说明 | 示例取值 |
+|---|---|---|---|
+| `X` | `DataFrame`，形状 $(400, 10)$ | 去掉 `label` 后的全量特征矩阵 | `X` |
+| 返回值 | `ndarray` | $z_{ij} = (x_{ij} - \mu_j) / \sigma_j$，均值为 0 标准差为 1 | `X_scaled` |
 
 ### 示例代码
 
@@ -144,9 +107,9 @@ X_scaled = scaler.fit_transform(X)
 
 ### 理解重点
 
-- 当前 PCA 流水线会先对全量特征做标准化，再训练 PCA。
-- 由于这里没有 train/test split，因此不存在“只在训练集拟合标准化器”这一监督学习式边界。
-- 对 PCA 来说，标准化尤其重要，否则大尺度特征会直接主导主成分方向。
+- PCA 依赖协方差矩阵——$\mathbf{S} = \frac{1}{N}\mathbf{X}^T\mathbf{X}$ 的元素是平方和与叉积，对特征尺度高度敏感。
+- 当前合成数据各特征量纲本已相近（均为高斯噪声的线性组合），但标准化仍是最佳实践。
+- 与 LDA 流水线一致——无切分，在全量数据上直接 `fit_transform`。这是降维分册（PCA 和 LDA）共有的教学型简化。
 
 ## 数据可视化
 
@@ -160,12 +123,14 @@ X_scaled = scaler.fit_transform(X)
 
 ## 常见坑
 
-1. 把 `label` 当成训练标签，误以为当前 PCA 是监督学习流程。
-2. 忽略当前数据是“低秩结构 + 噪声”的教学构造，误把它当成普通随机高维数据。
-3. 把监督学习里的 train/test split 惯性写进当前 PCA 流程，和源码不一致。
+1. 把 `label` 当成训练标签传入 `model.fit()`——PCA 是无监督算法，不接受标签参数。
+2. 忽略标准化——协方差矩阵计算被特征量纲绑架，主成分方向失真。
+3. 忘记数据是低秩合成结构——前 3 个主成分应捕获绝大部分方差，若结果与此不符，说明噪声水平或数据处理有问题。
+4. 把伪标签的 3 个类别当成数据固有的分类目标——`label` 只是低维结构的符号化着色依据。
 
 ## 小结
 
-- 当前 PCA 数据来自 `DimensionalityData.pca()`，底层是手工构造的低秩高维数据。
-- 数据表结构很清晰：`x1` ~ `x10` 是训练输入，`label` 只用于可视化着色。
-- 读懂数据来源、低秩结构设计和标准化顺序，是理解后续 PCA 训练与降维图像的前提。
+- 当前 PCA 数据来自手工构造的低秩合成数据：`base`（400×3）@ `projection`（3×10）+ 噪声（$\sigma=0.5$）。
+- 数据流为：随机生成 → 低秩信号 + 噪声 → DataFrame（`x1`–`x10` + `label`）→ 剥离 `label` → 全量标准化。
+- `label` 仅用于可视化着色——这是无监督降维与有监督降维（LDA）在数据处理上的根本差异。
+- 低秩构造（10 维表面仅 3 维真实变化）使 PCA 的价值直观可感——前 3 个主成分应与后续主成分形成明显的方差断层。

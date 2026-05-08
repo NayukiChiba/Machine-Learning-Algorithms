@@ -1,173 +1,168 @@
 ---
-title: PCA — 模型构建
+title: PCA 主成分分析 — 模型构建
 outline: deep
 ---
 
 # 模型构建
 
-> 对应代码：`model_training/dimensionality/pca.py`
->  
-> 运行方式：`python -m model_training.dimensionality.pca`
-
 ## 本章目标
 
 1. 明确 `train_model(...)` 如何构建并训练 `PCA`。
-2. 理解 `n_components`、`svd_solver`、`random_state` 和解释方差相关属性在当前源码中的作用。
-3. 看清训练函数除了 `fit(...)` 之外还做了哪些工程封装和日志输出。
+2. 理解 `PCA` 的核心构造器参数（`n_components`、`svd_solver`）及其数学对应关系。
+3. 看清训练完成后最重要的模型属性——`components_`（主成分方向）、`explained_variance_ratio_`（解释方差比）、`singular_values_`（奇异值）。
 
 ## 重点方法与概念速览
 
 | 名称 | 类型 | 作用 |
 |---|---|---|
-| `train_model(...)` | 函数 | 构建并训练一个 `sklearn.decomposition.PCA` 模型 |
-| `PCA(...)` | 类 | scikit-learn 提供的主成分分析实现 |
-| `model.fit(X_train)` | 方法 | 在标准化后的特征矩阵上学习主成分方向 |
-| `model.explained_variance_ratio_` | 属性 | 返回各主成分的解释方差比 |
-| `model.transform(X)` | 方法 | 将原始高维数据投影到主成分空间 |
+| `train_model(...)` | 函数 | 构建并训练一个 `sklearn.decomposition.PCA` 模型，打印解释方差比日志 |
+| `PCA(...)` | 类 | scikit-learn 提供的主成分分析器——通过 SVD 寻找方差最大的正交方向 |
+| `model.fit(X_train)` | 方法 | 学习主成分方向——无监督，不接收标签 |
+| `model.components_` | 属性 | 主成分方向矩阵——将原始特征空间映射到主成分空间的线性变换 |
+| `model.explained_variance_ratio_` | 属性 | 各主成分的解释方差占比——反映每个方向的重要性 |
+| `model.transform(X)` | 方法 | 将数据投影到主成分空间——生成降维后的坐标 |
 
 ## 1. `train_model(...)` 的函数签名
 
-### 参数速览（本节）
+### 参数速览
 
 适用函数：`train_model(X_train, n_components=2, svd_solver='auto', random_state=42)`
 
-| 参数名 | 本例取值 | 说明 |
-|---|---|---|
-| `X_train` | 标准化后的特征 | 输入给 `PCA.fit(...)` 的训练矩阵 |
-| `n_components` | `2` | 保留的主成分数量 |
-| `svd_solver` | `'auto'` | 主成分求解器 |
-| `random_state` | `42` | 随机种子 |
-| 返回值 | `PCA` | 已训练完成的 PCA 模型 |
+| 参数名 | 类型 | 说明 | 示例取值 |
+|---|---|---|---|
+| `X_train` | `array_like`，形状 $(400, 10)$ | 标准化后的特征矩阵，传入 `PCA.fit()` | `X_scaled` |
+| `n_components` | `int` | 保留的主成分数。当前 2D 模型为 `2`，3D 模型为 `3` | `2`、`3`、`5` |
+| `svd_solver` | `str` | SVD 求解器。`'auto'`（默认）自适应选择最优实现：小数据用 `'full'`，大数据用 `'randomized'` | `'auto'`、`'full'`、`'randomized'`、`'arpack'` |
+| `random_state` | `int` | 随机种子——`'randomized'` 求解器时需要，保证结果可复现。默认 `42` | `42` |
+| 返回值 | `PCA` | 已完成 `fit()` 的模型对象，含 `components_`、`explained_variance_ratio_` 等 | — |
 
 ### 示例代码
 
 ```python
 from model_training.dimensionality.pca import train_model
 
-model = train_model(X_scaled)
+model = train_model(X_scaled, n_components=2)
 ```
 
 ### 理解重点
 
-- 当前训练入口返回的是单个 PCA 模型对象。\n+- 与分类或回归模型不同，这里训练目标不是预测标签，而是学习主成分方向。\n+- 默认参数直接来自源码，是后续理解 2D / 3D 降维流程的基线。
+- 和 LDA 分册不同，`train_model(...)` **没有 `y_train` 参数**——PCA 是无监督算法，不需要标签。
+- `n_components=2` 和 `n_components=3` 分别在流水线中用于训练两个独立模型——这在所有算法分册中独一无二。
+- `train_model(...)` 是对 `sklearn.decomposition.PCA` 的薄封装——算法本体是 scikit-learn 基于 SVD 的高效实现。
 
-## 2. `PCA(...)` 的实际构建方式
+## 2. `PCA` 构造器参数
 
-### 参数速览（本节）
+### 参数速览
 
-适用 API（分项）：
+适用 API：`PCA(n_components=2, svd_solver='auto', random_state=42)`
 
-1. `PCA(...)`
-2. `model.fit(X_train)`
-
-| 参数名 | 本例取值 | 说明 |
-|---|---|---|
-| `n_components` | `2` 或 `3` | 当前分册会分别训练 2D 和 3D PCA |
-| `svd_solver` | `'auto'` | 让 sklearn 自动选择合适求解方式 |
-| `random_state` | `42` | 保证部分求解流程可复现 |
+| 参数名 | 类型 | 说明 | 示例取值 |
+|---|---|---|---|
+| `n_components` | `int` | 保留的主成分数。无类别约束（与 LDA 的 $K-1$ 上限不同），可从 1 到 $\min(d, N)$ 自由选择 | `2`、`3`、`5` |
+| `svd_solver` | `str` | SVD 求解器。`'auto'`（默认）自适应选择；`'full'` 完整 SVD（精确但慢）；`'randomized'` 随机化 SVD（大数据快）；`'arpack'` 只求前 $q$ 个特征对 | `'auto'`、`'full'`、`'randomized'`、`'arpack'` |
+| `random_state` | `int` | 随机种子——`'randomized'` 和 `'arpack'` 求解器需要。默认 `42` | `42` |
+| `whiten` | `bool` | 是否白化——使各主成分方差归一化。默认 `False` | `False`、`True` |
+| `tol` | `float` | `'arpack'` 求解器的收敛容忍度。默认 `0.0` | `0.0`、`1e-6` |
+| `iterated_power` | `int` 或 `'auto'` | `'randomized'` 求解器的幂迭代次数。默认 `'auto'` | `'auto'`、`5` |
+| `n_oversamples` | `int` | `'randomized'` 求解器的过采样数。默认 `10` | `10`、`20` |
+| `power_iteration_normalizer` | `str` | `'randomized'` 求解器的幂迭代归一化方式。默认 `'auto'` | `'auto'`、`'QR'`、`'LU'`、`'none'` |
 
 ### 示例代码
 
 ```python
 model = PCA(
-    n_components=n_components,
-    svd_solver=svd_solver,
-    random_state=random_state,
+    n_components=2,
+    svd_solver="auto",
+    random_state=42,
 )
-
 model.fit(X_train)
 ```
 
 ### 理解重点
 
-- 仓库没有自己实现特征值分解或 SVD，而是直接调用 scikit-learn 的现成 PCA。\n+- 当前文档的重点，不是重写底层线性代数算法，而是理解这几个高层参数如何影响降维输出。\n+- `n_components` 是当前分册最关键的建模选择之一。
+- PCA 的核心参数是 `n_components`——它直接决定降维后的维数和保留的信息量。与 LDA 不同，PCA 没有 $K-1$ 上限。
+- `svd_solver='auto'` 是大多数情况下的最佳选择——scikit-learn 会根据数据大小自动选择 full / randomized / arpack。
+- PCA 的 `fit()` 是解析求解（SVD）——与 KMeans（迭代优化）和 DBSCAN（密度扩展）在计算特征上截然不同，与 LDA 类似（都是特征分解家族）。
 
-## 3. 三个核心参数分别控制什么
+## 3. 训练完成后的关键属性
 
-### 参数速览（本节）
+### 参数速览
 
-适用参数（分项）：
-
-1. `n_components`
-2. `svd_solver`
-3. `random_state`
-
-| 参数 | 当前作用 | 调整时的常见影响 |
-|---|---|---|
-| `n_components` | 决定保留多少个主成分 | 影响降维后维度和信息保留量 |
-| `svd_solver` | 控制求解方式 | 影响数值求解策略 |
-| `random_state` | 控制部分随机过程 | 影响可复现性 |
-
-### 理解重点
-
-- `n_components` 最直观，决定最终投影到几维。\n+- `svd_solver='auto'` 表示当前实现把求解器选择交给 sklearn，而不是手工强行指定。\n+- `random_state` 在 PCA 里不像树模型那样总是核心，但保留它有利于流程可复现。
-
-## 4. 解释方差相关属性在当前实现里表示什么
-
-### 参数速览（本节）
-
-适用属性（分项）：
-
-1. `explained_variance_ratio_`
-2. `explained_variance_ratio_.sum()`
-
-| 属性名 | 当前含义 |
-|---|---|
-| `explained_variance_ratio_` | 每个主成分分别解释了多少方差 |
-| 累计解释方差 | 当前保留主成分总共解释了多少方差 |
+| 属性名 | 类型 | 数学含义 | 说明 |
+|---|---|---|---|
+| `components_` | `ndarray`，形状 `(n_components, n_features)` | 主成分方向 $\mathbf{u}_1, \dots, \mathbf{u}_q$ | 将 10 维特征映射到主成分空间的线性变换——每行是一个主成分方向 |
+| `explained_variance_` | `ndarray`，形状 `(n_components,)` | $\lambda_k$ | 各主成分的方差（特征值）——反映每个方向捕获的绝对变化量 |
+| `explained_variance_ratio_` | `ndarray`，形状 `(n_components,)` | $\lambda_k / \sum_j \lambda_j$ | 各主成分的解释方差占比——反映每个方向的相对重要性 |
+| `singular_values_` | `ndarray`，形状 `(n_components,)` | $\sigma_k$ | 各主成分对应的奇异值——$\sigma_k^2/N = \lambda_k$ |
+| `mean_` | `ndarray`，形状 `(n_features,)` | $\bar{\mathbf{x}}$ | 训练数据的均值向量——`transform()` 时用于中心化 |
+| `n_features_in_` | `int` | 特征维度 $d$ | 训练时输入的特征维数，当前为 `10` |
+| `n_samples_` | `int` | 样本数 $N$ | 训练时的样本数，当前为 `400` |
 
 ### 示例代码
 
 ```python
+print(f"n_components: {n_components}")
 print(f"解释方差比: {model.explained_variance_ratio_.round(4)}")
 print(f"累计解释方差: {model.explained_variance_ratio_.sum():.4f}")
 ```
 
 ### 理解重点
 
-- 当前日志中最有价值的输出，不是精度，而是解释方差比和累计解释方差。\n+- 它们帮助你判断当前降维压缩是否保留了足够多的信息。\n+- 这也是 PCA 分册最核心的定量解释线索之一。
+- `components_` 是 PCA 最有教学意义的属性——它把"主成分方向"这一概念直接映射为可观察的线性变换矩阵。
+- `explained_variance_ratio_` 是 PCA 的核心量化输出——它直接告诉你每个主成分有多重要。当前源码打印到 4 位小数。
+- 与 LDA 的关键对比：PCA 有 `components_`（主成分方向）、`singular_values_`（奇异值），LDA 有 `scalings_`（判别方向）、`means_`（类均值）。名称不同，数学含义也不同。
 
-## 5. 训练阶段的工程封装
+## 4. `transform()` ：从模型训练到降维输出的桥梁
 
-除了 `PCA(...).fit(...)` 之外，`train_model(...)` 还做了多层工程包装。
-
-### 参数速览（本节）
-
-适用装饰与上下文（分项）：
-
-1. `@print_func_info`
-2. `@timeit`
-3. `with timer(name='模型训练耗时')`
-
-| 包装项 | 作用 |
-|---|---|
-| `@print_func_info` | 打印函数调用入口 |
-| `@timeit` | 打印整个函数耗时 |
-| `timer(...)` | 打印模型 `fit(...)` 阶段耗时 |
-
-### 理解重点
-
-- 当前训练函数会同时打印“模型训练耗时”和整个函数耗时，因此终端里会看到两层计时信息。\n+- 这些包装不改变 PCA 训练行为，但有助于观察训练入口和执行耗时。\n+- 和监督学习分册相比，这里的日志重点是解释方差，而不是预测性能。
-
-## 6. `transform(...)` 为什么是关键步骤
-
-### 参数速览（本节）
+### 参数速览
 
 适用方法：`model.transform(X)`
 
-| 方法 | 当前作用 |
-|---|---|
-| `fit(...)` | 学主成分方向 |
-| `transform(...)` | 把原始数据投影到主成分空间 |
+| 参数名 | 类型 | 说明 | 示例取值 |
+|---|---|---|---|
+| `X` | `array_like`，形状 `(n, 10)` | 经过同一 `scaler` 标准化后的特征矩阵 | `X_scaled` |
+| 返回值 | `ndarray`，形状 `(n, n_components)` | 投影到主成分空间后的坐标——$\mathbf{X} \cdot \text{components\_}^T$ | `X_transformed` |
+
+### 示例代码
+
+```python
+X_transformed = model.transform(X_scaled)
+```
 
 ### 理解重点
 
-- PCA 训练并不会自动给出降维后的坐标结果，它先学习方向，再由 `transform(...)` 做投影。\n+- 当前流水线中的 2D 图和 3D 图，都是建立在这一步之后的结果上。\n+- 这使 `transform(...)` 成为连接“模型训练”和“可视化结果”的核心桥梁。
+- `fit()` 学习主成分方向（`components_`），`transform()` 执行投影——两者分离的设计使模型可以对新数据重复投影。
+- 流水线中 `X_transformed` 是 `plot_dimensionality(...)` 的直接输入——它是训练和可视化的桥梁。
+- 与 LDA 的 `transform()` 语法相同、语义不同——PCA 投影到方差最大方向，LDA 投影到类别最可分方向。
+
+## 5. 训练阶段的工程封装
+
+除了 `PCA(...).fit(...)` 之外，`train_model(...)` 还做了几层工程包装：
+
+| 输出项 | 作用 |
+|---|---|
+| `@print_func_info` 标题 | 帮助在终端中定位训练入口 |
+| `@timeit` 训练耗时 | 观察 SVD 求解耗时——通常极快（毫秒级） |
+| `n_components` 日志 | 确认当前保留的主成分数 |
+| `explained_variance_ratio_` 日志 | 打印各主成分解释占比（4 位小数）和累计值 |
+| `timer(...)` 上下文 | 单独测量 `fit()` 阶段的耗时 |
+
+### 理解重点
+
+- 当前封装强调教学型可读性——通过装饰器打印函数信息和耗时，通过 `print` 输出关键统计量。
+- `explained_variance_ratio_` 是 PCA 独有的日志输出——它直接反映方差保留比例，是选择 `n_components` 的基础。
+- PCA 与 LDA 在日志输出结构上相似（都有解释方差比 + 累计值），但数值含义不同——当前数据前 3 个主成分累计方差应接近但小于 100%（有噪声），LDA 的累计必然是 100%（$K-1$ 上限）。
 
 ## 常见坑
 
-1. 只看 `fit(...)`，忽略 `transform(...)` 才是真正得到降维结果的步骤。\n+2. 把解释方差比误当成监督学习精度指标。\n+3. 忘记当前 PCA 分册会分别训练 2D 和 3D 两个模型，而不是一个模型同时输出两种结果。
+1. 误以为 `train_model(...)` 需要传入 `y_train`——PCA 是无监督算法，不接受标签。
+2. 忽略 `n_components` 与数据固有秩的关系——当 `n_components` 超过固有秩时，多余的主成分只贡献噪声方差。
+3. 把 `components_` 当成 LDA 的 `scalings_`——两者优化目标不同，方向含义不同。
+4. 忘记 PCA 的 `explained_variance_ratio_` 总和必然 < 100%（有噪声时），而 LDA 的累计值在 `n_components=K-1` 时必为 100%。
 
 ## 小结
 
-- `train_model(...)` 是本仓库 PCA 的核心训练入口。\n+- 它本质上是对 `sklearn.decomposition.PCA` 的薄封装，重点在于主成分数量设定、解释方差输出和训练耗时日志。\n+- 读懂这一层之后，再看流水线中的投影和可视化过程会更清晰。
+- `train_model(...)` 是本仓库 PCA 的核心训练入口，是对 `sklearn.decomposition.PCA` 的薄封装。
+- `PCA` 的核心参数是 `n_components`（保留主成分数）和 `svd_solver`（SVD 求解器）——前者决定信息保留量，后者决定计算路径。
+- 训练完成后的核心属性：`components_`（主成分方向）、`explained_variance_ratio_`（解释方差比）、`singular_values_`（奇异值）——三者分别回答了"哪个方向""多重要""多大变化"。
+- PCA 有 `components_`、有 `explained_variance_ratio_`、无监督、维数自由选择——这四点构成了它与 LDA 最核心的工程差异。

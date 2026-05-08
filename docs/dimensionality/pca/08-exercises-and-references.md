@@ -1,105 +1,93 @@
 ---
-title: PCA — 练习与参考文献
+title: PCA 主成分分析 — 练习与参考文献
 outline: deep
 ---
 
 # 练习与参考文献
 
-> 对应代码：`data_generation/dimensionality.py`、`model_training/dimensionality/pca.py`、`pipelines/dimensionality/pca.py`
->  
-> 相关对象：`DimensionalityData.pca()`、`train_model(...)`
-
 ## 本章目标
 
-1. 用练习把前面章节里的数据、模型、训练和评估方法串起来。
-2. 引导读者直接修改当前源码中的关键参数，观察 PCA 行为变化。
-3. 给出与当前分册强相关的参考资料，便于继续深入。
+1. 用练习题帮助读者检查自己是否真正理解当前 PCA 实现。
+2. 给出继续深入阅读主成分分析与相关数据工具的可靠入口。
 
 ## 自检题
 
-1. 当前仓库为什么要用“低秩结构映射到高维空间”的数据来讲 PCA？
-2. 在本项目里，`n_components`、`explained_variance_ratio_`、累计解释方差分别在说明什么？
-3. 为什么当前流水线既要训练 2D PCA，又要训练 3D PCA？
-4. 为什么当前 `label` 不参与训练，却仍然出现在降维图里？
-5. PCA 和 LDA 的核心区别是什么？
+1. 为什么 PCA 的 `fit()` 不需要 `y` 参数，而 LDA 需要？PCA 的优化目标（最大化投影方差）为什么天然不依赖标签？
+2. 当前 PCA 流水线为什么分别训练 2D 和 3D 两个独立模型？2D PCA 的前两个主成分与 3D PCA 的前两个主成分是否相同？为什么？
+3. 当前数据是低秩合成结构（3 个真实方向隐藏在 10 维中）——这在 `explained_variance_ratio_` 的输出中如何体现？方差断层应该出现在第几个主成分之后？
+4. `svd_solver='auto'` 与 `'full'`、`'randomized'`、`'arpack'` 有什么区别？为什么 `'auto'` 是大多数情况下的最佳选择？
+5. PCA 的 `components_` 与 LDA 的 `scalings_` 在数学含义上有何不同？为什么不能用同一套术语描述它们？
+6. 为什么标准化对 PCA 是硬性要求？如果去掉标准化，协方差矩阵会怎样被大尺度特征主导？
+7. PCA 和 LDA 共用同一个 `plot_dimensionality` 函数——同名的 `explained_variance_ratio_` 属性在两种场景下语义有何不同？
 
-## 动手练习
+## 练习方向
 
-### 1. 调整 `n_components`
+### 1. 改变 `n_components`
 
-修改 `model_training/dimensionality/pca.py` 中的参数，或在流水线中尝试不同主成分数量。
+- 对 2D 模型：把 `n_components=2` 改成 `1`、`2`、`3`、`5`
+- 观察变化：
+  - `explained_variance_ratio_` 各值的变化
+  - 累计解释方差从 ~75%（2D）→ ~94%（3D）→ ~98%（5D）
+  - 降维图的视觉信息量变化
+- 核心理解：`n_components` 增加带来的信息增益是边际递减的——这正是数据低秩特性的体现
 
-示意：
+### 2. 改变 `pca_n_informative`
 
-```python
-model = train_model(X_scaled, n_components=2)
-```
+- 修改 `data_generation/dimensionality.py` 中 `DimensionalityData` 的 `pca_n_informative`（`2`、`3`、`5`）
+- 观察变化：
+  - 方差断层从第几个主成分之后开始
+  - `pca_n_informative=2` 时，前 2 个主成分累计方差是否更高
+  - `pca_n_informative=5` 时，方差下降是否更平缓
+- 核心理解：`pca_n_informative` 直接决定数据的固有秩——`explained_variance_ratio_` 的断层位置应与其对应
 
-观察重点：
+### 3. 改变 `pca_noise_std`
 
-- 当保留更多主成分时，累计解释方差如何变化。\n+- 降维图结构是否明显更清晰。\n+- 2D 和 3D 之间的差异是否足够大到值得保留第三个主成分。
+- 修改 `pca_noise_std`（`0.0`、`0.2`、`0.5`、`1.0`、`2.0`）
+- 观察变化：
+  - 无噪声（`0.0`）——前 3 个主成分累计方差 = 100%，后续主成分方差 = 0
+  - 高噪声（`2.0`）——方差下降非常平缓，难以识别固有秩
+  - 降维图上样本的散布程度——高噪声下结构被淹没
+- 核心理解：噪声水平决定了 PCA 从数据中能否可靠地识别低秩结构
 
-### 2. 调整原始特征维度 `pca_n_features`
+### 4. 去掉标准化
 
-在 `data_generation/dimensionality.py` 中修改：
+- 暂时去掉 `StandardScaler()`，直接用原始 `X` 训练
+- 观察变化：
+  - `components_` 方向是否变化——大尺度特征是否主导了第一主成分
+  - `explained_variance_ratio_` 分布是否不同
+- 体会：标准化确保每个特征在协方差矩阵中权重均等——PCA 结果反映数据的相关结构而非量纲差异
 
-```python
-pca_n_features: int = 10
-```
+### 5. 用 PCA 降维后接 LDA 做对比
 
-观察重点：
-
-- 原始维度增大后，前几个主成分是否仍然能解释大部分方差。\n+- 解释方差比是否更分散。\n+- 由此理解“高维不等于高信息量”。
-
-### 3. 调整真实信息维度 `pca_n_informative`
-
-修改以下参数：
-
-```python
-pca_n_informative: int = 3
-```
-
-观察重点：
-
-- 当真正有信息的方向变多时，前 2 个或前 3 个主成分是否还足够。\n+- 累计解释方差是否下降。\n+- 由此理解 PCA 对低秩结构强弱的敏感性。
-
-### 4. 调整噪声强度 `pca_noise_std`
-
-修改以下参数：
-
-```python
-pca_noise_std: float = 0.5
-```
-
-观察重点：
-
-- 噪声更大后，解释方差比是否更分散。\n+- 2D / 3D 图是否变得更混乱。\n+- 由此理解 PCA 为什么对噪声水平敏感。
-
-### 5. 对比标准化前后结果
-
-在 `pipelines/dimensionality/pca.py` 中尝试绕过标准化，再重新运行。
-
-示意位置：
-
-```python
-scaler = StandardScaler()
-X_scaled = scaler.fit_transform(X)
-```
-
-观察重点：
-
-- 主成分方向和解释方差比是否明显变化。\n+- 由此理解为什么当前 PCA 流水线把标准化作为固定步骤。\n+- 对比有无标准化时的可视化结构差异。
-
-## 阅读建议
-
-1. 先运行一次默认源码，记录 2D / 3D 的解释方差比、累计解释方差和降维图。\n+2. 每次只改一个参数，例如只改 `pca_noise_std` 或只改 `pca_n_informative`，避免多个变量同时变化。\n+3. 观察时优先对比三条线索：解释方差变化、累计解释方差变化、投影图结构变化。
+- 先用 PCA 降到 5 维，再在 PCA 投影特征上用 LDA 降到 2 维
+- 对比直接在原始 10 维数据上用 LDA 降到 2 维
+- 观察变化：
+  - 两种路径下的判别投影图有何差异
+  - PCA 作为 LDA 的预处理步骤，是否丢失了类别区分信息
+- 核心理解：PCA 的方差最大化 + LDA 的判别最大化可以串联——这是特征工程的常见组合
 
 ## 参考文献
 
-- scikit-learn PCA API 文档：`https://scikit-learn.org/stable/modules/generated/sklearn.decomposition.PCA.html`
-- scikit-learn PCA 用户指南：`https://scikit-learn.org/stable/modules/decomposition.html#pca`
-- Jolliffe, Cadima, *Principal Component Analysis: A Review and Recent Developments*.\n+- Bishop, *Pattern Recognition and Machine Learning*, Principal Component Analysis.\n+- Hastie, Tibshirani, Friedman, *The Elements of Statistical Learning*, Unsupervised Learning and PCA.
+| # | 文献 | 说明 |
+|---|---|---|
+| 1 | scikit-learn 官方文档：`PCA` | 完整构造器参数（`n_components`、`svd_solver`、`random_state`、`whiten`、`tol`、`iterated_power`、`n_oversamples`、`power_iteration_normalizer`）、属性（`components_`、`explained_variance_`、`explained_variance_ratio_`、`singular_values_`、`mean_`、`n_features_in_`、`n_samples_`）与方法（`fit`、`transform`、`fit_transform`、`inverse_transform`、`get_covariance`、`get_precision`）说明 |
+| 2 | scikit-learn 用户指南：Decomposing signals in components (matrix factorization problems) → PCA | PCA 原理、SVD 求解器选择指南、`n_components` 选择策略、增量 PCA（`IncrementalPCA`）和核 PCA（`KernelPCA`）的适用场景 |
+| 3 | Jolliffe, I. T. and Cadima, J. (2016). *Principal component analysis: a review and recent developments*. Philosophical Transactions of the Royal Society A. | PCA 综述——从经典推导到稀疏 PCA、鲁棒 PCA 等现代变体，涵盖选主成分数量的多种准则 |
+| 4 | Bishop, C. M. (2006). *Pattern Recognition and Machine Learning*. Chapter 12: Continuous Latent Variables. | PCA 的概率视角——概率 PCA（PPCA）、EM 算法求解、与因子分析的关系，为理解贝叶斯 PCA 提供基础 |
+
+- scikit-learn `PCA`：https://scikit-learn.org/stable/modules/generated/sklearn.decomposition.PCA.html
+- scikit-learn 用户指南 PCA：https://scikit-learn.org/stable/modules/decomposition.html#pca
 
 ## 小结
 
-- 这部分练习最重要的目标，不是死记特征值推导，而是亲手观察主成分数量、噪声水平和真实信息维度如何一起影响降维结果。\n+- 当前源码已经提供了低秩高维数据、解释方差输出和 2D / 3D 可视化，因此很适合做基础 PCA 实验。\n+- 把这些练习做完，再回头看数学原理、模型构建和评估章节，理解通常会更扎实。
+- 这一章的重点不是新增概念，而是把前面章节学到的内容重新落到源码和实验现象上。
+- 如果能独立解释以下问题，说明已经掌握了当前 PCA 分册的核心内容：
+  - PCA 是无监督降维——`fit()` 不接收 `y`，优化目标是最大化投影方差
+  - 主成分是协方差矩阵的特征向量——可通过 SVD 数值稳定地求解
+  - 当前流水线有独特的双模型设计——分别训练 2D 和 3D PCA，对比不同降维程度的效果
+  - `explained_variance_ratio_` 反映各主成分的方差占比——方差断层揭示数据的固有秩
+  - 标准化对基于协方差矩阵的 PCA 是硬性要求——特征量纲差异会绑架主成分方向
+  - PCA 的 `components_`（主成分方向）与 LDA 的 `scalings_`（判别方向）名称不同、数学含义不同
+  - PCA 与 LDA 共用可视化模块 `plot_dimensionality`——同函数、同属性名、不同语义
+  - `n_components` 在 PCA 中可自由选择（1 到 $\min(d,N)$），在 LDA 中受 $K-1$ 约束
+  - 低秩合成数据（`base @ projection + noise`）是展示 PCA 优势的理想教学数据

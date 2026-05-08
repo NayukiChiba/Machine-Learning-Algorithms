@@ -1,126 +1,90 @@
 ---
-title: PCA — 训练与预测
+title: PCA 主成分分析 — 训练与预测
 outline: deep
 ---
 
 # 训练与预测
 
-> 对应代码：`pipelines/dimensionality/pca.py`、`model_training/dimensionality/pca.py`
->  
-> 运行方式：`python -m pipelines.dimensionality.pca`
-
 ## 本章目标
 
-1. 明确当前流水线从取数到生成 2D / 3D 降维图的完整执行顺序。
-2. 理解训练阶段、投影阶段和可视化阶段分别由哪个函数负责。
-3. 明确当前 PCA 实现没有 train/test split，而是对全量数据标准化后直接训练和投影。
+1. 按源码顺序看清当前 PCA 流水线从数据复制到 2D/3D 降维图输出的完整步骤。
+2. 理解 PCA 无监督训练、无切分、`transform()` 为输出的工程特征——与 LDA 既有相似又有本质差异。
+3. 理解"双模型"设计（分别训练 2D 和 3D PCA）的教学意图——对比不同降维程度下的信息保留。
 
 ## 重点方法与概念速览
 
 | 名称 | 类型 | 作用 |
 |---|---|---|
-| `run()` | 函数 | PCA 端到端流水线入口 |
-| `StandardScaler` | 类 | 对全量特征做标准化 |
-| `train_model(...)` | 函数 | 训练 PCA 模型 |
-| `model.transform(X_scaled)` | 方法 | 生成低维主成分坐标 |
-| `plot_dimensionality(...)` | 函数 | 绘制 2D 或 3D 降维图 |
+| `pca_data.copy()` | 方法 | 复制原始数据，避免修改源对象 |
+| `data.drop(columns=["label"])` | 操作 | 去掉伪标签列，保留 10 个特征作为训练输入 |
+| `StandardScaler().fit_transform(X)` | 方法 | 对全量特征做一致性标准化——协方差矩阵计算的前置条件 |
+| `train_model(X_scaled, n_components=2)` | 函数 | 训练 2D PCA 模型——无监督，不传标签 |
+| `train_model(X_scaled, n_components=3)` | 函数 | 训练 3D PCA 模型——第二个独立模型，与 2D 模型互不依赖 |
+| `model.transform(X_scaled)` | 方法 | 将 10 维特征投影到主成分空间——生成降维坐标 |
+| `plot_dimensionality(...)` | 函数 | 绘制降维后的散点图——2D 和 3D 分别调用 |
 
-## 1. 端到端入口 `run()`
-
-### 参数速览（本节）
-
-适用函数：`run()`
-
-| 项目 | 当前实现 |
-|---|---|
-| 数据源 | `pca_data.copy()` |
-| 标签列 | `label`（仅用于着色） |
-| 训练入口 | `train_model(X_scaled, n_components=2)` 与 `train_model(X_scaled, n_components=3)` |
-| 投影入口 | `model.transform(X_scaled)` |
-| 可视化入口 | `plot_dimensionality(...)` |
+## 1. 流水线起点：复制数据并拆出特征与伪标签
 
 ### 示例代码
 
 ```python
-def run():
-    data = pca_data.copy()
-    X = data.drop(columns=["label"])
-    y = data["label"].values
+data = pca_data.copy()
+X = data.drop(columns=["label"])
+y = data["label"].values
 ```
 
 ### 理解重点
 
-- 整个分册的运行入口就是 `pipelines/dimensionality/pca.py` 里的 `run()`。\n+- 这个函数不负责推导 PCA 数学原理，而是把取数、标准化、训练、投影和画图串成一条完整流程。\n+- 这里的 `y` 只用于图像着色，不参与训练。
+- `.copy()` 确保后续处理不修改全局 `pca_data`。
+- `label` 被单独保存为 `y`——它**仅用于**最终的 `plot_dimensionality(...)` 着色，不参与 `train_model()`。
+- 与 LDA 流水线最关键的区别：`y` 在这里不流入 `train_model()`，PCA 的训练完全不接触标签。
 
-## 2. 训练前的数据准备顺序
+## 2. 标准化
 
-### 参数速览（本节）
+### 参数速览
 
-适用流程（分项）：
+适用 API：`StandardScaler().fit_transform(X)`
 
-1. 去掉 `label` 得到 `X`
-2. 保留 `label` 得到 `y`
-3. 全量标准化 `X`
-
-| 参数名 | 本例取值 | 说明 |
-|---|---|---|
-| `X` | `data.drop(columns=["label"])` | 真正参与 PCA 训练的特征矩阵 |
-| `y` | `data["label"].values` | 仅用于可视化着色 |
-| `X_scaled` | `StandardScaler().fit_transform(X)` | 标准化后的高维特征 |
+| 参数名 | 类型 | 说明 | 示例取值 |
+|---|---|---|---|
+| `X` | `DataFrame`，形状 $(400, 10)$ | 去掉 `label` 后的全量特征矩阵 | `X` |
+| 输出 | `ndarray` | $z_{ij} = (x_{ij} - \mu_j) / \sigma_j$，均值为 0 标准差为 1 | `X_scaled` |
 
 ### 示例代码
 
 ```python
-X = data.drop(columns=["label"])
-y = data["label"].values
-
 scaler = StandardScaler()
 X_scaled = scaler.fit_transform(X)
 ```
 
 ### 理解重点
 
-- 当前实现没有 train/test split，而是直接对全量特征做标准化。\n+- 这和监督学习流程不同，因为当前目标不是泛化预测，而是学习主成分结构。\n+- 标准化在这里尤其重要，否则不同量纲会直接影响主成分方向。
+- PCA 流水线**没有**训练/测试切分——当前实现为教学型简化，直接在全量数据上训练和投影。
+- `fit_transform` 直接在全量数据上计算统计量并变换——目标是展示整体数据结构而非评估泛化能力。
+- 标准化是必须的——协方差矩阵对特征尺度高度敏感。不标准化意味着"尺度最大的特征主导所有主成分方向"。
 
-## 3. 训练阶段：先训练 2D PCA
+## 3. 第一阶段：训练 2D PCA 并生成 2D 图
 
-### 参数速览（本节）
+### 参数速览
 
-适用函数：`train_model(X_scaled, n_components=2)`
+适用函数：`train_model(X_scaled, n_components=2)` → `model.transform(X_scaled)`
 
-| 参数名 | 本例取值 | 说明 |
-|---|---|---|
-| `X_scaled` | 标准化后的高维特征 | 当前 PCA 训练输入 |
-| `n_components` | `2` | 保留两个主成分 |
-| 返回值 | `model` | 已训练好的 2D PCA 模型 |
+| 参数名 | 类型 | 说明 | 示例取值 |
+|---|---|---|---|
+| `X_scaled` | `ndarray`，形状 $(400, 10)$ | 标准化后的特征矩阵——2D PCA 的输入 | `X_scaled` |
+| `n_components` | `int` | 保留的主成分数。当前为 `2` | `2` |
+| `X_transformed` | `ndarray`，形状 $(400, 2)$ | 投影到 2 维主成分空间后的坐标 | — |
 
 ### 示例代码
 
 ```python
+# 训练 2D PCA
 model = train_model(X_scaled, n_components=2)
+
+# 投影到 2D 主成分空间
 X_transformed = model.transform(X_scaled)
-```
 
-### 理解重点
-
-- 当前实现第一步先训练 2D PCA，用于最基础的二维降维展示。\n+- 这里训练和投影是两步：先 `fit` 学方向，再 `transform` 得到坐标。\n+- `X_transformed` 才是后续 2D 可视化真正使用的数据。
-
-## 4. 2D 可视化是如何接入流水线的
-
-### 参数速览（本节）
-
-适用函数：`plot_dimensionality(..., mode='2d')`
-
-| 参数名 | 本例取值 | 说明 |
-|---|---|---|
-| `X_transformed` | 2D 投影结果 | 降维后的二维坐标 |
-| `y` | `label` 数组 | 只用于着色 |
-| `explained_variance_ratio` | `model.explained_variance_ratio_` | 用于轴标签展示解释方差比 |
-| `mode` | `'2d'` | 输出二维图 |
-
-### 示例代码
-
-```python
+# 绘制 2D 降维图
 plot_dimensionality(
     X_transformed,
     y=y,
@@ -134,46 +98,32 @@ plot_dimensionality(
 
 ### 理解重点
 
-- 当前 2D 图的轴标签会直接带上 `PC1`、`PC2` 的解释方差比。\n+- 这让图像不仅是“降维后坐标图”，也是解释方差信息的直观展示。\n+- `y` 只用于着色，不参与任何降维计算。
+- `PCA.fit(X_scaled)` 内部执行 SVD 分解 $\mathbf{X} = \mathbf{U}\boldsymbol{\Sigma}\mathbf{V}^T$，取 $\mathbf{V}$ 的前 2 行作为 `components_`。
+- 2D 投影图展示的是数据方差最大的两个方向——对于当前低秩数据（3 个真实方向），它能展示约 2/3 的真实结构。
+- `plot_dimensionality` 的 `mode='2d'` 参数决定输出 2D 散点图，轴标签为 `PC1 (xx.x%)` 和 `PC2 (xx.x%)`。
 
-## 5. 为什么当前实现还要单独训练 3D PCA
+## 4. 第二阶段：训练 3D PCA 并生成 3D 图
 
-### 参数速览（本节）
+### 参数速览
 
-适用函数：`train_model(X_scaled, n_components=3)`
+适用函数：`train_model(X_scaled, n_components=3)` → `model_3d.transform(X_scaled)`
 
-| 参数名 | 本例取值 | 说明 |
-|---|---|---|
-| `n_components` | `3` | 保留三个主成分 |
-| 返回值 | `model_3d` | 已训练好的 3D PCA 模型 |
+| 参数名 | 类型 | 说明 | 示例取值 |
+|---|---|---|---|
+| `X_scaled` | `ndarray`，形状 $(400, 10)$ | 标准化后的特征矩阵——3D PCA 的输入（与 2D PCA 共享同一份标准化数据） | `X_scaled` |
+| `n_components` | `int` | 保留的主成分数。当前为 `3` | `3` |
+| `X_3d` | `ndarray`，形状 $(400, 3)$ | 投影到 3 维主成分空间后的坐标 | — |
 
 ### 示例代码
 
 ```python
+# 训练 3D PCA（第二个独立模型）
 model_3d = train_model(X_scaled, n_components=3)
+
+# 投影到 3D 主成分空间
 X_3d = model_3d.transform(X_scaled)
-```
 
-### 理解重点
-
-- 当前实现不是复用 2D 模型去拼出 3D 图，而是重新训练一个 `n_components=3` 的 PCA 模型。\n+- 这样做可以更自然地对应“保留 3 个主成分”的建模设定。\n+- 这也是当前分册一个很重要的工程细节，文档必须如实说明。
-
-## 6. 3D 可视化是如何接入流水线的
-
-### 参数速览（本节）
-
-适用函数：`plot_dimensionality(..., mode='3d')`
-
-| 参数名 | 本例取值 | 说明 |
-|---|---|---|
-| `X_3d` | 3D 投影结果 | 降维后的三维坐标 |
-| `y` | `label` 数组 | 只用于着色 |
-| `explained_variance_ratio` | `model_3d.explained_variance_ratio_` | 用于轴标签展示解释方差比 |
-| `mode` | `'3d'` | 输出三维图 |
-
-### 示例代码
-
-```python
+# 绘制 3D 降维图
 plot_dimensionality(
     X_3d,
     y=y,
@@ -187,11 +137,19 @@ plot_dimensionality(
 
 ### 理解重点
 
-- 当前 3D 图会额外在 Z 轴上标注 `PC3` 及其解释方差比。\n+- 它的价值在于帮助读者比较“保留 2 个主成分”和“保留 3 个主成分”时的结构差异。\n+- 这也是当前流水线为什么会明确写出两套训练与投影流程。
+- **`model_3d` 是第二个独立模型**——它不是从 `model`（2D PCA）复用或扩展而来的，而是重新创建 `PCA(n_components=3)` 并重新 `fit()`。
+- 3D 投影图展示数据方差最大的三个方向——对于当前低秩数据（3 个真实方向），它能几乎完整展示全部真实结构。
+- 这种"先训练 2D、再训练 3D"的双模型设计，在 PCA 分册中旨在展示：**增加一个主成分（从 2D 到 3D）新增了多少结构信息？**
 
-## 7. 用伪代码看完整流程
+## 5. 2D 与 3D 模型的关系
 
-### 示例代码
+### 理解重点
+
+- 两个模型分别 `fit()` 了两次——从数学上讲，2D PCA 的前两个主成分与 3D PCA 的前两个主成分完全相同（都是相同的 $\mathbf{V}$ 的前两行）。工程上分开训练只是为了代码清晰。
+- `X_transformed`（2D）的列是 `X_3d`（3D）的前两列——3D 投影完全包含 2D 投影的信息。
+- 2D 累计解释方差 < 3D 累计解释方差——增加第 3 个主成分必然带来信息增益，但增益的幅度取决于数据的固有秩。
+
+## 6. 用伪代码看完整流程
 
 ```python
 data = pca_data.copy()
@@ -200,27 +158,33 @@ y = data["label"].values
 
 X_scaled = StandardScaler().fit_transform(X)
 
+# 第一阶段：2D PCA
 model = train_model(X_scaled, n_components=2)
-X_transformed = model.transform(X_scaled)
-plot_dimensionality(..., mode="2d")
+X_2d = model.transform(X_scaled)
+plot_dimensionality(X_2d, y=y, explained_variance_ratio=..., mode="2d")
 
+# 第二阶段：3D PCA
 model_3d = train_model(X_scaled, n_components=3)
 X_3d = model_3d.transform(X_scaled)
-plot_dimensionality(..., mode="3d")
+plot_dimensionality(X_3d, y=y, explained_variance_ratio=..., mode="3d")
 ```
 
 ### 理解重点
 
-- 当前 PCA 流水线的主线非常清楚：取数、标准化、训练 2D PCA、投影、画图，再训练 3D PCA、投影、画图。\n+- 这条链路里最关键的中间变量是 `X_scaled`、2D 模型及其投影结果、3D 模型及其投影结果。\n+- 只要把这条流程走清楚，整个 pca 分册的工程部分就基本读懂了。
-
-## 训练诊断可视化
-
-![训练曲线](../../../outputs/pca/training_curve.png)
+- 流水线的主线非常清楚：取数 → 标准化 → 2D PCA 训练+投影+画图 → 3D PCA 训练+投影+画图。
+- 这条链路里最关键的中间变量是：`X_scaled`（标准化特征）、2D PCA `model`（含 `components_` 和 `explained_variance_ratio_`）、3D PCA `model_3d`、两组投影结果和伪标签 `y`。
+- 与 LDA 流水线最直观的区别：PCA 只画降维图（2D+3D），LDA 只画 2D 图——流程结构相似但输出维度不同。
 
 ## 常见坑
 
-1. 把 PCA 当前流程误写成监督学习流程，忽略它没有 train/test split。\n+2. 忘记 `transform(...)` 才是真正得到低维坐标的步骤。\n+3. 把 2D 与 3D 结果误写成同一个模型的不同展示，而忽略当前源码实际上训练了两个模型。
+1. 以为 2D 和 3D 是同一个模型的不同 `n_components` 调用——实际上是两个独立 `PCA` 实例分别 `fit()`。
+2. 忘记 `label` 在 PCA 中只用于着色——与 LDA 流水线中将 `y` 传入 `train_model()` 形成鲜明对比。
+3. 误以为 PCA 流水线有分类评估步骤——PCA 是无监督降维，输出只有降维散点图。
+4. 把 `PC1`、`PC2`、`PC3` 的标签当成分类标签——它们是主成分编号，不是类别编号。
 
 ## 小结
 
-- 当前流水线把数据准备、标准化、2D/3D PCA 训练、投影和可视化串成了一条完整路径。\n+- 训练函数负责“得到 PCA 模型”，流水线函数负责“组织执行和产出结果”。\n+- 把这一层执行顺序读清楚，后续看评估与工程实现章节就会更顺。
+- 当前 PCA 流水线分为两阶段：2D PCA（训练+投影+画图）→ 3D PCA（训练+投影+画图）。这是所有算法分册中独一无二的双模型设计。
+- `train_model` 在两次调用中分别传入 `n_components=2` 和 `n_components=3`——两次都只传 `X_scaled`（无监督）。
+- 与 LDA 流水线的核心差异：无监督（无 `y` 入 `fit`）、维数自由（不受 $K-1$ 约束）、两阶段双模型、2D+3D 双图输出。
+- 与分类分册的核心差异：输出是低维坐标而非类别预测、可视化是降维散点图而非混淆矩阵/ROC。
