@@ -1,247 +1,195 @@
 ---
-title: GBDT — 训练与预测
+title: GBDT 梯度提升树 — 训练与预测
 outline: deep
 ---
 
 # 训练与预测
 
-> 对应代码：`pipelines/ensemble/gbdt.py`、`model_training/ensemble/gbdt.py`
->  
-> 运行方式：`python -m pipelines.ensemble.gbdt`
-
 ## 本章目标
 
-1. 明确当前流水线从取数到生成四类图像的完整执行顺序。
-2. 理解训练阶段、预测阶段、概率输出和四类可视化分别由哪个函数负责。
-3. 明确当前 GBDT 实现包含分层切分、标准化和学习曲线。
+1. 理解 GBDT 流水线的完整执行流程——从数据拆解到模型预测。
+2. 认清 GBDT 作为监督多分类算法的流程特征——有训练/测试切分、有 `y_train` 参与训练、有 `predict` 和 `predict_proba`。
+3. 理解流水线中每一步的意图和与算法原理的对应关系。
 
 ## 重点方法与概念速览
 
 | 名称 | 类型 | 作用 |
 |---|---|---|
-| `run()` | 函数 | GBDT 端到端流水线入口 |
-| `train_test_split(..., stratify=y)` | 函数 | 拆分训练集与测试集并保持类别比例 |
-| `StandardScaler` | 类 | 对训练和测试特征做一致标准化 |
-| `train_model(...)` | 函数 | 训练 GBDT 分类模型 |
-| `model.predict(X_test_s)` | 方法 | 输出预测类别 |
-| `model.predict_proba(X_test_s)` | 方法 | 输出分类概率 |
+| `run()` | 函数 | GBDT 多分类端到端流水线入口——串联数据准备、标准化、训练、预测和四项评估 |
+| `train_test_split(..., stratify=y)` | 函数 | 分层训练/测试切分——保证三个类别的比例一致 |
+| `StandardScaler` | 类 | Z-score 标准化——`fit_transform` 在训练集、`transform` 在测试集 |
+| `model.predict(X_test)` | 方法 | 200 棵树加权累加后 softmax 取最大——输出硬分类标签 |
+| `model.predict_proba(X_test)` | 方法 | softmax 概率输出——直接用于多分类 ROC 曲线 |
 
-## 1. 端到端入口 `run()`
+## 1. `run()` 流水线总览
 
-### 参数速览（本节）
+GBDT 流水线是一个典型的有监督多分类流程——与 Bagging 结构相似，但 GBDT 多了特征重要性（`feature_importances_`）和学习曲线两项评估。
+
+### 参数速览
 
 适用函数：`run()`
 
-| 项目 | 当前实现 |
-|---|---|
-| 数据源 | `gbdt_data.copy()` |
-| 标签列 | `label` |
-| 切分方式 | `test_size=0.2, random_state=42, stratify=y` |
-| 训练入口 | `train_model(X_train_s, y_train)` |
-| 预测入口 | `model.predict(X_test_s)` |
-| 概率入口 | `model.predict_proba(X_test_s)` |
-| 可视化入口 | 混淆矩阵、ROC 曲线、特征重要性图、学习曲线 |
+| 参数名 | 类型 | 说明 | 示例取值 |
+|---|---|---|---|
+| 无参数 | — | `run()` 无参数——所有配置硬编码在函数体内 | — |
+| 返回值 | `None` | 触发完整的 GBDT 训练+预测+四项评估+可视化流程 | — |
 
 ### 示例代码
 
 ```python
-def run():
-    data = gbdt_data.copy()
-    X = data.drop(columns=["label"])
-    y = data["label"]
-    feature_names = list(X.columns)
+from pipelines.ensemble.gbdt import run
+
+run()
+```
+
+或命令行：
+
+```bash
+python -m pipelines.ensemble.gbdt
 ```
 
 ### 理解重点
 
-- 整个分册的运行入口就是 `pipelines/ensemble/gbdt.py` 里的 `run()`。
-- 这个函数不负责实现 boosting 本身，而是把取数、标准化、训练、预测和画图串成一条流程。
-- `feature_names` 会在这里提前保存下来，后续供特征重要性图使用。
+- `run()` 是薄流程编排层——每个步骤调用现有模块，本身不包含算法逻辑。
+- 与 Bagging 流水线的关键差异在于评估环节：GBDT 有 4 项评估输出（混淆矩阵 + ROC + 特征重要性 + 学习曲线），Bagging 有 2 项（混淆矩阵 + ROC + OOB 日志）。
+- `feature_names = list(X.columns)` 是 GBDT 流水线特有的步骤——为特征重要性图表提供 x 轴标注。
 
-## 2. 训练前的数据准备顺序
+## 2. 数据准备：复制、拆解、切分
 
-### 参数速览（本节）
+### 参数速览
 
-适用 API（分项）：
-
-1. `train_test_split(X, y, test_size=0.2, random_state=42, stratify=y)`
-2. `StandardScaler().fit_transform(X_train)`
-3. `StandardScaler().transform(X_test)`
-
-| 参数名 | 本例取值 | 说明 |
+| 步骤 | 代码 | 意图 |
 |---|---|---|
-| `test_size` | `0.2` | 测试集占比 |
-| `random_state` | `42` | 保证可复现划分 |
-| `stratify` | `y` | 保持训练集和测试集类别比例一致 |
-| `X_train_s` | 标准化训练特征 | 供 GBDT 训练使用 |
-| `X_test_s` | 标准化测试特征 | 供 GBDT 预测使用 |
-
-### 示例代码
-
-```python
-X_train, X_test, y_train, y_test = train_test_split(
-    X, y, test_size=0.2, random_state=42, stratify=y
-)
-scaler = StandardScaler()
-X_train_s = scaler.fit_transform(X_train)
-X_test_s = scaler.transform(X_test)
-```
+| 复制数据 | `data = gbdt_data.copy()` | 避免修改模块级全局变量 |
+| 拆解 X/y | `X = data.drop(columns=["label"])`、`y = data["label"]` | 分离 8 个特征和 3 分类标签 |
+| 提取特征名 | `feature_names = list(X.columns)` | 供特征重要性图表使用——`['x1', ..., 'x8']` |
+| 分层切分 | `train_test_split(X, y, test_size=0.2, random_state=42, stratify=y)` | 80% 训练 + 20% 测试，按三类别比例分层 |
 
 ### 理解重点
 
-- 当前 GBDT 流水线真实包含标准化步骤，这一点必须和 XGBoost 分册区分开。
-- `stratify=y` 对多分类任务很关键，它能让测试集类别比例更稳定。
-- 当前文档中的 `X_train_s`、`X_test_s` 都是源码里真实使用的变量名。
+- `feature_names` 是 GBDT 流水线独有的中间变量——Bagging 没有特征重要性图表，所以不需要这个步骤。
+- `stratify=y` 对三分类场景尤其重要——避免某个类别在训练集或测试集中比例失衡。
+- 8 个特征中只有 4 个有效——训练完成后特征重要性图表会揭示哪些特征"说了算"。
 
-## 3. 训练阶段：调用 `train_model(...)`
+## 3. 标准化：训练集拟合、测试集变换
 
-### 参数速览（本节）
+### 参数速览
 
-适用函数：`train_model(X_train_s, y_train)`
-
-| 参数名 | 本例取值 | 说明 |
+| 步骤 | 代码 | 意图 |
 |---|---|---|
-| `X_train_s` | 标准化后的训练特征 | 当前直接传入 GBDT 训练函数 |
-| `y_train` | 训练标签 | 多分类目标 |
-| 返回值 | `model` | 已训练好的 `GradientBoostingClassifier` 模型 |
-
-### 示例代码
-
-```python
-model = train_model(X_train_s, y_train)
-```
+| 训练集拟合 | `scaler.fit_transform(X_train)` → `X_train_s` | 在训练集上计算 8 维 $\mu$ 和 $\sigma$，同时变换 |
+| 测试集变换 | `scaler.transform(X_test)` → `X_test_s` | 使用训练集的 $\mu$ 和 $\sigma$ 变换——防止数据泄露 |
 
 ### 理解重点
 
-- 当前实现没有把训练和预测揉成同一个函数，而是先得到训练好的模型，再单独调用 `predict(...)` 和 `predict_proba(...)`。
-- 训练阶段最重要的副产物，不只是 `model` 对象，还有控制台里打印出的 boosting 配置日志。
-- 这些日志帮助你确认当前串行残差拟合过程使用了什么参数设定。
+- 标准化对 GBDT 不是必需的——决策树天然不受特征尺度影响。但保留标准化是为了流水线一致性。
+- 正确做法是 `fit_transform` 训练集、`transform` 测试集——如果在测试集上 `fit_transform`，会导致信息泄露。
 
-## 4. 预测阶段：类别输出与概率输出
+## 4. 模型训练：`train_model(X_train_s, y_train)`
 
-### 参数速览（本节）
+### 参数速览
 
-适用流程（分项）：
+| 参数名 | 类型 | 说明 | 示例取值 |
+|---|---|---|---|
+| `X_train_s` | `ndarray`，形状 `(400, 8)` | 标准化后的训练特征 | `scaler.fit_transform(X_train)` |
+| `y_train` | `Series`，形状 `(400,)` | 训练标签 $\{0, 1, 2\}$ | `y_train` |
+| 返回值 | `GradientBoostingClassifier` | 已完成 `fit()` 的模型——含 200 × 3 = 600 棵回归树 | — |
 
-1. `y_pred = model.predict(X_test_s)`
-2. `y_scores = model.predict_proba(X_test_s)`
+### 理解重点
 
-| 参数名 | 本例取值 | 说明 |
-|---|---|---|
-| `y_pred` | 预测类别数组 | 用于混淆矩阵 |
-| `y_scores` | 预测概率矩阵 | 用于多分类 ROC 曲线 |
-| `X_test_s` | 标准化后的测试特征 | 与训练时保持一致预处理 |
+- `train_model(...)` **必须有 `y_train`**——GBDT 比 Bagging 更依赖标签，因为每个阶段的拟合目标（负梯度）由标签和当前预测共同决定。
+- 训练过程是严格串行的——第 $m$ 棵树的训练依赖前 $m-1$ 棵的输出，无法并行化（与 Bagging 的 `n_jobs=-1` 形成对比）。
+- 训练完成后终端打印 `n_estimators`、`learning_rate`、`max_depth`、`subsample`。
+
+## 5. 预测：`predict()` 和 `predict_proba()`
+
+### 参数速览
+
+| 方法 | 输入 | 输出 | 机制 |
+|---|---|---|---|
+| `model.predict(X_test_s)` | `ndarray`，形状 `(100, 8)` | `ndarray`，形状 `(100,)`，取值 $\{0, 1, 2\}$ | 200 棵树加权累加 → softmax → argmax |
+| `model.predict_proba(X_test_s)` | `ndarray`，形状 `(100, 8)` | `ndarray`，形状 `(100, 3)` | 200 棵树加权累加 → softmax → 三类概率 |
 
 ### 示例代码
 
 ```python
 y_pred = model.predict(X_test_s)
+# y_pred 形状 (100,)，取值 {0, 1, 2}
+
 y_scores = model.predict_proba(X_test_s)
+# y_scores 形状 (100, 3)，每行三个类别的 softmax 概率
+```
+
+### 输出
+
+```text
+# predict 输出示例（前 10 个预测）
+[1 0 2 1 0 1 2 1 0 0]
+
+# predict_proba 输出示例（前 3 行）
+[[0.15 0.72 0.13]
+ [0.81 0.10 0.09]
+ [0.05 0.20 0.75]]
 ```
 
 ### 理解重点
 
-- `predict(...)` 给出最终类别判断，用来观察分类结果是否正确。
-- `predict_proba(...)` 给出每个类别的概率，用来画 ROC 曲线。
-- 这说明当前分册的评估既看硬分类结果，也看概率排序能力。
+- `predict()` 输出硬标签——200 棵树加权累加后取 softmax 最大概率对应的类别。
+- `predict_proba()` 输出 softmax 概率——每行 3 个值之和为 1。直接用于多分类 ROC 曲线（one-vs-rest）。
+- GBDT 流水线没有 `hasattr(model, "predict_proba")` 检查——直接调用，因为 `GradientBoostingClassifier` 始终支持概率输出。
 
-## 5. 预测后的四类图像输出
+## 6. 评估触发：四项输出
 
-### 参数速览（本节）
+### 参数速览
 
-适用函数（分项）：
-
-1. `plot_confusion_matrix(...)`
-2. `plot_roc_curve(...)`
-3. `plot_feature_importance(...)`
-4. `plot_learning_curve(...)`
-
-| 函数 | 当前作用 |
-|---|---|
-| `plot_confusion_matrix(...)` | 看类别预测混淆情况 |
-| `plot_roc_curve(...)` | 看多分类概率区分能力 |
-| `plot_feature_importance(...)` | 看模型主要依赖哪些特征 |
-| `plot_learning_curve(...)` | 看训练样本规模变化下的训练/验证走势 |
+| 步骤 | 触发条件 | 输入 | 输出 |
+|---|---|---|---|
+| 混淆矩阵 | **始终** | `y_test` + `y_pred` | `outputs/gbdt/confusion_matrix.png` |
+| ROC 曲线 | **始终** | `y_test` + `y_scores` | `outputs/gbdt/roc_curve.png` |
+| 特征重要性 | **始终** | `model` + `feature_names` | `outputs/gbdt/feature_importance.png` |
+| 学习曲线 | **始终** | `GradientBoostingClassifier(...)` + `X_train_s` + `y_train` | `outputs/gbdt/learning_curve.png` |
 
 ### 理解重点
 
-- 当前 GBDT 分册的结果输出比普通分类示例更完整，不只看类别结果，也看概率和训练趋势。
-- 混淆矩阵负责看“分错了哪些类”，ROC 曲线负责看“概率排序是否有区分力”，特征重要性图负责看“模型主要看什么”，学习曲线负责看“样本量与泛化走势”。
-- 这四类输出合起来，才构成当前分册完整的评估视角。
+- 四项评估全部始终触发——没有条件判断（不像 Bagging 的 `hasattr` 检查）。
+- 特征重要性是 GBDT 独有的评估——Bagging 没有此项。
+- 学习曲线通过额外实例化一个 `GradientBoostingClassifier` 生成——不是用训练好的 `model`，而是用 `sklearn.model_selection.learning_curve` 进行交叉验证。
 
-## 6. 学习曲线为什么单独重新构造模型
+## 完整流程总结
 
-### 参数速览（本节）
-
-适用函数：`plot_learning_curve(GradientBoostingClassifier(n_estimators=100, random_state=42), X_train_s, y_train, ...)`
-
-| 参数名 | 本例取值 | 说明 |
-|---|---|---|
-| `model` | `GradientBoostingClassifier(n_estimators=100, random_state=42)` | 用于学习曲线的独立模型实例 |
-| `X` | `X_train_s` | 使用训练集标准化特征 |
-| `y` | `y_train` | 使用训练标签 |
-
-### 示例代码
-
-```python
-plot_learning_curve(
-    GradientBoostingClassifier(n_estimators=100, random_state=42),
-    X_train_s,
-    y_train,
-    title="GBDT 学习曲线",
-    dataset_name=DATASET,
-    model_name=MODEL,
-)
 ```
-
-### 理解重点
-
-- 学习曲线不是直接复用已经训练好的 `model`，而是重新传入一个新的分类器实例。
-- 这里还要特别注意：学习曲线使用的 `n_estimators=100`，与主训练函数默认的 `200` 并不完全一致。
-- 文档必须如实说明这一点，不能写成“完全复用同一训练配置”。
-
-## 7. 用伪代码看完整流程
-
-### 示例代码
-
-```python
-data = gbdt_data.copy()
-X = data.drop(columns=["label"])
-y = data["label"]
-feature_names = list(X.columns)
-
-X_train, X_test, y_train, y_test = train_test_split(..., stratify=y)
-X_train_s = scaler.fit_transform(X_train)
-X_test_s = scaler.transform(X_test)
-
-model = train_model(X_train_s, y_train)
-y_pred = model.predict(X_test_s)
-y_scores = model.predict_proba(X_test_s)
-
-plot_confusion_matrix(...)
-plot_roc_curve(...)
-plot_feature_importance(...)
-plot_learning_curve(...)
+gbdt_data.copy()
+    │
+    ├─ X = data.drop(columns=["label"])
+    ├─ y = data["label"]
+    ├─ feature_names = list(X.columns)
+    │
+    ├─ train_test_split(test_size=0.2, stratify=y)
+    │   ├─ X_train (400, 8)、y_train (400,)
+    │   └─ X_test (100, 8)、y_test (100,)
+    │
+    ├─ StandardScaler
+    │   ├─ X_train_s = scaler.fit_transform(X_train)
+    │   └─ X_test_s = scaler.transform(X_test)
+    │
+    ├─ model = train_model(X_train_s, y_train)
+    │   └─ 终端打印: n_estimators, learning_rate, max_depth, subsample
+    │
+    ├─ y_pred = model.predict(X_test_s)               → 混淆矩阵
+    ├─ y_scores = model.predict_proba(X_test_s)       → ROC 曲线
+    ├─ plot_feature_importance(model, feature_names)  → 特征重要性
+    └─ plot_learning_curve(..., X_train_s, y_train)   → 学习曲线
 ```
-
-### 理解重点
-
-- 当前 GBDT 流水线的主线非常清楚：取数、分层切分、标准化、训练、预测类别、预测概率、画四类图。
-- 这条链路里最关键的中间变量是 `feature_names`、训练后的 `model`、`y_pred` 和 `y_scores`。
-- 只要把这条流程走清楚，整个 gbdt 分册的工程部分就基本读懂了。
-
-## 训练诊断可视化
-
-![学习曲线](../../../outputs/gbdt/learning_curve.png)
 
 ## 常见坑
 
-1. 把 GBDT 当前流程误写成回归任务流程，忽略它其实是多分类任务。
-2. 只看 `predict(...)`，忽略 `predict_proba(...)` 才是 ROC 曲线输入的关键。
-3. 把学习曲线误写成与主训练完全同配置，忽略当前源码其实单独构造了 `n_estimators=100` 的模型。
+1. 混淆 GBDT 的串行训练与 Bagging 的并行训练——GBDT 不能用 `n_jobs=-1` 并行训练多棵树（但 scikit-learn 在某些版本中支持并行化每棵树内部的分裂搜索）。
+2. 在测试集上 `fit_transform` 而非 `transform`——数据泄露的经典错误。
+3. 忘记 `feature_names` 的提取——没有特征名，特征重要性图表只有位置索引，可读性大打折扣。
+4. 混淆 `predict` 的机制——GBDT 是加权累加后 softmax，不是投票。
 
 ## 小结
 
-- 当前流水线把数据准备、单模型训练、类别预测、概率预测和四类可视化输出串成了一条完整路径。
-- 训练函数负责“得到 GBDT 分类模型”，流水线函数负责“组织执行和产出结果”。
-- 把这一层执行顺序读清楚，后续看评估与工程实现章节就会更顺。
+- GBDT 流水线是一个有监督多分类流程：数据拆解 → 分层切分 → 训练集拟合标准化/测试集变换 → 串行梯度提升训练 → 硬预测/软概率 → 四项评估（混淆矩阵 + ROC + 特征重要性 + 学习曲线）。
+- 与 Bagging 流水线的核心差异：（1）训练是串行而非并行；（2）有 `feature_names` 提取步骤；（3）有特征重要性和学习曲线两项额外评估；（4）没有 `hasattr` 条件判断。
+- `run()` 是薄编排层——每步调用现有模块，自身不含算法逻辑。

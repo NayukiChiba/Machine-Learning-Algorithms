@@ -1,137 +1,114 @@
 ---
-title: GBDT — 数据构成
+title: GBDT 梯度提升树 — 数据构成
 outline: deep
 ---
 
 # 数据构成
 
-> 对应代码：`data_generation/ensemble.py`、`data_generation/__init__.py`、`pipelines/ensemble/gbdt.py`
->  
-> 相关对象：`EnsembleData.gbdt()`、`gbdt_data`
-
 ## 本章目标
 
-1. 明确本仓库 GBDT 数据来自 `EnsembleData.gbdt()` 的多分类构造逻辑。
-2. 明确特征列、标签列以及有效特征、冗余特征的整体结构。
-3. 明确分层切分与标准化的顺序和边界。
+1. 明确本仓库 GBDT 数据来自 `EnsembleData.gbdt()` 构造的多类别分类数据。
+2. 理解为什么选择 8 特征 × 3 类别的数据——中等复杂度，充分展示 GBDT 串行纠错的偏差缩减能力。
+3. 明确当前流程中的训练/测试切分（分层抽样）和标准化顺序。
 
 ## 重点方法与概念速览
 
 | 名称 | 类型 | 作用 |
 |---|---|---|
-| `EnsembleData.gbdt()` | 方法 | 生成 GBDT 分类使用的中等难度多分类数据 |
-| `make_classification(...)` | 函数 | scikit-learn 提供的分类数据生成器 |
-| `gbdt_data` | 变量 | 在 `data_generation/__init__.py` 中导出的数据对象 |
-| `label` | 列名 | 当前流水线中的分类目标列 |
+| `EnsembleData.gbdt()` | 方法 | 生成 GBDT 使用的多类别分类数据 |
+| `make_classification(...)` | 函数 | scikit-learn 提供的合成分类数据生成器 |
+| `gbdt_data` | 变量 | 在 `data_generation/__init__.py` 中导出的 DataFrame |
+| `gbdt_n_informative` | 参数 | 有效特征数 `4`——8 个特征中 4 个携带分类信号 |
+| `gbdt_n_redundant` | 参数 | 冗余特征数 `2`——通过线性组合从有效特征生成 |
+| `StandardScaler` | 类 | 对特征做 Z-score 标准化——训练集拟合、测试集变换 |
 
-## 1. 本仓库数据入口
+## 1. 数据生成：`EnsembleData.gbdt()`
 
-- 数据变量：`data_generation/__init__.py` 中导出的 `gbdt_data`
-- 生成来源：`data_generation/ensemble.py` 中的 `EnsembleData.gbdt()`
-- 流水线使用：`pipelines/ensemble/gbdt.py` 中的 `data = gbdt_data.copy()`
+当前 GBDT 数据来自 `EnsembleData.gbdt()`，底层调用 `sklearn.datasets.make_classification()`。
 
-### 理解重点
+### 参数速览
 
-- `gbdt_data` 在导入时就已经生成完成，因此流水线里直接 `.copy()` 使用即可。
-- 使用 `.copy()` 的目的，是避免后续切分或调试过程意外修改原始数据对象。
+适用函数：`make_classification(n_samples=500, n_features=8, n_informative=4, n_redundant=2, n_classes=3, class_sep=0.7, random_state=42)`
 
-## 2. 数据生成函数 `EnsembleData.gbdt()`
-
-### 参数速览（本节）
-
-适用 API（分项）：
-
-1. `EnsembleData.gbdt()`
-2. `make_classification(...)`
-
-| 参数名 | 本例取值 | 说明 |
-|---|---|---|
-| `n_samples` | `500` | 样本总数 |
-| `n_features` | `8` | 特征总数，等于 `4 + 2 + 2` |
-| `n_informative` | `4` | 有效特征数 |
-| `n_redundant` | `2` | 冗余特征数 |
-| `n_classes` | `3` | 类别数量 |
-| `class_sep` | `0.7` | 类别间隔，难度中等 |
-| `random_state` | `42` | 随机种子，保证可复现 |
-| 返回值 | `DataFrame` | 含 `x1` ~ `x8` 与 `label` 的数据表 |
+| 参数名 | 类型 | 说明 | 示例取值 |
+|---|---|---|---|
+| `n_samples` | `int` | 总样本数。默认 `500`——适中规模，200 个 GBDT 弱学习器可在秒级完成串行训练 | `500`、`1000` |
+| `n_features` | `int` | 总特征数。`8`——中等维度，提供足够的特征空间让 GBDT 展示特征选择能力 | `8`、`20` |
+| `n_informative` | `int` | 有效特征数。`4`——只有一半特征携带真正的分类信号 | `4`、`8` |
+| `n_redundant` | `int` | 冗余特征数。`2`——通过有效特征的线性组合生成 | `2`、`5` |
+| `n_classes` | `int` | 类别数。`3`——多分类场景，比二分类更能展示 GBDT 的拟合能力 | `2`、`3`、`4` |
+| `class_sep` | `float` | 类别间隔。`0.7`——中等难度，不是完全分离也不是严重重叠 | `0.5`、`0.7`、`1.0` |
+| `random_state` | `int` | 随机种子，保证数据可复现。默认 `42` | `42` |
+| 返回值 | `(ndarray, ndarray)` | `(X, y)` 元组，$X$ 形状 $(500, 8)$，$y$ 取值 $\{0, 1, 2\}$ | — |
 
 ### 示例代码
 
 ```python
-n_features = self.gbdt_n_informative + self.gbdt_n_redundant + 2
 X, y = make_classification(
-    n_samples=self.n_samples,
-    n_features=n_features,
-    n_informative=self.gbdt_n_informative,
-    n_redundant=self.gbdt_n_redundant,
-    n_repeated=0,
-    n_classes=self.gbdt_n_classes,
-    n_clusters_per_class=1,
-    class_sep=self.gbdt_class_sep,
-    random_state=self.random_state,
+    n_samples=500,
+    n_features=8,
+    n_informative=4,
+    n_redundant=2,
+    n_classes=3,
+    class_sep=0.7,
+    random_state=42,
 )
+data = DataFrame(X, columns=[f"x{i+1}" for i in range(8)])
+data["label"] = y
 ```
 
 ### 理解重点
 
-- 当前数据不是回归数据，而是一个 3 分类任务。
-- 设计这份数据的目的，是突出 GBDT 串行拟合残差、逐步修正分类边界的能力。
-- 文档中需要特别区分它和 XGBoost 分册当前使用的真实回归数据。
+- 8 个特征中只有 4 个（`x1`~`x4`）携带真正的分类信号——剩余 4 个（`x5`~`x8`）是冗余或噪声特征。这为 GBDT 的特征重要性评估提供了有意义的测试场景。
+- `class_sep=0.7` 是中等难度——类别有一定重叠但并非不可分。GBDT 的串行纠错能力在这种"中等混沌"中优势明显。
+- 与 Bagging 的 `make_moons(noise=0.35)` 对比：Bagging 用 2 特征二分类高噪声数据展示降方差，GBDT 用 8 特征三分类中等难度数据展示降偏差。
 
-## 3. 特征列与标签列
+## 2. 特征列与标签列
 
-当前数据表结构如下：
+### 参数速览
 
-- 特征列：`x1` ~ `x8`
-- 标签列：`label`
+| 参数名 | 类型 | 说明 | 示例取值 |
+|---|---|---|---|
+| `X` | `DataFrame`，形状 $(500, 8)$ | 含 8 个连续特征的特征矩阵，列名 `x1`~`x8` | `data.drop(columns=["label"])` |
+| `y` | `Series`，形状 $(500,)$ | 三分类标签 $\{0, 1, 2\}$——参与 GBDT 训练和评估 | `data["label"]` |
 
-### 参数速览（本节）
+### 特征一览
 
-适用列组（本节）：
-
-1. 有效特征
-2. 冗余特征
-3. 其余补充特征
-4. 标签列
-
-| 列组 | 当前含义 | 作用 |
+| 列名 | 特征类型 | 说明 |
 |---|---|---|
-| 有效特征 | 4 个主要信息来源 | 提供最核心分类信号 |
-| 冗余特征 | 2 个冗余特征 | 增加相关性和识别难度 |
-| 其余补充特征 | 额外 2 维 | 提高整体边界复杂度 |
-| 标签列 | `label` | 3 分类目标 |
+| `x1`~`x4` | 有效特征（informative） | 携带分类信号——GBDT 特征重要性应对这 4 列给出较高值 |
+| `x5`~`x6` | 冗余特征（redundant） | 由有效特征线性组合生成——重要性应低于 `x1`~`x4` |
+| `x7`~`x8` | 噪声特征（noise） | 纯随机噪声——重要性应接近零 |
+| `label` | 标签列 | 取值 $\{0, 1, 2\}$，三分类监督信号 |
 
 ### 示例代码
 
 ```python
 X = data.drop(columns=["label"])
 y = data["label"]
-feature_names = list(X.columns)
+feature_names = list(X.columns)  # ['x1', 'x2', 'x3', 'x4', 'x5', 'x6', 'x7', 'x8']
 ```
 
 ### 理解重点
 
-- 当前流水线先把 `feature_names` 提前保存下来，是为了后续绘制特征重要性图时使用。
-- GBDT 不会像线性模型那样输出系数，因此列名与重要性值的对应关系很重要。
-- 这份中等维度数据也为 GBDT 的边界修正直觉提供了更合适的背景。
+- `label` 是三分类监督标签——取值 $\{0, 1, 2\}$，参与 `model.fit()`、`model.predict()` 和混淆矩阵/ROC 评估。
+- `feature_names` 在 GBDT 流水线中被显式提取——用于后续特征重要性图表的 x 轴标注。这是 Bagging 流水线中没有的步骤。
+- 有效/冗余/噪声的三层特征结构是教学设计的亮点——它让特征重要性图表的解读有了"正确答案"做参照。
 
-## 4. 分层切分与标准化
+## 3. 训练/测试切分与标准化
 
-### 参数速览（本节）
+### 参数速览
 
-适用 API（分项）：
+适用 API：`train_test_split(X, y, test_size=0.2, random_state=42, stratify=y)`
 
-1. `train_test_split(X, y, test_size=0.2, random_state=42, stratify=y)`
-2. `StandardScaler().fit_transform(X_train)`
-3. `StandardScaler().transform(X_test)`
-
-| 参数名 | 本例取值 | 说明 |
-|---|---|---|
-| `test_size` | `0.2` | 测试集占比 |
-| `random_state` | `42` | 保证可复现划分 |
-| `stratify` | `y` | 保持训练集和测试集类别比例一致 |
-| `X_train_s` | 标准化训练特征 | 供 GBDT 训练使用 |
-| `X_test_s` | 标准化测试特征 | 供 GBDT 预测使用 |
+| 参数名 | 类型 | 说明 | 示例取值 |
+|---|---|---|---|
+| `X` | `DataFrame`，形状 $(500, 8)$ | 全量特征矩阵 | `X` |
+| `y` | `Series`，形状 $(500,)$ | 全量标签 $\{0, 1, 2\}$ | `y` |
+| `test_size` | `float` | 测试集比例。默认 `0.2` | `0.2`、`0.3` |
+| `stratify` | `array_like` | 分层抽样依据——确保训练/测试集中三个类别的比例一致 | `y` |
+| `random_state` | `int` | 随机种子。默认 `42` | `42` |
+| 返回值 | `(DataFrame, DataFrame, Series, Series)` | `X_train`（400 样本）、`X_test`（100 样本）及对应标签 | — |
 
 ### 示例代码
 
@@ -139,6 +116,7 @@ feature_names = list(X.columns)
 X_train, X_test, y_train, y_test = train_test_split(
     X, y, test_size=0.2, random_state=42, stratify=y
 )
+
 scaler = StandardScaler()
 X_train_s = scaler.fit_transform(X_train)
 X_test_s = scaler.transform(X_test)
@@ -146,24 +124,25 @@ X_test_s = scaler.transform(X_test)
 
 ### 理解重点
 
-- 当前 GBDT 流水线真实包含标准化步骤，这一点必须和 XGBoost 分册区分开。
-- `stratify=y` 对多分类任务很重要，它能让训练集和测试集的类别分布更稳定。
-- 当前文档中的 `X_train_s`、`X_test_s` 都是源码里真实使用的变量名。
+- `stratify=y` 确保三个类别在训练/测试集中比例一致——对于三分类数据，这避免了某个类别在测试集中完全缺失。
+- 标准化采用监督学习的标准做法：`fit_transform` 在训练集上计算 $\mu$ 和 $\sigma$，`transform` 在测试集上使用相同统计量——防止测试集信息泄露。
+- 与 Bagging 的差异：GBDT 有 8 个特征（而非 2 个），标准化对 GBDT 来说也非必需（决策树不受尺度影响），但保留是为了流水线一致性。
 
 ## 数据可视化
 
-![数据类别分布](../../../outputs/gbdt/data_class_distribution.png)
-![数据相关性](../../../outputs/gbdt/data_correlation.png)
-![数据特征空间](../../../outputs/gbdt/data_feature_space_2d.png)
+![类别分布图](../../../outputs/gbdt/data_class_distribution.png)
+
+![特征相关性热力图](../../../outputs/gbdt/data_correlation.png)
 
 ## 常见坑
 
-1. 把当前 GBDT 数据误写成回归数据，忽略它其实是 3 分类任务。
-2. 忽略 `stratify=y`，把当前多分类切分流程写成普通随机切分。
-3. 把 XGBoost 分册里的“无标准化”惯性套到当前 GBDT 流程上。
+1. 把 GBDT 的多分类数据当成"越复杂越好"——3 分类 + 中等间隔是教学平衡选择，过高的复杂度会掩盖算法特性。
+2. 忽略特征的三层结构（有效/冗余/噪声）——这是理解特征重要性图表的"标准答案"。
+3. 在测试集上 `fit_transform` 而非 `transform`——这是数据泄露的典型错误。
+4. 认为 GBDT 不需要 `stratify=y`——多分类比二分类更容易出现类别不平衡问题，分层抽样更重要。
 
 ## 小结
 
-- 当前 GBDT 数据来自 `EnsembleData.gbdt()`，底层使用的是 `make_classification(...)`。
-- 数据表由 8 个特征和标签列 `label` 组成，包含有效、冗余和额外补充特征。
-- 读懂数据结构、分层切分和标准化顺序，是理解后续 GBDT 训练与分类评估的前提。
+- 当前 GBDT 数据来自 `make_classification(n_samples=500, n_features=8, n_informative=4, n_classes=3)`：8 个连续特征（4 有效 + 2 冗余 + 2 噪声）、三分类、中等难度。
+- 数据流为：`make_classification` → DataFrame（`x1`~`x8` + `label`）→ 分层训练/测试切分 → 训练集拟合标准化器 / 测试集变换。
+- 特征的三层结构（有效/冗余/噪声）为 GBDT 独有的特征重要性评估提供了"有标准答案"的验证场景。

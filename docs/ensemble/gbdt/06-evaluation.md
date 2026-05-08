@@ -1,240 +1,179 @@
 ---
-title: GBDT — 评估与诊断
+title: GBDT 梯度提升树 — 评估与诊断
 outline: deep
 ---
 
 # 评估与诊断
 
-> 对应代码：`pipelines/ensemble/gbdt.py`、`result_visualization/confusion_matrix.py`、`result_visualization/roc_curve.py`、`result_visualization/feature_importance.py`、`result_visualization/learning_curve.py`
->  
-> 相关对象：`plot_confusion_matrix(...)`、`plot_roc_curve(...)`、`plot_feature_importance(...)`、`plot_learning_curve(...)`
-
 ## 本章目标
 
-1. 明确当前仓库实际使用了哪些评估手段，而不是泛泛讨论所有分类指标。
-2. 理解混淆矩阵、ROC 曲线、特征重要性图和学习曲线分别能帮助我们诊断什么。
-3. 明确当前实现没有做哪些数值指标输出，以免误读源码能力边界。
+1. 理解 GBDT 的四项评估输出——混淆矩阵、ROC 曲线、特征重要性、学习曲线，各自回答什么问题。
+2. 理解特征重要性的计算原理和解读方法——它是 GBDT 独有的"自动特征选择"工具。
+3. 理解学习曲线的诊断价值——判断模型是欠拟合、恰好还是过拟合。
+4. 明确当前代码中评估的实现范围。
 
 ## 重点方法与概念速览
 
 | 名称 | 类型 | 作用 |
 |---|---|---|
-| `plot_confusion_matrix(...)` | 函数 | 生成分类混淆矩阵图 |
-| `plot_roc_curve(...)` | 函数 | 生成 ROC 曲线图 |
-| `plot_feature_importance(...)` | 函数 | 生成特征重要性柱状图 |
-| `plot_learning_curve(...)` | 函数 | 生成训练/验证得分曲线 |
-| `y_pred` / `y_scores` | 预测输出 | 当前 GBDT 的类别和概率结果 |
+| `plot_confusion_matrix(...)` | 函数 | 在测试集上绘制混淆矩阵——评估多分类硬标签准确率 |
+| `plot_roc_curve(...)` | 函数 | 绘制多分类 ROC 曲线（one-vs-rest）——评估概率输出的排序能力 |
+| `plot_feature_importance(...)` | 函数 | 绘制特征重要性柱状图——展示 8 个特征对分类的贡献排序 |
+| `plot_learning_curve(...)` | 函数 | 绘制学习曲线——训练集/测试集准确率随训练样本数变化 |
+| `model.feature_importances_` | 属性 | 8 个特征的重要性值——基于 200 棵树中的分裂增益 |
+| `model.train_score_` | 属性 | 每轮迭代的训练得分——可观察损失下降趋势 |
 
-## 1. 当前实现真正做了什么评估
+## 1. 混淆矩阵：多分类硬标签评估
 
-### 参数速览（本节）
+混淆矩阵评估的是 `model.predict()` 的输出——200 棵树加权累加后 softmax 取最大的分类结果。
 
-适用评估手段（本节）：
+### 参数速览
 
-1. 混淆矩阵
-2. ROC 曲线
-3. 特征重要性图
-4. 学习曲线
+适用 API：`plot_confusion_matrix(y_test, y_pred, title="GBDT 混淆矩阵", dataset_name=DATASET, model_name=MODEL)`
 
-| 评估方式 | 来源 | 用途 |
-|---|---|---|
-| 混淆矩阵 | `plot_confusion_matrix(...)` | 观察各类别之间的混淆情况 |
-| ROC 曲线 | `plot_roc_curve(...)` | 观察模型概率区分能力 |
-| 特征重要性图 | `plot_feature_importance(...)` | 观察哪些特征更重要 |
-| 学习曲线 | `plot_learning_curve(...)` | 观察训练样本数变化时训练/验证走势 |
-
-### 理解重点
-
-- 当前 GBDT 流水线没有显式打印 accuracy、precision、recall、F1、AUC 等数值指标。
-- 这并不表示这些指标不重要，而是说明本仓库当前实现更强调图像化诊断。
-- 因此阅读这一分册时，不能把“指标表格”想成已经在源码里实现的内容。
-
-## 2. 混淆矩阵是怎么生成的
-
-### 参数速览（本节）
-
-适用函数：`plot_confusion_matrix(y_true, y_pred, title=..., dataset_name=..., model_name=...)`
-
-| 参数名 | 本例取值 | 说明 |
-|---|---|---|
-| `y_true` | `y_test` | 测试集真实类别 |
-| `y_pred` | 预测类别 | 模型对测试集的离散输出 |
-| `dataset_name` | `"gbdt"` | 输出目录名 |
-| `model_name` | `"gbdt"` | 输出文件名前缀 |
-
-### 示例代码
-
-```python
-plot_confusion_matrix(
-    y_test,
-    y_pred,
-    title="GBDT 混淆矩阵",
-    dataset_name=DATASET,
-    model_name=MODEL,
-)
-```
+| 参数名 | 类型 | 说明 | 示例取值 |
+|---|---|---|---|
+| `y_test` | `Series`，形状 `(100,)` | 测试集真实标签 $\{0, 1, 2\}$ | `y_test` |
+| `y_pred` | `ndarray`，形状 `(100,)` | 模型预测结果 | `model.predict(X_test_s)` |
+| `title` | `str` | 图表标题 | `"GBDT 混淆矩阵"` |
+| `dataset_name` | `str` | 数据集名称——用于输出路径 | `"gbdt"` |
+| `model_name` | `str` | 模型名称——用于输出路径 | `"gbdt"` |
+| 输出 | PNG 文件 | 3×3 混淆矩阵热力图 | `outputs/gbdt/confusion_matrix.png` |
 
 ### 理解重点
 
-- 混淆矩阵最适合看“哪些类和哪些类容易混在一起”。
-- 对当前 3 分类任务来说，它比单个准确率更容易暴露具体错误结构。
-- 这也是为什么当前分册把它作为第一类评估图输出。
+- 三分类混淆矩阵是 3×3 的表格——对角线是正确分类的样本，非对角线是错误分类。
+- 与 Bagging 的二分类混淆矩阵（2×2）不同——三分类有更多错分组合，诊断信息更丰富。
+- 对于 `class_sep=0.7` 的中等难度数据——对角线元素应该明显亮于非对角线元素，但可能不如 Bagging 的高噪声双月牙那样极端。
 
-## 3. ROC 曲线是怎么生成的
+## 2. ROC 曲线：多分类概率评估
 
-### 参数速览（本节）
+ROC 曲线评估的是 `model.predict_proba()` 的输出——多分类使用 one-vs-rest 策略，为每个类别单独绘制一条 ROC 曲线。
 
-适用函数：`plot_roc_curve(y_true, y_scores, title=..., dataset_name=..., model_name=...)`
+### 参数速览
 
-| 参数名 | 本例取值 | 说明 |
-|---|---|---|
-| `y_true` | `y_test` | 测试集真实类别 |
-| `y_scores` | `model.predict_proba(X_test_s)` | 每个类别的预测概率 |
-| `dataset_name` | `"gbdt"` | 输出目录名 |
-| `model_name` | `"gbdt"` | 输出文件名前缀 |
+适用 API：`plot_roc_curve(y_test, y_scores, title="GBDT ROC 曲线", dataset_name=DATASET, model_name=MODEL)`
 
-### 示例代码
-
-```python
-y_scores = model.predict_proba(X_test_s)
-plot_roc_curve(
-    y_test,
-    y_scores,
-    title="GBDT ROC 曲线",
-    dataset_name=DATASET,
-    model_name=MODEL,
-)
-```
+| 参数名 | 类型 | 说明 | 示例取值 |
+|---|---|---|---|
+| `y_test` | `Series`，形状 `(100,)` | 测试集真实标签 | `y_test` |
+| `y_scores` | `ndarray`，形状 `(100, 3)` | softmax 概率输出——每行三类概率 | `model.predict_proba(X_test_s)` |
+| `title` | `str` | 图表标题 | `"GBDT ROC 曲线"` |
+| `dataset_name` | `str` | 数据集名称 | `"gbdt"` |
+| `model_name` | `str` | 模型名称 | `"gbdt"` |
+| 输出 | PNG 文件 | 含 3 条曲线的 ROC 图（每个类别一条 + 微平均/宏平均） | `outputs/gbdt/roc_curve.png` |
 
 ### 理解重点
 
-- ROC 曲线依赖的是概率输出，而不是离散类别预测。
-- 这也是为什么当前流水线要额外调用 `predict_proba(...)`。
-- 它帮助你观察模型在不同阈值下的区分能力，而不只是最后给出的硬分类结果。
+- 多分类 ROC 为每个类别绘制一条曲线——可以看到模型在哪个类别上区分能力最强/最弱。
+- 当前流水线直接调用 `predict_proba`，没有条件检查——`GradientBoostingClassifier` 始终支持概率输出。
+- 与 Bagging 的二分类 ROC（只有一条曲线）不同——GBDT 的 ROC 图展示三条曲线的对比。
 
-## 4. 特征重要性图是怎么生成的
+## 3. 特征重要性：谁在真正做决策
 
-### 参数速览（本节）
+特征重要性是 GBDT 独有的诊断工具——基于 200 棵树中每个特征的分裂增益，自动排序特征贡献。
 
-适用函数：`plot_feature_importance(model, feature_names=None, top_n=None, title='特征重要性', dataset_name='default', model_name='model', figsize=(10, 7))`
+### 参数速览
 
-| 参数名 | 本例取值 | 说明 |
-|---|---|---|
-| `model` | 训练好的 GBDT 模型 | 提供特征重要性来源 |
-| `feature_names` | `list(X.columns)` | 为每个重要性值提供真实列名 |
-| `top_n` | `None` | 当前实现展示全部特征 |
+适用 API：`plot_feature_importance(model, feature_names=feature_names, title="GBDT 特征重要性", dataset_name=DATASET, model_name=MODEL)`
 
-### 示例代码
-
-```python
-plot_feature_importance(
-    model,
-    feature_names=feature_names,
-    title="GBDT 特征重要性",
-    dataset_name=DATASET,
-    model_name=MODEL,
-)
-```
+| 参数名 | 类型 | 说明 | 示例取值 |
+|---|---|---|---|
+| `model` | `GradientBoostingClassifier` | 已训练的 GBDT 模型——从中提取 `feature_importances_` | `model` |
+| `feature_names` | `list[str]` | 8 个特征的名称列表 | `['x1', 'x2', 'x3', 'x4', 'x5', 'x6', 'x7', 'x8']` |
+| `title` | `str` | 图表标题 | `"GBDT 特征重要性"` |
+| `dataset_name` | `str` | 数据集名称 | `"gbdt"` |
+| `model_name` | `str` | 模型名称 | `"gbdt"` |
+| 输出 | PNG 文件 | 水平或垂直柱状图——特征按重要性降序排列 | `outputs/gbdt/feature_importance.png` |
 
 ### 理解重点
 
-- 特征重要性图帮助你理解模型主要依赖哪些特征做分类判断。
-- 对当前包含有效特征与冗余特征的数据来说，这一步尤其有意义。
-- 但它依然不能替代分类结果分析，因为“重要性高”不等于“分类一定好”。
+- 好的模型应让 `x1`~`x4`（有效特征）的重要性显著高于 `x5`~`x8`（冗余和噪声特征）——这是数据设计的"标准答案"。
+- 特征重要性来自 200 棵树的累积——不是单棵树的随机判断，比 Bagging 的特征重要性更稳定。
+- 特征重要性是 GBDT 的"自动特征选择"——如果某些噪声特征重要性异常高，说明模型可能过拟合。
+- Bagging 没有此项评估——因为 Bagging 的基学习器是并行随机采样，特征重要性不如 GBDT 稳定。
 
-## 5. 学习曲线是怎么生成的
+## 4. 学习曲线：诊断偏差-方差状态
 
-### 参数速览（本节）
+学习曲线展示模型性能随训练样本数增加的变化——是诊断欠拟合/过拟合的标准工具。
 
-适用函数：`plot_learning_curve(model, X, y, cv=5, scoring='accuracy', train_sizes=None, ...)`
+### 参数速览
 
-| 参数名 | 本例取值 | 说明 |
-|---|---|---|
-| `model` | `GradientBoostingClassifier(n_estimators=100, random_state=42)` | 一个新的未训练模型实例 |
-| `X` | `X_train_s` | 使用训练集标准化特征 |
-| `y` | `y_train` | 使用训练标签 |
-| `scoring` | 默认值 | 当前源码未显式覆盖 |
+适用 API：`plot_learning_curve(GradientBoostingClassifier(n_estimators=100, random_state=42), X_train_s, y_train, ...)`
 
-### 示例代码
-
-```python
-plot_learning_curve(
-    GradientBoostingClassifier(n_estimators=100, random_state=42),
-    X_train_s,
-    y_train,
-    title="GBDT 学习曲线",
-    dataset_name=DATASET,
-    model_name=MODEL,
-)
-```
+| 参数名 | 类型 | 说明 | 示例取值 |
+|---|---|---|---|
+| `estimator` | `GradientBoostingClassifier` | 新实例化的 GBDT 模型（`n_estimators=100`，注意不同于主模型的 200） | `GradientBoostingClassifier(n_estimators=100, random_state=42)` |
+| `X` | `ndarray`，形状 `(400, 8)` | 训练特征 | `X_train_s` |
+| `y` | `Series`，形状 `(400,)` | 训练标签 | `y_train` |
+| `title` | `str` | 图表标题 | `"GBDT 学习曲线"` |
+| `dataset_name` | `str` | 数据集名称 | `"gbdt"` |
+| `model_name` | `str` | 模型名称 | `"gbdt"` |
+| 输出 | PNG 文件 | 训练集和交叉验证集准确率 vs 训练样本数 | `outputs/gbdt/learning_curve.png` |
 
 ### 理解重点
 
-- 学习曲线内部会在不同训练样本规模下重复训练和验证，不是直接复用已训练好的主模型。
-- 当前这里使用的模型配置与主训练配置并不完全一致，这一点必须如实理解。
-- 它更适合帮助你观察样本量变化下的训练/验证走势，而不是单次测试结果。
+- 学习曲线使用交叉验证——在不同大小的训练子集上评估模型性能。
+- 训练集准确率高 + 交叉验证准确率低 = **过拟合**（高方差）——两条曲线之间有大的间隙。
+- 训练集准确率低 + 交叉验证准确率也低 = **欠拟合**（高偏差）——两条曲线都低且接近。
+- 两条曲线收敛且都高 = **拟合良好**——GBDT 期望达到的状态。
+- 注意学习曲线使用的 `n_estimators=100`（不同于主模型的 200）——以减少计算开销。
 
-## 6. 看四类图时重点观察什么
+## 5. 当前代码已实现 vs 未实现的评估内容
 
-### 参数速览（本节）
+### 已实现
 
-适用观察点（本节）：
+| 评估项 | 输出形式 | 触发条件 |
+|---|---|---|
+| 混淆矩阵 | PNG 热力图（`outputs/gbdt/confusion_matrix.png`） | 始终 |
+| ROC 曲线 | PNG 曲线图（`outputs/gbdt/roc_curve.png`） | 始终 |
+| 特征重要性 | PNG 柱状图（`outputs/gbdt/feature_importance.png`） | 始终 |
+| 学习曲线 | PNG 曲线图（`outputs/gbdt/learning_curve.png`） | 始终 |
+| 训练超参数日志 | 终端打印（n_estimators、learning_rate、max_depth、subsample） | `train_model(...)` 调用 |
 
-1. 类别混淆结构
-2. 概率区分能力
-3. 重要性是否集中
-4. 训练/验证走势是否分裂
+### 未实现（以及原因）
 
-| 图像 | 重点观察什么 |
+| 未实现的评估项 | 原因 |
 |---|---|
-| 混淆矩阵 | 哪些类别最容易混淆 |
-| ROC 曲线 | 模型对不同类别的概率区分能力 |
-| 特征重要性图 | 主要依赖哪些特征 |
-| 学习曲线 | 是否过拟合、欠拟合或样本量不足 |
+| 准确率/精确率/召回率/F1 硬数字打印 | 教学型代码通过混淆矩阵可视化间接呈现 |
+| 每轮迭代的训练损失曲线 | 需要从 `train_score_` 提取——但当前用学习曲线覆盖了类似需求 |
+| 早停（early stopping） | 需要额外划分验证集——增加教学复杂度 |
+| 与 Bagging 的性能定量对比 | 两个算法的数据和任务不同，直接对比不公平 |
+| 特征交互效应分析 | 属于深度分析——超出教学型流水线范围 |
+| SHAP 值 / 部分依赖图 | 需要额外依赖（shap 库）——当前保持最小依赖原则 |
 
 ### 理解重点
 
-- 混淆矩阵帮助你理解“分错在哪里”。
-- ROC 曲线帮助你理解“概率输出有没有区分力”。
-- 特征重要性图帮助你理解“模型主要看什么”。
-- 学习曲线帮助你理解“当前 boosting 配置与样本量是否匹配”。
+- GBDT 的评估体系比 Bagging 更丰富——四项图表输出覆盖了分类性能（混淆矩阵 + ROC）、特征诊断（特征重要性）和模型健康度（学习曲线）三个维度。
+- "未实现"并非"做不到"——教学型流水线选择最具代表性的评估项，保持轻量。
 
-## 7. 当前实现没有做什么
+## 6. GBDT vs Bagging 评估对比
 
-### 参数速览（本节）
-
-当前源码未包含的内容：
-
-1. 显式数值指标打印
-2. 交叉验证结果表格
-3. 早停训练
-
-| 未实现项 | 当前状态 |
-|---|---|
-| accuracy / precision / recall / F1 / AUC 打印 | 未在流水线中出现 |
-| 交叉验证明细表 | 未在流水线中出现 |
-| 早停逻辑 | 当前训练封装未使用 |
+| 评估维度 | Bagging | GBDT |
+|---|---|---|
+| 硬分类评估 | 混淆矩阵（2×2 二分类） | 混淆矩阵（3×3 三分类） |
+| 概率评估 | ROC 曲线（1 条，二分类） | ROC 曲线（每类 1 条 + 平均，三分类） |
+| 特征诊断 | 无 | **特征重要性**——基于分裂增益 |
+| 模型健康度 | 无 | **学习曲线**——训练/验证准确率变化 |
+| 训练内诊断 | **OOB 得分**——Bagging 独有 | `train_score_`——每轮迭代训练得分 |
+| 基学习器诊断 | `estimators_`——80 棵分类树 | `estimators_`——600 棵回归树 |
+| 评估项数量 | 3（混淆矩阵 + ROC + OOB） | 4（混淆矩阵 + ROC + 特征重要性 + 学习曲线） |
 
 ### 理解重点
 
-- 评估章节必须以源码为准，不能把“GBDT 常见训练技巧”写成“当前仓库已经实现”。
-- 当前实现的评估重点是四类图像，而不是数值指标面板。
-- 如果后续扩展这部分，最自然的方向是补指标打印或更一致的学习曲线配置说明。
-
-## 评估图表
-
-![混淆矩阵](../../../outputs/gbdt/confusion_matrix.png)
-![ROC曲线](../../../outputs/gbdt/roc_curve.png)
-![特征重要性](../../../outputs/gbdt/feature_importance.png)
+- Bagging 有 OOB（免费泛化估计）但无特征重要性——因为并行随机采样的特征重要性不够稳定。
+- GBDT 有特征重要性和学习曲线但无 OOB——因为串行训练没有"天然留出"的样本。
+- 两者是互补的评估体系——各有各的优势诊断工具。
 
 ## 常见坑
 
-1. 只看 ROC 曲线，不看混淆矩阵，错过具体类别混淆情况。
-2. 只看特征重要性图，不看学习曲线和分类结果，误把“重要性高”当成“分类一定好”。
-3. 误以为当前流水线已经输出了 accuracy / AUC 指标表，实际源码并没有这些步骤。
+1. 只看特征重要性柱状图的高度就下结论——高度受特征尺度影响，标准化后可比性更好。
+2. 忽略学习曲线中两条曲线之间的间隙——间隙越大，过拟合越严重。
+3. 把特征重要性当成因果关系——高重要性只说明"该特征被用于分裂很多次"，不说明因果关系。
+4. 忽略 `n_estimators=100`（学习曲线）与 `n_estimators=200`（主模型）的差异——学习曲线的 GBDT 配置与主模型不同。
 
 ## 小结
 
-- 当前 GBDT 的评估主线由四部分组成：混淆矩阵、ROC 曲线、特征重要性图和学习曲线。
-- 它们分别从类别错误结构、概率区分能力、特征贡献和训练趋势四个角度解释模型表现。
-- 只有把这四条线索一起看，才能更完整地理解当前实现的表现。
+- GBDT 有四项评估输出：混淆矩阵（多分类硬标签）→ ROC 曲线（one-vs-rest 软概率）→ 特征重要性（自动特征选择）→ 学习曲线（过拟合/欠拟合诊断）——四者从分类性能、特征贡献、模型健康度三个维度完整描述模型质量。
+- 特征重要性是 GBDT 独有的诊断优势——基于 200 棵树的分裂增益累积，比 Bagging 的并行随机采样更稳定。
+- 学习曲线是偏差-方差状态的标准诊断工具——两条曲线（训练集/验证集）的位置和间隙直接反映欠拟合或过拟合。
