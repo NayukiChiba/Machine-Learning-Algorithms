@@ -5,10 +5,6 @@ outline: deep
 
 # SVC 支持向量分类
 
-> 对应代码：`pipelines/classification/svc.py`、`model_training/classification/svc.py`
->
-> 运行方式：`python -m pipelines.classification.svc`
-
 ## 本章目标
 
 1. 明确本分册对应的 SVC 源码入口与运行方式。
@@ -33,8 +29,8 @@ outline: deep
 |---|---|
 | 训练模型 | `SVC(C=1.0, kernel='rbf', gamma='scale', random_state=42)` |
 | 数据切分 | `train_test_split(..., test_size=0.2, random_state=42, stratify=y)` |
-| 特征预处理 | `StandardScaler` 仅在训练集 `fit`，测试集 `transform` |
-| 正式预测输出 | `y_pred = model.predict(X_test_s)` |
+| 特征预处理 | `StandardScaler` 仅在训练集 `fit`，测试集 `transform`——标准化对 RBF 核方法至关重要，因为距离计算对特征尺度敏感 |
+| 正式预测输出 | `y_pred = model.predict(X_test_s)`——基于决策函数 $\text{sign}(f(\mathbf{x}))$ 的硬分类 |
 | 评估方式 | 混淆矩阵 + PCA 2D 决策边界 + 学习曲线 |
 
 ## 阅读路线
@@ -59,8 +55,8 @@ python -m pipelines.classification.svc
 ### 理解重点
 
 - 这个命令会串起当前 SVC 分册中最核心的工程流程。
-- 运行后会训练一个 RBF 核 SVC 模型，并输出混淆矩阵、决策边界图和学习曲线。
-- 当前任务是监督二分类，因此 `label` 会真实参与模型拟合与测试集预测。
+- 运行后会训练一个 RBF 核 SVC 模型（求解对偶优化问题），并输出混淆矩阵、决策边界图和学习曲线。
+- 当前任务是监督二分类（同心圆），数据本身线性不可分——因此默认 RBF 核是该数据形态的直接回应。
 
 ## 先修
 
@@ -72,5 +68,5 @@ python -m pipelines.classification.svc
 ## 小结
 
 - 本分册严格对应当前仓库中的 SVC 源码实现。
-- 阅读时建议始终把文档内容与 `pipelines/classification/svc.py` 和 `model_training/classification/svc.py` 对照起来看。
-- 如果已经熟悉整体入口，可以直接从“数据构成”“模型构建”或“训练与预测”章节开始阅读。
+- SVC 的核心特点：判别式模型 + 最大间隔优化 + 核技巧（将非线性问题映射为高维线性问题）——与逻辑回归（线性判别式）、KNN（基于实例）、决策树（递归划分）、GaussianNB（生成式）在建模思路上有本质区别。
+- 当前使用 `make_circles` 构造的同心圆数据 + `SVC(kernel='rbf')`，是展示核方法处理非线性分类的最经典教学配置。
