@@ -5,15 +5,11 @@ outline: deep
 
 # DBSCAN 密度聚类
 
-> 对应代码：`pipelines/clustering/dbscan.py`、`model_training/clustering/dbscan.py`
->
-> 运行方式：`python -m pipelines.clustering.dbscan`
-
 ## 本章目标
 
 1. 明确本分册对应的 DBSCAN 源码入口与运行方式。
 2. 理解当前 DBSCAN 文档各章节分别负责解释什么内容。
-3. 建立从数据、模型、训练到可视化评估的整体阅读路线。
+3. 建立从数据、模型、训练到可视化评估的整体阅读路线——注意这是无监督聚类，与分类分册有本质差异。
 
 ## 对应代码速览
 
@@ -30,10 +26,10 @@ outline: deep
 | 项目 | 当前实现 |
 |---|---|
 | 训练模型 | `DBSCAN(eps=0.3, min_samples=5, metric='euclidean')` |
-| 数据来源 | `ClusteringData.dbscan()` 调用 `make_moons(...)` |
-| 特征预处理 | `StandardScaler().fit_transform(X)` |
-| 训练输入 | 去掉 `true_label` 后的二维特征 |
-| 评估呈现 | 聚类散点图 + `true_label` 对照 + 簇数量/噪声点数量日志 |
+| 数据来源 | `make_moons(n_samples=400, noise=0.08, random_state=42)` |
+| 特征预处理 | `StandardScaler().fit_transform(X)`——对基于距离的 `eps` 邻域判定至关重要 |
+| 训练方式 | `model.fit(X_scaled)`——无监督，不传入标签 |
+| 评估呈现 | 聚类散点图（预测簇 vs 真实标签对照）+ 簇数量/噪声点数量日志 |
 
 ## 阅读路线
 
@@ -57,8 +53,8 @@ python -m pipelines.clustering.dbscan
 ### 理解重点
 
 - 这个命令会串起当前 DBSCAN 分册中最核心的工程流程。
-- 运行后会训练一个 DBSCAN 模型，并输出聚类分布图。
-- 当前流程是无监督聚类，因此 `true_label` 仅用于结果对照，不参与拟合。
+- 运行后会训练一个 DBSCAN 模型（沿密度可达关系扩展簇），并输出聚类分布对照图。
+- 当前流程是**无监督聚类**——`true_label` 仅用于结果对照，不参与 `fit()`。这是与分类分册最根本的差异。
 
 ## 先修
 
@@ -70,5 +66,5 @@ python -m pipelines.clustering.dbscan
 ## 小结
 
 - 本分册严格对应当前仓库中的 DBSCAN 源码实现。
-- 阅读时建议始终把文档内容与 `pipelines/clustering/dbscan.py` 和 `model_training/clustering/dbscan.py` 对照起来看。
-- 如果已经熟悉整体入口，可以直接从“数据构成”“模型构建”或“训练与预测”章节开始阅读。
+- DBSCAN 的核心特点：密度聚类 + 无需预设簇数 + 天然识别噪声点 + 能发现任意形状簇——与 KMeans（中心式聚类、需预设 $k$、偏好球形簇）在建模思路上有本质区别。
+- 当前使用 `make_moons` 构造的双月牙数据 + `DBSCAN(eps=0.3, min_samples=5)`，是展示基于密度的非球形聚类最经典的教学配置。

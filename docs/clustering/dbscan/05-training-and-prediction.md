@@ -5,65 +5,48 @@ outline: deep
 
 # 训练与预测
 
-> 对应代码：`pipelines/clustering/dbscan.py`、`model_training/clustering/dbscan.py`
->
-> 运行方式：`python -m pipelines.clustering.dbscan`
-
 ## 本章目标
 
-1. 按源码顺序看清当前 DBSCAN 流水线到底执行了哪些步骤。
-2. 理解聚类场景下“训练结果输出”和监督学习里的“预测”有何不同。
-3. 明确 `labels_` 与可视化之间的连接关系，以及为什么当前实现不强调新样本预测。
+1. 按源码顺序看清当前 DBSCAN 流水线从数据复制到聚类输出的完整步骤。
+2. 理解 DBSCAN 无训练/测试切分、无 `predict()` 的工程特征——与分类分册有本质差异。
+3. 理解 `fit()` 即聚类、`labels_` 即输出的流程特征。
 
 ## 重点方法与概念速览
 
 | 名称 | 类型 | 作用 |
 |---|---|---|
 | `dbscan_data.copy()` | 方法 | 复制原始数据，避免修改源对象 |
-| `data.drop(columns=["true_label"])` | 操作 | 去掉参考标签列，保留训练特征 |
-| `StandardScaler().fit_transform(X)` | 方法 | 标准化特征 |
-| `train_model(X_scaled)` | 函数 | 训练 DBSCAN 模型 |
-| `model.labels_` | 属性 | 返回训练样本的簇分配结果 |
-| `plot_clusters(...)` | 函数 | 绘制聚类结果与真实标签对照图 |
+| `StandardScaler` | 类 | 对全量特征做一致性标准化——`eps` 邻域判定的前置条件 |
+| `train_model(...)` | 函数 | 调用 `DBSCAN.fit()` 执行密度聚类，返回模型对象 |
+| `model.fit(X_scaled)` | 方法 | 在标准化特征上执行密度聚类——标签生成、簇分配一步到位 |
+| `model.labels_` | 属性 | 聚类结果的唯一输出——每个样本被分配到簇编号或 $-1$（噪声） |
 
-## 1. 流水线从复制数据开始
+## 1. 流水线起点：复制数据并拆出特征与对照标签
 
 ### 示例代码
 
 ```python
 data = dbscan_data.copy()
-```
-
-### 理解重点
-
-- 当前流水线先复制 `dbscan_data`，这样后续即使做列拆分或其他处理，也不会影响原始数据对象。
-- 这种写法和回归分册保持一致，体现了“原始数据只读、流程内部再处理”的习惯。
-
-## 2. 拆出 `y_true`，但不把它送进模型
-
-### 示例代码
-
-```python
 y_true = data["true_label"].values
 X = data.drop(columns=["true_label"])
 ```
 
 ### 理解重点
 
-- `y_true` 在当前仓库里只用于训练后的结果对照，不参与 `fit(...)`。
-- `X` 才是送进 DBSCAN 的真正输入特征。
-- 这是聚类文档里最需要反复强调的一点：当前任务是无监督训练，不是分类。
+- `.copy()` 确保后续处理不修改全局 `dbscan_data`。
+- `true_label` 被单独保存为 `y_true`——它**不参与**后续的 `fit()`，只在最后的 `plot_clusters(...)` 中作为对照显示。
+- 这是聚类与分类最根本的工程差异——没有"标签=训练目标"的概念。
 
-## 3. 训练前先做标准化
+## 2. 标准化
 
-### 参数速览（本节）
+### 参数速览
 
 适用 API：`StandardScaler().fit_transform(X)`
 
-| 参数名 | 当前对象 | 说明 |
-|---|---|---|
-| `X` | `x1`、`x2` 组成的特征表 | DBSCAN 训练输入 |
-| 返回值 | `X_scaled` | 标准化后的特征矩阵 |
+| 参数名 | 类型 | 说明 | 示例取值 |
+|---|---|---|---|
+| `X` | `DataFrame`，形状 $(400, 2)$ | 去掉 `true_label` 后的全量特征矩阵 | `X` |
+| 输出 | `ndarray` | $z_{ij} = (x_{ij} - \mu_j) / \sigma_j$，均值为 0 标准差为 1 | `X_scaled` |
 
 ### 示例代码
 
@@ -74,11 +57,20 @@ X_scaled = scaler.fit_transform(X)
 
 ### 理解重点
 
-- DBSCAN 用 `eps` 来定义邻域半径，因此特征必须处于可比较的尺度。
-- 当前流水线没有拆训练集/测试集，所以直接对全量 `X` 做 `fit_transform(...)`。
-- 这里和监督学习分册不同，不涉及“只在训练集上拟合标准化统计量”的问题。
+- DBSCAN 流水线**没有**训练/测试切分——无监督聚类不需要验证集。
+- `fit_transform` 直接在全量数据上计算统计量并变换——不存在测试集数据泄露的风险。
+- 标准化是必须的——`eps=0.3` 作为绝对距离阈值，其几何意义依赖于各维度尺度一致。
 
-## 4. 训练步骤实际只有一次 `train_model(...)`
+## 3. 密度聚类：`fit()` 即训练 + 预测
+
+### 参数速览
+
+适用 API：`train_model(X_scaled)` → `model.fit(X_scaled)`
+
+| 参数名 | 类型 | 说明 | 示例取值 |
+|---|---|---|---|
+| `X_scaled` | `ndarray`，形状 $(400, 2)$ | 标准化后的全量特征矩阵——DBSCAN 的唯一输入 | `X_scaled` |
+| 无 `y` 参数 | — | DBSCAN 是无监督算法——`fit(X)` 不接受标签 | — |
 
 ### 示例代码
 
@@ -88,27 +80,45 @@ model = train_model(X_scaled)
 
 ### 理解重点
 
-- 这里没有 `y_train`，也没有单独验证集。
-- `train_model(...)` 内部会创建 `DBSCAN(...)` 并执行 `model.fit(X_train)`。
-- 训练结束后，模型对象内部已经包含当前样本的聚类标签结果。
+- `DBSCAN.fit(X_scaled)` 内部流程：遍历所有点 → 对每个点计算 $\epsilon$ 邻域 → 判定核心/边界/噪声 → 沿密度可达关系 BFS/DFS 扩展簇 → 生成 `labels_`。
+- 这**既是训练也是预测**——DBSCAN 没有分离的 `fit()` + `predict()` 两阶段。对于新样本，sklearn 的 DBSCAN 无法直接预测簇归属。
+- 与分类模型比较：分类流程是 `fit(X, y)` → `predict(X_test)`，DBSCAN 流程是 `fit(X)` → `labels_`。
 
-## 5. 当前实现里的“预测”如何体现
+## 4. 获取聚类结果
 
-在监督学习里，“预测”通常指对未见样本调用 `predict(...)`。当前 DBSCAN 流水线没有单独写这一步，而是直接使用训练完成后的模型属性：
+### 参数速览
+
+| 属性名 | 类型 | 说明 | 示例取值 |
+|---|---|---|---|
+| `labels_` | `ndarray`，形状 $(400,)$ | 每个样本的簇分配标签，$\{-1, 0, 1, \dots, k-1\}$ | `model.labels_` |
+| `n_clusters` | `int` | 排除 $-1$ 后的簇数量 | 当前期望为 `2` |
+| `n_noise` | `int` | 标签为 $-1$ 的噪声点数量 | 取决于 `noise=0.08` 下落入月牙间隙的样本数 |
 
 ### 示例代码
 
 ```python
-labels_pred = model.labels_
+labels = model.labels_
+n_clusters = len(set(labels)) - (1 if -1 in labels else 0)
+n_noise = (labels == -1).sum()
 ```
 
 ### 理解重点
 
-- `model.labels_` 是对训练样本的簇分配结果，可以理解为“当前数据的聚类输出”。
-- 与 KMeans 不同，标准 `sklearn.cluster.DBSCAN` 并不提供同风格的 `predict(new_X)` 接口。
-- 因此本分册更适合把重点放在“训练后标签输出”而不是“新样本预测”。
+- `model.labels_` 是 DBSCAN 的唯一输出——它就是这个聚类算法的"预测结果"。
+- `-1` 标签是 DBSCAN 特定的噪声标记——与分类模型中的 `predict` 输出不同，噪声点不属于任何类别。
+- 没有 `model.predict(X_test)`——这是 DBSCAN 在预测能力上的天然限制（sklearn 实现）。新样本的簇归属需通过其他方式推断（如最近邻搜索）。
 
-## 6. 训练结果如何进入可视化
+## 5. 聚类结果可视化
+
+### 参数速览
+
+适用函数：`plot_clusters(X_scaled, labels_pred=model.labels_, labels_true=y_true, ...)`
+
+| 参数名 | 类型 | 说明 | 示例取值 |
+|---|---|---|---|
+| `X_scaled` | `ndarray`，形状 $(400, 2)$ | 标准化后的全量特征，用于散点图的坐标 | `X_scaled` |
+| `labels_pred` | `ndarray`，形状 $(400,)$ | DBSCAN 的预测簇标签（含 $-1$ 噪声） | `model.labels_` |
+| `labels_true` | `ndarray`，形状 $(400,)$ | 真实簇标签（仅用于视觉对照） | `y_true` |
 
 ### 示例代码
 
@@ -125,27 +135,19 @@ plot_clusters(
 
 ### 理解重点
 
-- `labels_pred` 决定左图的预测簇着色，其中 `-1` 对应噪声点。
-- `labels_true` 决定右图的真实标签着色，用于对照观察。
-- 当前 DBSCAN 流水线没有传入 `centers`，因为 DBSCAN 本身没有簇中心这一结果对象。
-
-## 7. 为什么这里不强调新样本预测
-
-### 理解重点
-
-- 对当前实现来说，最重要的是理解 DBSCAN 如何给现有样本分簇并识别噪声。
-- 新样本如何增量归类，不是当前源码展示的重点，也不是标准 `DBSCAN` 在 scikit-learn 中最直接提供的接口能力。
-- 因此“训练与预测”这一章在 DBSCAN 分册里，应被理解为“训练与标签输出”。
+- `plot_clusters(...)` 是当前 DBSCAN 分册唯一的可视化函数——与分类分册的四类评估（混淆矩阵+ROC+决策边界+学习曲线）完全不同。
+- 双侧对照布局：左侧显示 `labels_pred`（算法聚类结果），右侧显示 `labels_true`（真实簇标签）——帮助读者直观判断算法是否恢复了真实结构。
+- `labels_pred` 中的噪声点（$-1$）通常以特殊颜色（如黑色或灰色）标记，便于识别。
 
 ## 常见坑
 
-1. 把 `labels_` 误认为真实类别标签。
-2. 误以为 DBSCAN 必须像监督学习一样区分 `fit` 和 `predict` 两个阶段。
-3. 忘记训练前先删除 `true_label`。
-4. 把新样本预测流程写成当前流水线里已经存在的实现。
+1. 期望当前流水线有训练/测试切分——无监督聚类不划分训练集和验证集。
+2. 误以为 `model.predict(X_new)` 可用——sklearn 的 DBSCAN 不支持 `predict()`，`fit()` 即得到全部聚类结果。
+3. 把 `true_label` 当成 `fit()` 的输入——它仅用于最终的可视化对照。
+4. 把 DBSCAN 的训练流程理解成"先生成模型，再用于预测新数据"——它是直接对输入数据进行标记，没有分离的训练和推理阶段。
 
 ## 小结
 
-- 当前 DBSCAN 流水线的训练过程非常直接：复制数据、拆出 `y_true`、标准化、训练模型、绘图展示。
-- 对本仓库而言，`model.labels_` 就是训练样本的聚类输出，而噪声点会通过 `-1` 显式体现。
-- 把这条链路看清楚后，再读评估与工程实现章节会更容易建立全局理解。
+- 当前 DBSCAN 流水线极为简洁：复制数据 → 剥离 `true_label` → 全量标准化 → `fit(X)` 密度聚类 → `labels_` 直接作为聚类输出 → 可视化对照。
+- 与分类分册的核心差异：无切分（无 `train_test_split`）、无监督标签、无 `predict()`（`fit()` 即输出）、无概率输出、无混淆矩阵/ROC/学习曲线。
+- 这种简洁性源于 DBSCAN 的算法特性——它是直接对数据点做密度连通分析，而非训练一个可泛化的判别函数。

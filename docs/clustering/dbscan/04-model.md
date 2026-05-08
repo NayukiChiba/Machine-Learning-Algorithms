@@ -5,41 +5,35 @@ outline: deep
 
 # 模型构建
 
-> 对应代码：`model_training/clustering/dbscan.py`
->
-> 运行方式：`python -m model_training.clustering.dbscan`
-
 ## 本章目标
 
 1. 明确 `train_model(...)` 如何构建并训练 `DBSCAN`。
-2. 理解 `labels_`、簇数量和噪声点数量在当前源码中的作用。
-3. 看清训练函数除了 `fit(...)` 之外还做了哪些工程封装。
+2. 理解 `DBSCAN` 的核心构造器参数（`eps`、`min_samples`、`metric`）及其数学对应关系。
+3. 看清训练完成后最重要的模型属性——`labels_`、`core_sample_indices_`、以及衍生的簇数量和噪声点数量。
 
 ## 重点方法与概念速览
 
 | 名称 | 类型 | 作用 |
 |---|---|---|
-| `train_model(...)` | 函数 | 构建并训练一个 `sklearn.cluster.DBSCAN` 模型 |
-| `DBSCAN(...)` | 类 | scikit-learn 提供的密度聚类器 |
-| `model.fit(X_train)` | 方法 | 在训练数据上执行密度聚类 |
-| `model.labels_` | 属性 | 返回训练样本的簇分配结果，噪声为 `-1` |
-| `n_clusters` | 统计量 | 从 `labels_` 推导出的簇数量 |
-| `n_noise` | 统计量 | 从 `labels_ == -1` 推导出的噪声点数量 |
-| `@print_func_info` / `@timeit` | 装饰器 | 打印函数信息并统计训练耗时 |
+| `train_model(...)` | 函数 | 构建并训练一个 `sklearn.cluster.DBSCAN` 模型，打印聚类统计日志 |
+| `DBSCAN(...)` | 类 | scikit-learn 提供的密度聚类器——基于 $\epsilon$ 邻域和密度连通关系 |
+| `model.fit(X_train)` | 方法 | 在训练数据上执行密度聚类——注意无监督：只传特征不传标签 |
+| `model.labels_` | 属性 | 每个训练样本的簇分配结果，噪声点标记为 $-1$ |
+| `model.core_sample_indices_` | 属性 | 核心点在训练数组中的索引位置 |
 
 ## 1. `train_model(...)` 的函数签名
 
-### 参数速览（本节）
+### 参数速览
 
 适用函数：`train_model(X_train, eps=0.3, min_samples=5, metric='euclidean')`
 
-| 参数名 | 本例取值 | 说明 |
-|---|---|---|
-| `X_train` | 标准化后的特征 | 输入给 `DBSCAN.fit(...)` 的训练矩阵 |
-| `eps` | `0.3` | 邻域半径 |
-| `min_samples` | `5` | 核心点判定阈值 |
-| `metric` | `'euclidean'` | 距离度量方式 |
-| 返回值 | `DBSCAN` | 已训练完成的模型对象 |
+| 参数名 | 类型 | 说明 | 示例取值 |
+|---|---|---|---|
+| `X_train` | `array_like` | 标准化后的特征矩阵，形状 $(400, 2)$，传入 `DBSCAN.fit()` | `X_scaled` |
+| `eps` | `float` | $\epsilon$ 邻域半径。$\epsilon \uparrow$ → 更大邻域、更多核心点、簇数减少。默认 `0.3` | `0.2`、`0.3`、`0.5`、`1.0` |
+| `min_samples` | `int` | 核心点判定阈值 $\text{MinPts}$。值越大，成为核心点的门槛越高。默认 `5` | `3`、`5`、`10` |
+| `metric` | `str` | 距离度量方式。默认 `'euclidean'`（欧氏距离 $d = \sqrt{\sum (x_j - z_j)^2}$） | `'euclidean'`、`'manhattan'` |
+| 返回值 | `DBSCAN` | 已完成 `fit()` 的模型对象，含 `labels_`、`core_sample_indices_` 等属性 | — |
 
 ### 示例代码
 
@@ -51,59 +45,62 @@ model = train_model(X_scaled)
 
 ### 理解重点
 
-- 当前训练入口很直接，只负责训练一个 `DBSCAN` 模型。
-- 和监督学习分册不同，这里没有 `y_train`，也没有训练集/测试集拆分。
-- 所有默认超参数都写在函数签名里，阅读成本较低，适合作为源码入口。
+- 当前入口只负责构建一个 `DBSCAN` 并 `fit`——没有参数网格搜索或多度量对比。
+- 和监督学习分册的 `train_model` 不同，这里**没有 `y_train` 参数**——DBSCAN 是无监督算法。
+- `train_model(...)` 是对 `sklearn.cluster.DBSCAN` 的薄封装——算法本体是 scikit-learn 的 C++ 实现。
 
-## 2. `DBSCAN(...)` 的实际构建方式
+## 2. `DBSCAN` 构造器参数
 
-### 参数速览（本节）
+### 参数速览
 
-适用 API（分项）：
+适用 API：`DBSCAN(eps=0.3, min_samples=5, metric='euclidean')`
 
-1. `DBSCAN(...)`
-2. `model.fit(X_train)`
-
-| 项目 | 当前实现 | 说明 |
-|---|---|---|
-| 训练模型 | `DBSCAN(...)` | 使用源码中显式给出的超参数 |
-| 输入特征 | `X_train` | 当前流水线传入的是标准化后的二维特征 |
-| 训练方式 | `fit(X_train)` | 无监督拟合，不需要监督标签 |
-| 返回值 | 已训练模型 | 含 `labels_` 等聚类结果 |
+| 参数名 | 类型 | 说明 | 示例取值 |
+|---|---|---|---|
+| `eps` | `float` | $\epsilon$ 邻域半径。决定了"多近算邻居"。默认 `0.5`，当前源码显式设为 `0.3` | `0.2`、`0.3`、`0.5`、`1.0` |
+| `min_samples` | `int` | 核心点判定阈值 $\text{MinPts}$。决定了"多密算高密度区域"。$d$ 维数据建议 $\geq d+1$，默认 `5` | `3`、`5`、`10`、`20` |
+| `metric` | `str` 或 `callable` | 距离度量。`'euclidean'`（欧氏距离）、`'manhattan'`（曼哈顿距离）、`'cosine'`（余弦距离）等。默认 `'euclidean'` | `'euclidean'`、`'manhattan'`、`'cosine'` |
+| `algorithm` | `str` | 最近邻搜索算法。`'auto'` 自动选择最优；`'ball_tree'` 球树；`'kd_tree'` KD 树；`'brute'` 暴力搜索。默认 `'auto'` | `'auto'`、`'ball_tree'`、`'kd_tree'`、`'brute'` |
+| `leaf_size` | `int` | BallTree 或 KDTree 的叶子节点大小。对构建索引速度和查询速度有影响，不影响聚类结果。默认 `30` | `20`、`30`、`50` |
+| `p` | `float` | Minkowski 距离的指数参数。`p=2` 等价于欧氏距离，`p=1` 等价于曼哈顿距离。仅当 `metric='minkowski'` 时生效。默认 `2` | `1`、`2` |
+| `n_jobs` | `int` 或 `None` | 并行计算的作业数。`None` 表示 1，`-1` 表示使用所有 CPU。默认 `None` | `None`、`-1`、`4` |
 
 ### 示例代码
 
 ```python
 model = DBSCAN(
-    eps=eps,
-    min_samples=min_samples,
-    metric=metric,
+    eps=0.3,
+    min_samples=5,
+    metric="euclidean",
 )
 model.fit(X_train)
 ```
 
 ### 理解重点
 
-- 仓库没有自己实现密度扩展过程，而是直接调用 scikit-learn 的成熟实现。
-- 当前封装的重点，不是重写算法，而是把超参数、训练耗时和结果日志组织清楚。
-- `fit(X_train)` 只接收特征，不接收标签，这一点和监督学习的 `.fit(X, y)` 有本质差异。
+- DBSCAN 的核心参数是 `eps` 和 `min_samples`——两者联合决定了点类型的划分（核心/边界/噪声）和最终的簇结构。
+- `eps` 的默认值是 `0.5`，但当前源码显式设为 `0.3`——这是针对标准化后双月牙数据的定制选择（月牙间距约 0.5，`0.3 < 0.5` 避免跨月牙连接）。
+- `min_samples=5` 对二维数据是一个合理起点——经验规则 $2d$ 到 $2d+1$，即二维下 4~5。
+- `algorithm='auto'`（默认）会根据数据量和特征维度自动选择最近邻搜索方式——对当前 400 样本 2 维数据，通常选用 KD 树。
+- 与分类模型（逻辑回归、SVC）的关键差异：DBSCAN 的 `fit()` 不接受标签参数 `y`——`fit(X)` 而非 `fit(X, y)`。
 
-## 3. 训练完成后最重要的模型属性与统计量
+## 3. 训练完成后的关键属性与统计量
 
-### 参数速览（本节）
+### 参数速览
 
-适用属性/统计量（分项）：
+| 属性名 | 类型 | 数学含义 | 说明 |
+|---|---|---|---|
+| `labels_` | `ndarray`，形状 `(n_samples,)` | 簇分配标签 | 每个训练样本所属簇的编号 $\{0, 1, \dots, k-1\}$，噪声点为 $-1$ |
+| `core_sample_indices_` | `ndarray`，形状 `(n_core_samples,)` | 核心点索引集 | 所有核心点在原始训练数组中的下标位置 |
+| `components_` | `ndarray`，形状 `(n_core_samples, n_features)` | 核心点特征值 | 所有核心点的特征向量——仅在内存高效模式下可用 |
+| `n_features_in_` | `int` | 特征维度 $d$ | 训练时输入的特征维数，当前为 `2` |
 
-1. `model.labels_`
-2. `n_clusters`
-3. `n_noise`
+### 衍生统计量
 
-| 名称 | 当前含义 | 作用 |
+| 统计量 | 计算方式 | 说明 |
 |---|---|---|
-| `labels_` | 每个训练样本所属簇编号 | 用于绘制预测簇标签图 |
-| `-1` | 特殊标签 | 表示噪声点 |
-| `n_clusters` | 排除 `-1` 后的簇数量 | 用于日志观察聚类结构 |
-| `n_noise` | `labels_ == -1` 的样本数 | 用于日志观察噪声规模 |
+| `n_clusters` | `len(set(labels_)) - (1 if -1 in labels_ else 0)` | 排除噪声后的簇数量——当前期望为 2（两个月牙） |
+| `n_noise` | `(labels_ == -1).sum()` | 被标记为噪声的样本数量——反映数据中密度不足的点规模 |
 
 ### 示例代码
 
@@ -111,56 +108,47 @@ model.fit(X_train)
 labels = model.labels_
 n_clusters = len(set(labels)) - (1 if -1 in labels else 0)
 n_noise = (labels == -1).sum()
+
+print(f"簇数量: {n_clusters}")
+print(f"噪声点数量: {n_noise}")
 ```
 
 ### 理解重点
 
-- `labels_` 是当前训练样本的聚类结果，因此它在本仓库里承担了“训练后簇分配输出”的角色。
-- 对 DBSCAN 来说，没有 KMeans 那样的 `cluster_centers_` 概念。
-- 当前分册最核心的结果解释，不是“簇中心在哪里”，而是“分出了几个簇、多少点被视为噪声”。
+- `labels_` 是 DBSCAN 最重要的输出——它不是单个预测值，而是对所有 400 个训练样本的簇分配。
+- `-1` 是 DBSCAN 的独特标签——与其他分类器的 `classes_` 不同，它专门标记不满足密度连通条件的噪声点。
+- DBSCAN **没有** `cluster_centers_`（KMeans 有）——因为密度聚类不依赖簇中心。
+- DBSCAN **没有** `predict()` 方法——sklearn 的 DBSCAN 只能对训练数据本身做聚类，不能预测新样本。这是一个常见的工程限制。
 
 ## 4. 训练阶段的工程封装
 
-除了 `DBSCAN(...).fit(...)` 之外，`train_model(...)` 还做了几层工程包装。
-
-### 参数速览（本节）
-
-适用装饰与输出（分项）：
-
-1. `@print_func_info`
-2. `@timeit`
-3. `with timer(name="模型训练耗时")`
-4. 日志输出 `eps`、`min_samples`、`簇数量`、`噪声点数量`
+除了 `DBSCAN(...).fit(...)` 之外，`train_model(...)` 还做了几层工程包装：
 
 | 输出项 | 作用 |
 |---|---|
-| 函数调用标题 | 帮助在终端中定位训练入口 |
-| 训练耗时 | 观察当前模型拟合时间 |
-| `模型训练完成` | 明确训练阶段已结束 |
-| `eps` / `min_samples` | 确认当前参数配置 |
-| `簇数量` / `噪声点数量` | 快速查看当前聚类结构 |
+| `@print_func_info` 标题 | 帮助在终端中定位训练入口 |
+| `@timeit` 训练耗时 | 观察密度聚类执行时间 |
+| `eps` / `min_samples` 日志 | 确认当前参数配置 |
+| `簇数量` 日志 | 快速查看算法发现的簇数——与真实类别数对比 |
+| `噪声点数量` 日志 | 观察被识别为离群点的样本规模 |
 
 ### 理解重点
 
-- 当前封装强调的是教学型可读性，而不是复杂训练框架。
-- 这一层封装把“构建模型”“训练模型”“打印结果”收在一个函数里，方便文档和流水线复用。
-- 从工程角度看，这样的拆分也让 `pipelines/clustering/dbscan.py` 保持简洁。
-
-## 参数诊断可视化
-
-![Eps扫描曲线](../../../outputs/dbscan/eps_sweep_curve.png)
-
-![K距离曲线](../../../outputs/dbscan/k_distance_curve.png)
+- 当前封装强调教学型可读性——通过装饰器打印函数信息和耗时，通过 `print` 输出聚类统计量。
+- `簇数量` 和 `噪声点数量` 是 DBSCAN 独有的日志输出——它们直接反映算法的聚类行为。
+- 这一层封装把"构建模型""训练模型""打印统计"收在一个函数里，方便文档和流水线复用。
 
 ## 常见坑
 
-1. 误以为 `train_model(...)` 需要传入 `y_train`。
-2. 误以为 DBSCAN 训练完成后也会得到簇中心。
-3. 只看 `labels_`，却忽略 `-1`、簇数量和噪声点数量才是当前实现的关键输出。
-4. 忘记当前 `X_train` 应该是标准化后的特征。
+1. 误以为 `train_model(...)` 需要传入 `y_train`——DBSCAN 是无监督算法，不接受标签。
+2. 误以为 DBSCAN 训练完成后能得到簇中心——它没有 `cluster_centers_` 属性。
+3. 期望能用 `model.predict(X_new)` 预测新样本——sklearn 的 DBSCAN 不支持，需结合 `NearestNeighbors` 等后处理。
+4. 只看 `labels_`，却忽略 `-1`（噪声）、`n_clusters` 和 `n_noise` 才是理解聚类行为的关键统计量。
+5. 忘记当前 `X_train` 应该是标准化后的特征——`eps` 是绝对数值，未经标准化的数据会让邻域判定失真。
 
 ## 小结
 
-- `train_model(...)` 是本仓库 DBSCAN 的核心训练入口。
-- 它本质上是对 `sklearn.cluster.DBSCAN` 的薄封装，重点在于把超参数、训练结果和日志输出组织清楚。
-- 读懂这一层之后，再看流水线中的数据准备、可视化和评估过程会更顺畅。
+- `train_model(...)` 是本仓库 DBSCAN 的核心训练入口，是对 `sklearn.cluster.DBSCAN` 的薄封装。
+- `DBSCAN` 的核心参数是 `eps`（$\epsilon$ 邻域半径）和 `min_samples`（核心点阈值）——两者联合决定簇的形态和噪声规模。
+- 训练完成后的关键属性：`labels_`（含噪声标签 $-1$）、`core_sample_indices_`（核心点索引）——通过它们推导 `n_clusters` 和 `n_noise`。
+- DBSCAN 没有簇中心、没有 `predict()`、不接收 `y` 标签——这三个"没有"是它与分类模型和 KMeans 最核心的工程差异。
