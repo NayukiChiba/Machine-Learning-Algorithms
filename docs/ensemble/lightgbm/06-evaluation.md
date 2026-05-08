@@ -5,204 +5,170 @@ outline: deep
 
 # 评估与诊断
 
-> 对应代码：`pipelines/ensemble/lightgbm.py`、`result_visualization/confusion_matrix.py`、`result_visualization/roc_curve.py`、`result_visualization/feature_importance.py`
->  
-> 相关对象：`plot_confusion_matrix(...)`、`plot_roc_curve(...)`、`plot_feature_importance(...)`
-
 ## 本章目标
 
-1. 明确当前仓库实际使用了哪些评估手段，而不是泛泛讨论所有分类指标。
-2. 理解混淆矩阵、ROC 曲线和特征重要性图分别能帮助我们诊断什么。
-3. 明确当前实现没有做哪些数值指标输出，以免误读源码能力边界。
+1. 理解当前 LightGBM 流水线的三项评估输出——混淆矩阵、ROC 曲线、特征重要性。
+2. 理解每项评估背后的诊断意图和观察重点。
+3. 明确当前流水线**已实现**和**未实现**的评估项——以及未实现的原因。
 
 ## 重点方法与概念速览
 
 | 名称 | 类型 | 作用 |
 |---|---|---|
-| `plot_confusion_matrix(...)` | 函数 | 生成分类混淆矩阵图 |
-| `plot_roc_curve(...)` | 函数 | 生成 ROC 曲线图 |
-| `plot_feature_importance(...)` | 函数 | 生成特征重要性柱状图 |
-| `y_pred` | 预测结果 | 当前 LightGBM 输出的离散类别 |
-| `y_scores` | 概率输出 | 当前 LightGBM 输出的多分类概率 |
+| 混淆矩阵 | 图表 | 4×4 热力图——显示每个真实类别被预测为各个类别的样本数，对角线为正确预测 |
+| ROC 曲线 | 图表 | one-vs-rest 多分类 ROC——4 个类别各一条曲线 + macro/micro 平均 |
+| 特征重要性 | 图表 | 20 个特征按分裂增益排序——区分有效特征（x1~x8）与冗余/噪声特征 |
+| 终端日志 | 文本 | 训练完成时打印超参数和训练耗时——无准确率等汇总指标 |
 
-## 1. 当前实现真正做了什么评估
+## 1. 混淆矩阵
 
-### 参数速览（本节）
+`plot_confusion_matrix(y_test, y_pred, title="LightGBM 混淆矩阵", ...)` 绘制测试集混淆矩阵。
 
-适用评估手段（本节）：
+### 参数速览
 
-1. 混淆矩阵
-2. ROC 曲线
-3. 特征重要性图
-
-| 评估方式 | 来源 | 用途 |
-|---|---|---|
-| 混淆矩阵 | `plot_confusion_matrix(...)` | 观察各类别之间的混淆情况 |
-| ROC 曲线 | `plot_roc_curve(...)` | 观察模型概率区分能力 |
-| 特征重要性图 | `plot_feature_importance(...)` | 观察哪些特征更重要 |
-
-### 理解重点
-
-- 当前 LightGBM 流水线没有显式打印 accuracy、precision、recall、F1、AUC 等数值指标。
-- 这并不表示这些指标不重要，而是说明本仓库当前实现更强调图像化诊断。
-- 因此阅读这一分册时，不能把“指标表格”想成已经在源码里实现的内容。
-
-## 2. 混淆矩阵是怎么生成的
-
-### 参数速览（本节）
-
-适用函数：`plot_confusion_matrix(y_true, y_pred, title=..., dataset_name=..., model_name=...)`
-
-| 参数名 | 本例取值 | 说明 |
-|---|---|---|
-| `y_true` | `y_test` | 测试集真实类别 |
-| `y_pred` | 预测类别 | 模型对测试集的离散输出 |
-| `dataset_name` | `"lightgbm"` | 输出目录名 |
-| `model_name` | `"lightgbm"` | 输出文件名前缀 |
+| 参数名 | 类型 | 说明 | 示例取值 |
+|---|---|---|---|
+| `y_test` | `Series`，形状 `(200,)` | 测试集真实标签 $\{0, 1, 2, 3\}$ | 来自 `train_test_split` |
+| `y_pred` | `ndarray`，形状 `(200,)` | 模型预测标签——300 棵树加权累加后 argmax | `model.predict(X_test_s)` |
+| `title` | `str` | 图表标题 | `"LightGBM 混淆矩阵"` |
+| `dataset_name` | `str` | 数据集名称——决定输出路径 | `"lightgbm"` |
+| `model_name` | `str` | 模型名称——决定输出路径 | `"lightgbm"` |
 
 ### 示例代码
 
 ```python
+y_pred = model.predict(X_test_s)
 plot_confusion_matrix(
-    y_test,
-    y_pred,
+    y_test, y_pred,
     title="LightGBM 混淆矩阵",
-    dataset_name=DATASET,
-    model_name=MODEL,
+    dataset_name="lightgbm",
+    model_name="lightgbm",
 )
 ```
 
+### 输出
+
+![混淆矩阵](../../../outputs/lightgbm/confusion_matrix.png)
+
 ### 理解重点
 
-- 混淆矩阵最适合看“哪些类和哪些类容易混在一起”。
-- 对当前 4 分类任务来说，它比单个准确率更容易暴露具体错误结构。
-- 这也是为什么当前分册把它作为第一类评估图输出。
+- 这是一个 4×4 的矩阵（四分类）——对角线越亮、非对角越暗，模型越好。
+- 对于 `class_sep=0.6` 的数据，对角线通常有明显集中趋势——但非对角会有一定分散，因为类别间隔较小。
+- 与 Bagging（2×2）和 GBDT（3×3）对比——LightGBM 的 4×4 矩阵反映更高维度的分类复杂度。
 
-## 3. ROC 曲线是怎么生成的
+## 2. ROC 曲线
 
-### 参数速览（本节）
+`plot_roc_curve(y_test, y_scores, ...)` 绘制多分类 ROC 曲线。
 
-适用函数：`plot_roc_curve(y_true, y_scores, title=..., dataset_name=..., model_name=...)`
+### 参数速览
 
-| 参数名 | 本例取值 | 说明 |
-|---|---|---|
-| `y_true` | `y_test` | 测试集真实类别 |
-| `y_scores` | `model.predict_proba(X_test_s)` | 每个类别的预测概率 |
-| `dataset_name` | `"lightgbm"` | 输出目录名 |
-| `model_name` | `"lightgbm"` | 输出文件名前缀 |
+| 参数名 | 类型 | 说明 | 示例取值 |
+|---|---|---|---|
+| `y_test` | `Series`，形状 `(200,)` | 测试集真实标签 $\{0, 1, 2, 3\}$ | 来自 `train_test_split` |
+| `y_scores` | `ndarray`，形状 `(200, 4)` | 4 列概率输出——每列对应一个类别的 softmax 概率 | `model.predict_proba(X_test_s)` |
+| `title` | `str` | 图表标题 | `"LightGBM ROC 曲线"` |
+| `dataset_name` | `str` | 数据集名称 | `"lightgbm"` |
+| `model_name` | `str` | 模型名称 | `"lightgbm"` |
 
 ### 示例代码
 
 ```python
 y_scores = model.predict_proba(X_test_s)
 plot_roc_curve(
-    y_test,
-    y_scores,
+    y_test, y_scores,
     title="LightGBM ROC 曲线",
-    dataset_name=DATASET,
-    model_name=MODEL,
+    dataset_name="lightgbm",
+    model_name="lightgbm",
 )
 ```
 
+### 输出
+
+![ROC 曲线](../../../outputs/lightgbm/roc_curve.png)
+
 ### 理解重点
 
-- ROC 曲线依赖的是概率输出，而不是离散类别预测。
-- 这也是为什么当前流水线要额外调用 `predict_proba(...)`。
-- 它帮助你观察模型在不同阈值下的区分能力，而不只是最后给出的硬分类结果。
+- 多分类 ROC 使用 one-vs-rest 策略——每个类别作为"正类"，其余三类作为"负类"，分别画一条 ROC 曲线。
+- 同时绘制 macro-average（各曲线等权平均）和 micro-average（全局 TP/FP 累加）。
+- LightGBM 的 `predict_proba()` 与 sklearn 接口完全兼容——无需 `hasattr` 条件检查。
 
-## 4. 特征重要性图是怎么生成的
+## 3. 特征重要性
 
-### 参数速览（本节）
+`plot_feature_importance(model, feature_names=feature_names, ...)` 绘制特征重要性柱状图。
 
-适用函数：`plot_feature_importance(model, feature_names=None, top_n=None, title='特征重要性', dataset_name='default', model_name='model', figsize=(10, 7))`
+### 参数速览
 
-| 参数名 | 本例取值 | 说明 |
-|---|---|---|
-| `model` | 训练好的 LightGBM 模型 | 提供特征重要性来源 |
-| `feature_names` | `list(X.columns)` | 为每个重要性值提供真实列名 |
-| `top_n` | `None` | 当前实现展示全部特征 |
-| `dataset_name` | `"lightgbm"` | 输出目录名 |
-| `model_name` | `"lightgbm"` | 输出文件名前缀 |
+| 参数名 | 类型 | 说明 | 示例取值 |
+|---|---|---|---|
+| `model` | `LGBMClassifier` | 已训练的 LightGBM 模型——含 `feature_importances_` 属性 | `model` |
+| `feature_names` | `list[str]` | 特征名列表 | `["x1", "x2", ..., "x20"]` |
+| `title` | `str` | 图表标题 | `"LightGBM 特征重要性"` |
+| `top_n` | `int` | 显示前 N 个重要特征。默认全部 | `10`、`20` |
 
 ### 示例代码
 
 ```python
+feature_names = list(X.columns)
 plot_feature_importance(
     model,
     feature_names=feature_names,
     title="LightGBM 特征重要性",
-    dataset_name=DATASET,
-    model_name=MODEL,
+    dataset_name="lightgbm",
+    model_name="lightgbm",
 )
 ```
 
-### 理解重点
+### 输出
 
-- 特征重要性图帮助你理解模型主要依赖哪些特征做分类判断。
-- 对当前高维数据来说，这一步尤其有意义，因为并不是所有 20 个特征都同样重要。
-- 但它依然不能替代分类结果分析，因为“重要性高”不等于“分类一定好”。
-
-## 5. 看三类图时重点观察什么
-
-### 参数速览（本节）
-
-适用观察点（本节）：
-
-1. 类别混淆结构
-2. 概率区分能力
-3. 重要性是否集中
-
-| 图像 | 重点观察什么 |
-|---|---|
-| 混淆矩阵 | 哪些类别最容易混淆 |
-| ROC 曲线 | 模型对不同类别的概率区分能力 |
-| 特征重要性图 | 主要依赖哪些特征 |
-
-### 理解重点
-
-- 混淆矩阵帮助你理解“分错在哪里”。
-- ROC 曲线帮助你理解“概率输出有没有区分力”。
-- 特征重要性图帮助你理解“模型主要看什么”。
-- 只有把这三条线索结合起来，才能完整理解当前 LightGBM 分类模型。
-
-## 6. 当前实现没有做什么
-
-### 参数速览（本节）
-
-当前源码未包含的内容：
-
-1. 显式数值指标打印
-2. 学习曲线
-3. 交叉验证
-4. 早停训练
-
-| 未实现项 | 当前状态 |
-|---|---|
-| accuracy / precision / recall / F1 / AUC 打印 | 未在流水线中出现 |
-| 学习曲线 | 当前流程未调用相关函数 |
-| 交叉验证 | 未在流水线中出现 |
-| 早停逻辑 | 当前训练封装未使用 |
-
-### 理解重点
-
-- 评估章节必须以源码为准，不能把“LightGBM 常见训练技巧”写成“当前仓库已经实现”。
-- 当前实现的评估重点是三类图像，而不是数值指标面板或训练过程监控曲线。
-- 如果后续扩展这部分，最自然的方向是补指标打印、学习曲线或验证集早停流程。
-
-## 评估图表
-
-![混淆矩阵](../../../outputs/lightgbm/confusion_matrix.png)
-![ROC曲线](../../../outputs/lightgbm/roc_curve.png)
 ![特征重要性](../../../outputs/lightgbm/feature_importance.png)
+
+### 理解重点
+
+- LightGBM 的特征重要性基于**分裂增益**（`gain`）——每次树分裂时该特征带来的损失下降量累加。
+- 预期观察：有效特征（`x1`~`x8`）的重要性显著高于冗余特征（`x9`~`x13`）和噪声特征（`x14`~`x20`）。
+- 与 GBDT 的对比意义——在更高维度（20 vs 8）下，LightGBM 的特征重要性排序更稳定，因为列采样减少了单特征的过拟合倾向。
+
+## 4. 已实现 vs 未实现的评估
+
+### 参数速览
+
+| 评估项 | 状态 | 原因 |
+|---|---|---|
+| 混淆矩阵 | 已实现 | 分类评估的基础指标——4×4 多分类热力图 |
+| ROC 曲线 | 已实现 | LightGBM 始终支持 `predict_proba`——无需条件检查 |
+| 特征重要性 | 已实现 | LightGBM 的 `feature_importances_` 属性——训练后自动可用 |
+| 准确率/精确率/召回率/F1 打印 | **未实现** | 可从混淆矩阵直接计算——图表更直观 |
+| 学习曲线 | **未实现** | GBDT 分册已展示该评估——LightGBM 不做重复诊断 |
+| 决策边界可视化 | **未实现** | 数据为 20 维——无法在二维平面上直接绘制 |
+| LightGBM vs GBDT 训练耗时对比 | **未实现** | 可在练习中手动对比——流水线保持简洁 |
+| 交叉验证 | **未实现** | 当前专注于单次 split 的评估——留出法在教学场景下足够 |
+
+### 理解重点
+
+- LightGBM 的评估集比 GBDT 少一项（学习曲线），比 Bagging 多一项（特征重要性）。
+- 决策边界无法绘制（20 维）——与 Bagging 的 2 维双月牙形成有趣的对比。
+- 评估设计遵循"够用且不冗余"原则——已通过 GBDT 展示过的诊断手段不再重复。
+
+## 5. LightGBM vs GBDT vs Bagging 评估对比
+
+| 评估维度 | Bagging | GBDT | LightGBM | 差异原因 |
+|---|---|---|---|---|
+| 混淆矩阵 | 2×2（二分类） | 3×3（三分类） | 4×4（四分类） | 数据类别数递增 |
+| ROC 曲线 | 条件可用 | 始终可用 | 始终可用 | `predict_proba` 支持情况 |
+| 特征重要性 | 无 | 8 特征排序 | 20 特征排序 | LightGBM 维度最高 |
+| 学习曲线 | 无 | 有 | 无 | LightGBM 教学精简 |
+| OOB 得分 | 有 | 无 | 无 | 仅 Bagging 有 Bootstrap |
+| 训练耗时日志 | 有 | 有 | 有 | 三者一致 |
 
 ## 常见坑
 
-1. 只看 ROC 曲线，不看混淆矩阵，错过具体类别混淆情况。
-2. 只看特征重要性图，不看分类结果，误把“重要性高”当成“分类一定好”。
-3. 误以为当前流水线已经输出了 accuracy / AUC 指标表或学习曲线，实际源码并没有这些步骤。
+1. 期待 4×4 混淆矩阵像二分类一样简洁——多分类混淆矩阵有 16 个单元格，需逐类对比。
+2. 把特征重要性排序当成"因果关系的证明"——重要性仅反映特征在模型中被使用的程度，不等于因果影响。
+3. 忽略 4 个类别之间的结构性混淆——某些类别间的混淆可能是数据固有的。
+4. 认为评估项越多越好——教学场景下冗余评估反而分散注意力。
 
 ## 小结
 
-- 当前 LightGBM 的评估主线由三部分组成：混淆矩阵、ROC 曲线和特征重要性图。
-- 它们分别从类别错误结构、概率区分能力和特征贡献三个角度解释模型表现。
-- 只有把这三条线索一起看，才能更完整地理解当前实现的表现。
+- LightGBM 当前有三项评估输出：混淆矩阵（4×4 多分类热力图）、ROC 曲线（one-vs-rest 4 类）、特征重要性（20 特征按增益排序）。
+- 与 GBDT 对比：少一项学习曲线（教学精简），多 4 个分类维度和 12 个特征维度的评估挑战。
+- 未实现的评估项（学习曲线、准确率打印、决策边界、交叉验证）有明确的教学设计考量——保持流水线聚焦 LightGBM 独有价值的诊断。

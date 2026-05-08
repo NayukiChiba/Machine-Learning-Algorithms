@@ -5,116 +5,113 @@ outline: deep
 
 # 练习与参考文献
 
-> 对应代码：`data_generation/ensemble.py`、`model_training/ensemble/lightgbm.py`、`pipelines/ensemble/lightgbm.py`
->  
-> 相关对象：`EnsembleData.lightgbm()`、`train_model(...)`
-
 ## 本章目标
 
-1. 用练习把前面章节里的数据、模型、训练和评估方法串起来。
-2. 引导读者直接修改当前源码中的关键参数，观察 LightGBM 行为变化。
-3. 给出与当前分册强相关的参考资料，便于继续深入。
+1. 通过自检问题确认对 LightGBM 核心概念的理解程度。
+2. 通过动手练习在代码层面验证和探索 LightGBM 的行为。
+3. 提供扩展阅读的参考文献入口。
 
-## 自检题
+## 重点方法与概念速览
 
-1. 当前仓库为什么要用高维多分类数据来讲 LightGBM？
-2. 在本项目里，`num_leaves`、`max_depth`、`learning_rate` 分别在控制什么？
-3. 为什么当前流水线既要调用 `predict(...)`，又要调用 `predict_proba(...)`？
-4. 混淆矩阵、ROC 曲线和特征重要性图分别更适合回答哪类问题？
-5. 当前数学章节里提到的 Leaf-wise、GOSS、EFB，和这份高维数据有什么关系？
+| 名称 | 类型 | 作用 |
+|---|---|---|
+| 自检问题 | 诊断 | 确认对 Leaf-wise 生长、GOSS、EFB、直方图、LightGBM vs GBDT 等核心概念的理解 |
+| 动手练习 | 实践 | 修改超参数观察 LightGBM 行为变化——建立参数-效果的直觉 |
+| 参考文献 | 入口 | 提供 LightGBM 原始论文、官方文档和扩展阅读 |
 
-## 动手练习
+## 1. 自检问题
 
-### 1. 调整 `num_leaves`
+1. LightGBM 的 Leaf-wise 生长策略与 GBDT 的 Level-wise 生长策略有何本质区别？Leaf-wise 在同等叶子数下为何损失下降更快？
 
-修改 `model_training/ensemble/lightgbm.py` 中的默认参数：
+2. 直方图算法如何将连续特征离散化？离散化带来的速度收益和可能的精度损失分别是什么？
 
-```python
-num_leaves: int = 31
-```
+3. GOSS（Gradient-based One-Side Sampling）的采样策略与简单的随机子采样（`subsample`）有何本质不同？为什么保留大梯度样本比均匀随机采样更高效？
 
-观察重点：
+4. 为什么 LightGBM 使用 `num_leaves` 而非 `max_depth` 来控制树复杂度？在 `max_depth=-1` 的情况下，`num_leaves=31` 的树可能有多深？
 
-- 叶子数增大或减小时，混淆矩阵是否明显变化。
-- ROC 曲线是否出现更明显的提升或波动。
-- 特征重要性分布是否更集中或更分散。
+5. EFB（Exclusive Feature Bundling）在什么场景下最有效？在当前稠密 20 维数据上，EFB 的收益如何？
 
-### 2. 调整 `max_depth`
+6. LightGBM 与 sklearn GBDT 在训练速度、参数体系、默认配置上的核心差异有哪些？
 
-修改以下默认参数：
+7. 当前 LightGBM 流水线中 `n_jobs=-1` 的并行发生在哪个层面？为什么 Boosting 算法仍能利用多核并行？
 
-```python
-max_depth: int = -1
-```
+## 2. 动手练习
 
-观察重点：
+### 练习 1：改变叶子数 `num_leaves`
 
-- 限制深度后，模型是否更保守。
-- 混淆矩阵中是否出现更明显的欠拟合迹象。
-- 由此理解 `num_leaves` 和 `max_depth` 的配合关系。
-
-### 3. 调整 `n_estimators` 与 `learning_rate`
-
-尝试分别修改：
+将 `num_leaves` 分别设为 `7`、`15`、`31`、`63`、`127`，观察特征重要性和混淆矩阵的变化。
 
 ```python
-n_estimators
-learning_rate
+model = train_model(X_train_s, y_train, num_leaves=15)
 ```
 
-观察重点：
+回答：`num_leaves` 增大后，模型复杂度如何变化？`num_leaves=127` 在 800 个训练样本上是否会过拟合？
 
-- boosting 轮数和步长变化后，分类结果是否明显变化。
-- ROC 曲线的整体形态是否变化。
-- 不同参数组合下，模型是更激进还是更保守。
+### 练习 2：改变学习率 `learning_rate`
 
-### 4. 调整 `subsample`、`colsample_bytree`
-
-尝试调小或调大以下参数：
+将 `learning_rate` 分别设为 `0.01`、`0.02`、`0.05`、`0.1`、`0.2`，同时保持 `n_estimators=300`，观察混淆矩阵。
 
 ```python
-subsample
-colsample_bytree
+model = train_model(X_train_s, y_train, learning_rate=0.01)
 ```
 
-观察重点：
+回答：`learning_rate=0.01` 且 `n_estimators=300` 时，模型是否欠拟合？你需要增加多少棵树来匹配较小学习率？
 
-- 样本和特征采样比例变化后，分类稳定性是否变化。
-- 特征重要性图是否明显改变。
-- 由此理解采样机制对泛化能力的影响。
+### 练习 3：改变列采样 `colsample_bytree`
 
-### 5. 修改数据生成难度
-
-在 `data_generation/ensemble.py` 中调整以下参数之一：
+将 `colsample_bytree` 分别设为 `0.3`、`0.5`、`0.7`、`0.9`、`1.0`，观察特征重要性的变化。
 
 ```python
-lgbm_class_sep
-lgbm_n_features
-lgbm_n_informative
+model = train_model(X_train_s, y_train, colsample_bytree=0.3)
 ```
 
-观察重点：
+回答：`colsample_bytree` 减小后，特征重要性排序是否发生明显变化？这种变化对理解"哪些特征重要"有什么影响？
 
-- 类间间隔更小后，混淆矩阵是否变得更复杂。
-- 高维程度和有效特征数变化后，重要性分布是否更集中。
-- ROC 曲线是否明显受到影响。
+### 练习 4：对比 GBDT 训练速度
 
-## 阅读建议
+使用相同数据，分别训练 sklearn GBDT 和 LightGBM，对比训练耗时。
 
-1. 先运行一次默认源码，记录训练日志、混淆矩阵、ROC 曲线和特征重要性图。
-2. 每次只改一个参数，例如只改 `num_leaves` 或只改 `learning_rate`，避免多个变量同时变化。
-3. 观察时优先对比三条线索：分类结果变化、概率区分能力变化、特征重要性变化。
+```python
+from model_training.ensemble.gbdt import train_model as train_gbdt
+from model_training.ensemble.lightgbm import train_model as train_lgbm
 
-## 参考文献
+# 使用相同数据（需要调整维度匹配）
+model_gbdt = train_gbdt(X_train_s, y_train, n_estimators=200, learning_rate=0.1, max_depth=3)
+model_lgbm = train_lgbm(X_train_s, y_train, n_estimators=300, learning_rate=0.05, num_leaves=31)
+```
 
-- LightGBM 官方文档：`https://lightgbm.readthedocs.io/`
-- LightGBM Python API 文档：`https://lightgbm.readthedocs.io/en/latest/Python-API.html`
-- Ke et al., *LightGBM: A Highly Efficient Gradient Boosting Decision Tree*.
-- Hastie, Tibshirani, Friedman, *The Elements of Statistical Learning*, Boosting and Tree Methods.
-- Geron, *Hands-On Machine Learning*, Gradient Boosting and LightGBM 相关章节。
+回答：在 1000 样本 × 20 特征的数据上，LightGBM 比 GBDT 快多少？随着数据规模增大，这个差距如何变化？
+
+### 练习 5：改变数据规模观察速度优势
+
+修改 `data_generation/ensemble.py` 中的 `n_samples` 参数（分别设为 `500`、`1000`、`2000`、`5000`），重新运行 LightGBM 和 GBDT 流水线。
+
+```python
+# 在 data_generation/ensemble.py 的 __init__ 中
+class EnsembleData:
+    n_samples: int = 5000  # 试试 500, 1000, 2000, 5000
+```
+
+回答：数据规模从 500 增加到 5000 时，LightGBM 相对于 GBDT 的速度倍数如何变化？这验证了直方图算法的什么性质？
+
+## 3. 参考文献
+
+| 序号 | 文献 | 说明 |
+|---|---|---|
+| 1 | Ke, G., Meng, Q., Finley, T., et al. (2017). *LightGBM: A Highly Efficient Gradient Boosting Decision Tree*. NeurIPS 2017. | LightGBM 原始论文——GOSS、EFB 和 Leaf-wise 生长的完整推导和实验验证 |
+| 2 | LightGBM 官方文档 — [Parameters](https://lightgbm.readthedocs.io/en/latest/Parameters.html) | 全部参数、加速技巧和调参指南的权威参考 |
+| 3 | scikit-learn 兼容接口 — [LGBMClassifier](https://lightgbm.readthedocs.io/en/latest/pythonapi/lightgbm.LGBMClassifier.html) | scikit-learn 兼容接口的 API 参考——与 sklearn 无缝集成 |
+| 4 | Friedman, J. H. (2001). *Greedy Function Approximation: A Gradient Boosting Machine*. Annals of Statistics, 29(5), 1189-1232. | GBDT 的理论基础——LightGBM 在此数学框架上进行工程优化 |
+
+## 常见坑
+
+1. 把 `num_leaves=31` 和 `max_depth=-1` 当成"不受控的完全生长"——`num_leaves` 是实际复杂度控制参数，`max_depth=-1` 只是不另设上限。
+2. 在新环境中忘记 `lightgbm` 是可选依赖——导入前需 `try/except`，在未安装环境运行会抛出 `ImportError`。
+3. 把 LightGBM 的 `n_jobs=-1` 与 Bagging 的并行等同——LightGBM 的并行在直方图构建和特征扫描层面，而非基学习器级。
+4. 在极小数据（<100 样本）上使用 LightGBM——直方图离散化损失可能超过精度收益。
 
 ## 小结
 
-- 这部分练习最重要的目标，不是死记所有参数，而是亲手观察叶子数、深度、采样比例和数据难度如何一起影响分类结果。
-- 当前源码已经提供了高维多分类数据、训练日志和三类评估图，因此很适合做基础 LightGBM 实验。
-- 把这些练习做完，再回头看数学原理、模型构建和评估章节，理解通常会更扎实。
+- 7 个自检问题覆盖 LightGBM 的核心创新：Leaf-wise vs Level-wise、直方图算法、GOSS vs 随机采样、`num_leaves` vs `max_depth`、EFB、与 sklearn GBDT 对比、并行机制。
+- 5 个动手练习从不同角度探索 LightGBM 的行为——改变叶子数、学习率、列采样、对比 GBDT 速度、改变数据规模。
+- 4 篇参考文献从原始论文（Ke et al. 2017）→ 官方文档 → API 参考 → GBDT 理论基础构成完整的阅读路线。

@@ -5,139 +5,189 @@ outline: deep
 
 # 数学原理
 
-> 对应代码：`model_training/ensemble/lightgbm.py`
->  
-> 相关对象：`LGBMClassifier`、`train_model(...)`
-
 ## 本章目标
 
-1. 理解 LightGBM 为什么在 boosting 框架下进一步强调训练效率和高维处理能力。
-2. 理解直方图算法、GOSS、EFB、Leaf-wise 生长各自解决什么问题。
-3. 把这些算法思想和当前源码中的 `num_leaves`、`max_depth`、`subsample`、`colsample_bytree` 对应起来。
+1. 理解 LightGBM 与 GBDT 共享的数学基础——加法模型、负梯度拟合、多类对数损失。
+2. 理解 LightGBM 独有的工程优化：Leaf-wise 生长策略、直方图算法、GOSS 采样、EFB 特征捆绑。
+3. 理解 LightGBM 的参数选择如何在数学上影响模型——`num_leaves` vs `max_depth`、`learning_rate` 收缩。
 
 ## 重点方法与概念速览
 
 | 名称 | 类型 | 作用 |
 |---|---|---|
-| 直方图算法 | 训练优化 | 降低连续特征分裂搜索成本 |
-| GOSS | 样本采样策略 | 优先保留梯度大的样本 |
-| EFB | 特征压缩策略 | 合并互斥特征以降低维度 |
-| Leaf-wise 生长 | 树结构策略 | 每次优先分裂收益最大的叶子 |
-| `num_leaves` / `max_depth` | 源码参数 | 控制 Leaf-wise 生长复杂度 |
+| 加法模型 | 数学框架 | $F_M(\mathbf{x}) = \sum_{m=1}^{M} \nu h_m(\mathbf{x})$——GBDT 系列共享的建模方式 |
+| 负梯度 | 优化理论 | 每棵树拟合 $\tilde{y}_i^{(m)} = -\left[\frac{\partial L(y_i, F(\mathbf{x}_i))}{\partial F(\mathbf{x}_i)}\right]_{F=F_{m-1}}$——函数空间的梯度下降 |
+| Leaf-wise 生长 | 树生长策略 | 每次选择损失下降最多的叶子分裂——更快的收敛速度和更深的树 |
+| 直方图算法 | 加速技术 | 连续特征离散化为 $k$ 个 bins——分割点搜索从 $O(n\log n)$ 降到 $O(k)$ |
+| GOSS | 采样策略 | 保留所有大梯度样本 + 从小梯度样本中随机采样——在信息损失很小的前提下加速训练 |
+| EFB | 降维技术 | 将互斥特征捆绑为一个特征——减少直方图构建开销 |
 
-## 1. 核心思想
+## 1. GBDT 数学基础（与 LightGBM 共享）
 
-LightGBM 是微软开发的高效梯度提升框架，在 XGBoost 基础上通过两大创新显著降低训练复杂度：GOSS（单边梯度采样）和 EFB（互斥特征捆绑）。
+LightGBM 在数学框架上与 GBDT 完全一致——都是加法模型 + 负梯度拟合。
+
+### 加法模型
+
+$$
+F_M(\mathbf{x}) = \sum_{m=1}^{M} \nu \cdot h_m(\mathbf{x}; \Theta_m)
+$$
+
+其中 $h_m$ 是第 $m$ 棵回归树，$\nu$ 是学习率（`learning_rate`），$\Theta_m$ 是树的结构参数。
+
+### 多类对数损失
+
+对于 $K=4$ 类分类问题，使用多类对数损失（交叉熵）：
+
+$$
+L(\{y_i\}, \{F(\mathbf{x}_i)\}) = -\sum_{i=1}^{N} \sum_{k=1}^{K} y_{ik} \log p_k(\mathbf{x}_i)
+$$
+
+其中 $p_k(\mathbf{x}_i) = \frac{\exp(F_k(\mathbf{x}_i))}{\sum_{j=1}^{K} \exp(F_j(\mathbf{x}_i))}$（softmax），$y_{ik}$ 是 one-hot 编码。
+
+### 负梯度（残差近似）
+
+第 $m$ 轮对第 $k$ 类的负梯度：
+
+$$
+\tilde{y}_{ik}^{(m)} = -\left[\frac{\partial L}{\partial F_k(\mathbf{x}_i)}\right]_{F=F^{(m-1)}} = y_{ik} - p_k^{(m-1)}(\mathbf{x}_i)
+$$
+
+即**真实概率与当前预测概率之差**——新树拟合这个差值。
 
 ### 理解重点
 
-- 当前源码中的 `LGBMClassifier(...)`，本质上仍然是 boosting 树模型。
-- 它和 XGBoost 一样都属于多轮加法模型，但更强调高维和大规模场景下的训练效率。
-- 当前高维多分类数据，就是为了给这些机制提供更合适的展示背景。
+- LightGBM 在数学上等价于 GBDT——差异全在工程实现，不在数学框架。
+- 负梯度 $\tilde{y}_i$ 在分类场景下恰好是"残差概率"——当前预测的 softmax 概率与真实 one-hot 的偏差。
+- 学习率 $\nu=0.05$ 表示每棵树只修正残差概率的 5%——防止单棵树修正过猛。
 
-## 2. 与 XGBoost 的对比
+## 2. Leaf-wise 生长（LightGBM 独有）
 
-| 维度 | XGBoost | LightGBM |
-|------|---------|----------|
-| 树生长策略 | Level-wise（逐层） | Leaf-wise（逐叶） |
-| 分割点发现 | 预排序 / 近似 | 直方图算法 |
-| 样本采样 | 均匀随机 | GOSS 梯度采样 |
-| 特征处理 | 常规处理 | EFB 特征捆绑 |
+### Level-wise（sklearn GBDT）的局限
+
+传统 GBDT 按层生长（Level-wise）：每层所有叶子同时分裂——不分"重要"和"不重要的"叶子。
+
+### Leaf-wise 策略
+
+LightGBM 按叶子生长（Leaf-wise）：在所有叶子中，选择**分裂后损失下降最多**的叶子进行分裂。
+
+数学上：设叶子的分裂增益为 $\Delta L_j$，选择
+
+$$
+j^* = \arg\max_j \Delta L_j
+$$
+
+重复此过程直到叶子数达到 `num_leaves=31`。
+
+### 参数关系
+
+| Leaf-wise 关键参数 | 数学含义 |
+|---|---|
+| `num_leaves=31` | 最大叶子数——复杂度上限 |
+| `max_depth=-1` | 不限制深度——Leaf-wise 树可能很深但叶子数固定 |
 
 ### 理解重点
 
-- 这张表说明 LightGBM 不只是“另一个 boosting 工具”，而是在树生长和训练优化上都有自己的设计重点。
-- 当前分册在模型构建和调参章节里，也要围绕这些差异来解释参数作用。
-- 尤其是 `num_leaves`，它和 Leaf-wise 生长策略关系非常紧密。
+- Leaf-wise 使 Loss 下降更高效——同等叶子数下，Leaf-wise 树的损失低于 Level-wise 树。
+- 代价是可能生成极深的树（深度 $\gg \log_2(\text{num\_leaves})$）——因此需要 `min_child_samples=20` 等正则化手段防止叶子过小。
+- 与 Bagging 的完全生长树不同——Leaf-wise 仍受 `num_leaves` 限制，不会无限生长。
 
-## 3. 直方图算法（Histogram-Based）
+## 3. 直方图算法
 
-将连续特征离散化为 $k$ 个 bin（通常 $k = 256$），通过直方图统计梯度之和与样本数，搜索最优分割点。
+### 传统方法：预排序
 
-- 时间复杂度从 $O(N \cdot d)$ 降至 $O(k \cdot d)$
-- 内存消耗大幅减少
+sklearn GBDT 对每个特征的每个分裂点，排序后逐一计算损失——复杂度 $O(n_{\text{unique}})$。
 
-直方图做差技巧：父节点直方图 = 左子 + 右子，因此只需计算较小子节点的直方图。
+### LightGBM：直方图分桶
+
+将连续特征值离散化为 $k$ 个 bins（直方图桶），只在桶边界搜索分裂点——复杂度 $O(k)$，$k \ll n_{\text{unique}}$。
+
+数学上：
+
+$$
+\text{bin}(x_j) = \lfloor k \cdot \frac{x_j - x_{\min}}{x_{\max} - x_{\min}} \rfloor
+$$
 
 ### 理解重点
 
-- 直方图算法的核心思想，是不在原始连续值上逐点搜索分裂，而是先分桶再搜索。
-- 这让 LightGBM 在高维、多样本数据上训练更快、更节省资源。
-- 当前源码没有显式暴露 bin 数等参数，但数学上这仍是理解 LightGBM 的基础。
+- 直方图加速是 LightGBM 快于 sklearn GBDT 3-5 倍的核心原因——在大数据上差距更大。
+- 分桶带来轻微的正则化效果——离散化后的分割点更粗糙，有助于防止过拟合。
+- 代价是牺牲了极细粒度的分割点——但在实践中，256 个桶通常足够（默认 `max_bin=255`）。
 
-## 4. GOSS：单边梯度采样
+## 4. GOSS（Gradient-based One-Side Sampling）
 
 ### 动机
 
-梯度大的样本对信息增益贡献更大。GOSS 保留所有梯度大的样本（前 $a\%$），对梯度小的样本随机采样 $b\%$。
+在 Boosting 中，大梯度样本（$|\tilde{y}_i|$ 大）对训练更重要——它们是"还没学好的样本"。
 
-### 算法
+### GOSS 策略
 
-1. 按梯度绝对值排序
-2. 选取前 $a \times N$ 个大梯度样本（集合 $A$）
-3. 从剩余样本中随机选取 $b \times (1-a) \times N$ 个（集合 $B$）
-4. 对 $B$ 中样本的梯度乘以放大系数 $\frac{1-a}{b}$，以修正采样偏差
+1. 按梯度绝对值 $|\tilde{y}_i|$ 排序所有样本
+2. 保留前 $a \times 100\%$ 的大梯度样本（不采样）
+3. 从剩余小梯度样本中随机采样 $b \times 100\%$
+4. 为小梯度样本乘以权重 $\frac{1-a}{b}$ 以补偿
 
-### 近似增益
-
-$$
-\tilde{V}_j(d) = \frac{1}{n}\left(\frac{(\sum_{x_i \in A_l} g_i + \frac{1-a}{b}\sum_{x_i \in B_l} g_i)^2}{n_l^j} + \frac{(\sum_{x_i \in A_r} g_i + \frac{1-a}{b}\sum_{x_i \in B_r} g_i)^2}{n_r^j}\right)
-$$
+当前源码 `subsample=0.9`（全局采样）——未显式启用 GOSS（需要分别设置 `top_rate` 和 `other_rate`）。但 `subsample` 机制与 GOSS 的思想一致：利用梯度信息偏向保留重要样本。
 
 ### 理解重点
 
-- GOSS 的核心不是“随机少看一些样本”，而是“优先保留更关键的样本”。
-- 从直觉上看，它把注意力更多放在当前更难学、梯度更大的样本上。
-- 当前流水线虽然没有单独展示梯度采样过程，但这仍是 LightGBM 高效性的关键来源之一。
+- GOSS 使得 LightGBM 在保持训练精度的前提下，减少了参与分裂计算的样本数。
+- 梯度是样本"重要性"的天然代理——大梯度样本是当前模型处理不好的样本。
 
-## 5. EFB：互斥特征捆绑
+## 5. EFB（Exclusive Feature Bundling）
 
 ### 动机
 
-高维稀疏数据中，许多特征几乎互斥（不会同时非零）。可以将它们捆绑成一个复合特征，降低维度。
+高维稀疏数据中，许多特征互斥（不会同时为非零值）。EFB 将互斥特征捆绑为一个特征，减少直方图构建开销。
 
-### 方法
-
-1. 构建特征冲突图（两个特征同时非零的样本越多，冲突越大）
-2. 使用贪心图着色算法将低冲突特征分为同色组
-3. 通过偏移方式将同组特征合并为一个数值特征
+对于当前 20 维稠密数据，EFB 的收益有限——但这是 LightGBM 在处理稀疏高维数据时的关键加速手段。
 
 ### 理解重点
 
-- EFB 的重点不在于“创造新特征语义”，而在于减少高维特征处理的工程成本。
-- 当前数据虽然不是典型 one-hot 稀疏矩阵，但高维分类背景依然能帮助理解为什么 LightGBM 会特别重视这类机制。
-- 这也是 LightGBM 分册和 XGBoost 分册在“效率主线”上的重要差别。
+- EFB 本质上是一个图着色问题——将互斥特征（冲突少的特征）分到同一组，每组构建一个共享直方图。
+- 在当前数据上 `n_features=20`，EFB 的收益不大——但数据维度提升到数千维时，EFB 的降维效果显著。
 
-## 6. Leaf-wise 生长
+## 6. 数学原理如何映射到当前源码
 
-与 XGBoost 常见的 Level-wise 不同，LightGBM 每次选择增益最大的叶子节点进行分裂：
+| 数学概念 | 数学符号/公式 | 代码实现 |
+|---|---|---|
+| 加法模型 | $F_M(\mathbf{x}) = \sum_{m=1}^{M} \nu h_m(\mathbf{x})$ | `LGBMClassifier(n_estimators=300, learning_rate=0.05)` |
+| 多类对数损失 | $L = -\sum_i \sum_k y_{ik} \log p_k(\mathbf{x}_i)$ | `objective='multiclass'`（内部默认） |
+| 负梯度 | $\tilde{y}_{ik} = y_{ik} - p_k(\mathbf{x}_i)$ | 内部自动计算 |
+| Leaf-wise 生长 | $\arg\max_j \Delta L_j$ | `num_leaves=31, max_depth=-1` |
+| 直方图分桶 | $\text{bin}(x) = \lfloor k \cdot (x - x_{\min})/(x_{\max} - x_{\min})\rfloor$ | `max_bin=255`（内部默认） |
+| 行采样 | 按梯度采样 | `subsample=0.9` |
+| 列采样 | 随机选择特征子集 | `colsample_bytree=0.9` |
+| Softmax 概率 | $p_k = \exp(F_k)/\sum_j \exp(F_j)$ | `model.predict_proba(X)` |
+| 学习率收缩 | $\nu \cdot h_m$ | `learning_rate=0.05` |
+| 标准化 | $z_j = (x_j - \mu_j)/\sigma_j$ | `StandardScaler` |
 
-- 优点：相同 leaf 数下模型精度更高
-- 缺点：容易过拟合（需要配合 `max_depth` 限制）
+## 7. LightGBM vs GBDT 数学对比
+
+| 维度 | GBDT (sklearn) | LightGBM |
+|---|---|---|
+| 加法模型 | $F_M = \sum \nu h_m$ | $F_M = \sum \nu h_m$——相同 |
+| 损失函数 | 多类对数损失 | 多类对数损失——相同 |
+| 负梯度 | $\tilde{y} = y - p$ | $\tilde{y} = y - p$——相同 |
+| 树生长策略 | Level-wise（按层） | Leaf-wise（按叶子）——**不同** |
+| 分裂点搜索 | 预排序 → 逐一计算 | 直方图分桶 → 桶边界搜索——**不同** |
+| 样本采样 | 随机子采样 | GOSS（梯度加权采样）——**不同** |
+| 特征降维 | 无 | EFB（互斥特征捆绑）——**不同** |
+| 树复杂度控制 | `max_depth=3` | `num_leaves=31`——**不同** |
 
 ### 理解重点
 
-- Leaf-wise 生长更激进，因为它每次都优先扩展“最值得切”的位置。
-- 这通常能更快提高拟合能力，但也更容易让局部结构长得过深。
-- 当前源码中的 `num_leaves=31` 和 `max_depth=-1`，就是这一策略在工程上的重要控制点。
-
-## 7. 数学原理如何映射到当前源码
-
-### 理解重点
-
-- Leaf-wise 生长在工程里最直接对应到 `num_leaves` 和 `max_depth`。
-- 样本和特征采样机制在当前源码里分别对应 `subsample` 和 `colsample_bytree`。
-- 当前训练代码没有手写 GOSS、EFB 或直方图算法，而是由 `LGBMClassifier.fit(...)` 内部完成。
-- 这说明数学页讲的是 LightGBM 的核心机制，而工程页则要明确当前仓库只是调用了现成实现。
+- LightGBM 在数学主链上与 GBDT 完全相同——差异全在算法实现的四个环节：生长策略、分裂点搜索、样本采样、特征处理。
+- 这四个差异使得 LightGBM 在训练速度上有数量级优势——但预测精度与调好参的 GBDT 通常相当。
 
 ## 常见坑
 
-1. 把 LightGBM 误解成“更快的 XGBoost”，却忽略 Leaf-wise、GOSS 和 EFB 才是它的重要特征。
-2. 只记住 Leaf-wise 更强，却忽略它也更容易过拟合，因此需要结合 `num_leaves`、`max_depth` 控制。
-3. 把数学页里的训练优化机制误读成当前仓库手写实现了这些底层逻辑。
+1. 把 `max_depth=-1` 当成"树可以无限大"——Leaf-wise 生长下，`num_leaves` 才是真正的复杂度上限。
+2. 把 GOSS 当成普通的随机子采样——GOSS 保留所有大梯度样本，不是均匀随机采样。
+3. 以为 EFB 总是有效——在稠密低维数据上，特征间几乎没有互斥关系，EFB 收益极小。
+4. 忽略学习率与树数量的耦合——$\nu$ 和 $M$ 共同决定总修正量 $M \times \nu$。
 
 ## 小结
 
-- LightGBM 的数学核心，不只是 boosting，而是围绕高维高效训练展开的一整套优化设计。
-- 直方图算法、GOSS、EFB 和 Leaf-wise 生长共同构成了它区别于其他 boosting 树模型的关键特点。
-- 当前源码中的 `num_leaves`、`max_depth`、`subsample`、`colsample_bytree` 等参数，正是这些思想在工程层面的直接映射。
+- LightGBM 的数学核心链与 GBDT 完全一致：加法模型 + 负梯度拟合 + 多类对数损失 + softmax 输出。
+- LightGBM 的工程优化链：Leaf-wise 生长（损失下降更高效）→ 直方图分桶（分裂搜索加速）→ GOSS（梯度加权采样）→ EFB（互斥特征捆绑）——四项优化在不改变数学框架的前提下大幅提升训练速度。
+- 当前源码 `LGBMClassifier(n_estimators=300, learning_rate=0.05, num_leaves=31, max_depth=-1, subsample=0.9, colsample_bytree=0.9)` 是轻量级高维数据的经典配置。

@@ -5,132 +5,104 @@ outline: deep
 
 # 数据构成
 
-> 对应代码：`data_generation/ensemble.py`、`data_generation/__init__.py`、`pipelines/ensemble/lightgbm.py`
->  
-> 相关对象：`EnsembleData.lightgbm()`、`lightgbm_data`
-
 ## 本章目标
 
-1. 明确本仓库 LightGBM 数据来自 `EnsembleData.lightgbm()` 的高维多分类构造逻辑。
-2. 明确特征列、标签列以及有效特征、冗余特征、噪声特征的整体结构。
-3. 明确分层切分与标准化的顺序和边界。
+1. 明确本仓库 LightGBM 数据来自 `EnsembleData.lightgbm()` 构造的高维多类别分类数据。
+2. 理解为什么选择高维数据——`n_features=20`（含 7 个纯噪声特征）充分展示 LightGBM 的直方图加速和 GOSS 采样优势。
+3. 明确当前流程中的训练/测试切分（分层抽样）和标准化顺序。
 
 ## 重点方法与概念速览
 
 | 名称 | 类型 | 作用 |
 |---|---|---|
-| `EnsembleData.lightgbm()` | 方法 | 生成 LightGBM 分类使用的高维多分类数据 |
-| `make_classification(...)` | 函数 | scikit-learn 提供的分类数据生成器 |
-| `lightgbm_data` | 变量 | 在 `data_generation/__init__.py` 中导出的数据对象 |
-| `label` | 列名 | 当前流水线中的分类目标列 |
+| `EnsembleData.lightgbm()` | 方法 | 生成 LightGBM 使用的高维多类别分类数据 |
+| `make_classification(...)` | 函数 | scikit-learn 提供的合成分类数据生成器 |
+| `lightgbm_data` | 变量 | 在 `data_generation/__init__.py` 中导出的全局 DataFrame |
+| `lgbm_class_sep` | 参数 | 类别间隔 `0.6`——较小的间隔提高分类难度，体现 Boosting 的偏差缩减能力 |
+| `StandardScaler` | 类 | 对特征做 Z-score 标准化——训练集拟合、测试集变换 |
 
-## 1. 本仓库数据入口
+## 1. 数据生成：`EnsembleData.lightgbm()`
 
-- 数据变量：`data_generation/__init__.py` 中导出的 `lightgbm_data`
-- 生成来源：`data_generation/ensemble.py` 中的 `EnsembleData.lightgbm()`
-- 流水线使用：`pipelines/ensemble/lightgbm.py` 中的 `data = lightgbm_data.copy()`
+当前 LightGBM 数据来自 `EnsembleData.lightgbm()`，底层调用 `sklearn.datasets.make_classification()`。
 
-### 理解重点
+### 参数速览
 
-- `lightgbm_data` 在导入时就已经生成完成，因此流水线里直接 `.copy()` 使用即可。
-- 使用 `.copy()` 的目的，是避免后续切分或调试过程意外修改原始数据对象。
+适用函数：`make_classification(n_samples=1000, n_features=20, n_informative=8, n_redundant=5, n_classes=4, n_clusters_per_class=1, class_sep=0.6, random_state=42)`
 
-## 2. 数据生成函数 `EnsembleData.lightgbm()`
-
-### 参数速览（本节）
-
-适用 API（分项）：
-
-1. `EnsembleData.lightgbm()`
-2. `make_classification(...)`
-
-| 参数名 | 本例取值 | 说明 |
-|---|---|---|
-| `n_samples` | `500` | 样本总数 |
-| `n_features` | `20` | 特征总数 |
-| `n_informative` | `8` | 有效特征数 |
-| `n_redundant` | `5` | 冗余特征数 |
-| `n_classes` | `4` | 类别数量 |
-| `class_sep` | `0.6` | 类别间隔，越小越难分 |
-| `random_state` | `42` | 随机种子，保证可复现 |
-| 返回值 | `DataFrame` | 含 `x1` ~ `x20` 与 `label` 的数据表 |
+| 参数名 | 类型 | 说明 | 示例取值 |
+|---|---|---|---|
+| `n_samples` | `int` | 总样本数。`1000`——比 GBDT 多一倍，提供更充足的训练信号，同时展示 LightGBM 的直方图加速优势 | `500`、`1000`、`2000` |
+| `n_features` | `int` | 总特征数。`20`——高维设置，体现 LightGBM 处理大规模特征的能力 | `8`、`20`、`50` |
+| `n_informative` | `int` | 有效特征数。`8`——与类标签真正相关的独立信号 | `4`、`8` |
+| `n_redundant` | `int` | 冗余特征数。`5`——由有效特征线性组合生成 | `2`、`5` |
+| `n_classes` | `int` | 类别数。`4`——多分类 $\{0, 1, 2, 3\}$ | `3`、`4` |
+| `n_clusters_per_class` | `int` | 每类的簇数。`1`——每类一个高斯簇 | `1`、`2` |
+| `class_sep` | `float` | 类别间隔。`0.6`——较小的间隔使类别重叠较多，分类难度较高 | `0.3`、`0.6`、`1.5` |
+| `random_state` | `int` | 随机种子，保证数据可复现。`42` | `42` |
+| 返回值 | `(ndarray, ndarray)` | `(X, y)` 元组，$X$ 形状 $(1000, 20)$，$y$ 取值 $\{0, 1, 2, 3\}$ | — |
 
 ### 示例代码
 
 ```python
 X, y = make_classification(
-    n_samples=self.n_samples,
-    n_features=self.lgbm_n_features,
-    n_informative=self.lgbm_n_informative,
-    n_redundant=self.lgbm_n_redundant,
+    n_samples=1000,
+    n_features=20,
+    n_informative=8,
+    n_redundant=5,
     n_repeated=0,
-    n_classes=self.lgbm_n_classes,
+    n_classes=4,
     n_clusters_per_class=1,
-    class_sep=self.lgbm_class_sep,
-    random_state=self.random_state,
+    class_sep=0.6,
+    random_state=42,
 )
+columns = [f"x{i + 1}" for i in range(20)]
+data = DataFrame(X, columns=columns)
+data["label"] = y
 ```
 
 ### 理解重点
 
-- 当前数据不是回归数据，而是一个高维多分类任务。
-- 设计这份数据的目的，是突出 LightGBM 对高维结构化分类问题的处理能力。
-- 文档中需要特别区分它和 XGBoost 分册当前使用的 California Housing 回归数据。
+- `n_features=20` 是 LightGBM 独有设计——比 GBDT 的 8 维高 2.5 倍。含 8 个有效特征 + 5 个冗余特征 + 7 个纯噪声特征（$20 - 8 - 5 = 7$）。
+- `class_sep=0.6` 低于 GBDT 的 `0.7`——类别间隔更小意味着更高的分类难度和更模糊的类别边界。
+- `n_samples=1000` 是 GBDT 的两倍——更大数据量使 LightGBM 的直方图加速优势更加显著。
 
-## 3. 特征列与标签列
+## 2. 特征列与标签列
 
-当前数据表结构如下：
+### 参数速览
 
-- 特征列：`x1` ~ `x20`
-- 标签列：`label`
+| 参数名 | 类型 | 说明 | 示例取值 |
+|---|---|---|---|
+| `X` | `DataFrame`，形状 $(1000, 20)$ | 含 20 个连续特征的特征矩阵，列名 `x1`~`x20` | `data.drop(columns=["label"])` |
+| `y` | `Series`，形状 $(1000,)$ | 四分类标签 $\{0, 1, 2, 3\}$——参与 LightGBM 训练和评估 | `data["label"]` |
 
-### 参数速览（本节）
+### 特征构成
 
-适用列组（本节）：
-
-1. 有效特征
-2. 冗余特征
-3. 其余噪声特征
-4. 标签列
-
-| 列组 | 当前含义 | 作用 |
-|---|---|---|
-| 有效特征 | 前 8 个主要信息来源 | 提供最核心分类信号 |
-| 冗余特征 | 5 个冗余特征 | 增加相关性和识别难度 |
-| 其余特征 | 其余噪声或弱信息特征 | 增加高维复杂度 |
-| 标签列 | `label` | 4 分类目标 |
-
-### 示例代码
-
-```python
-X = data.drop(columns=["label"])
-y = data["label"]
-feature_names = list(X.columns)
-```
+| 特征范围 | 数量 | 类型 | 说明 |
+|---|---|---|---|
+| `x1` ~ `x8` | 8 | 有效特征 | 由 `make_classification` 生成的独立信号——与标签直接相关 |
+| `x9` ~ `x13` | 5 | 冗余特征 | 由 `x1`~`x8` 线性组合生成——提供重复信息 |
+| `x14` ~ `x20` | 7 | 噪声特征 | 随机生成——与标签无任何关联 |
 
 ### 理解重点
 
-- 当前流水线先把 `feature_names` 提前保存下来，是为了后续绘制特征重要性图时使用。
-- LightGBM 不会像线性模型那样输出系数，因此列名与重要性值的对应关系很重要。
-- 这份高维数据也为 LightGBM 的 Leaf-wise 与高效特征处理直觉提供了更合适的背景。
+- 特征重要性的期望排序：`x1`~`x8` > `x9`~`x13` > `x14`~`x20`——这是验证 LightGBM 特征选择能力的关键诊断。
+- `label` 是四分类监督标签——与 GBDT 的三分类和 Bagging 的二分类形成难度梯度。
+- 与 GBDT 的数据对比：类别多 1 个（4 vs 3），特征多 12 个（20 vs 8），样本多 500 个（1000 vs 500）。
 
-## 4. 分层切分与标准化
+## 3. 训练/测试切分与标准化
 
-### 参数速览（本节）
+### 参数速览
 
-适用 API（分项）：
+适用 API：`train_test_split(X, y, test_size=0.2, random_state=42, stratify=y)`
 
-1. `train_test_split(X, y, test_size=0.2, random_state=42, stratify=y)`
-2. `StandardScaler().fit_transform(X_train)`
-3. `StandardScaler().transform(X_test)`
-
-| 参数名 | 本例取值 | 说明 |
-|---|---|---|
-| `test_size` | `0.2` | 测试集占比 |
-| `random_state` | `42` | 保证可复现划分 |
-| `stratify` | `y` | 保持训练集和测试集类别比例一致 |
-| `X_train_s` | 标准化训练特征 | 供 LightGBM 训练使用 |
-| `X_test_s` | 标准化测试特征 | 供 LightGBM 预测使用 |
+| 参数名 | 类型 | 说明 | 示例取值 |
+|---|---|---|---|
+| `X` | `DataFrame`，形状 $(1000, 20)$ | 全量特征矩阵 | `X` |
+| `y` | `Series`，形状 $(1000,)$ | 全量标签 | `y` |
+| `test_size` | `float` | 测试集比例。`0.2` | `0.2`、`0.3` |
+| `stratify` | `array_like` | 分层抽样依据——确保训练/测试集中类别比例一致 | `y` |
+| `random_state` | `int` | 随机种子。`42` | `42` |
+| 返回值 | `(DataFrame, DataFrame, Series, Series)` | `X_train`（800 样本）、`X_test`（200 样本）及对应标签 | — |
 
 ### 示例代码
 
@@ -138,6 +110,7 @@ feature_names = list(X.columns)
 X_train, X_test, y_train, y_test = train_test_split(
     X, y, test_size=0.2, random_state=42, stratify=y
 )
+
 scaler = StandardScaler()
 X_train_s = scaler.fit_transform(X_train)
 X_test_s = scaler.transform(X_test)
@@ -145,24 +118,38 @@ X_test_s = scaler.transform(X_test)
 
 ### 理解重点
 
-- 当前 LightGBM 流水线真实包含标准化步骤，文档不能像 XGBoost 分册那样写成“无标准化”。
-- `stratify=y` 对多分类任务很重要，它能让训练集和测试集的类别分布更稳定。
-- 当前文档中的 `X_train_s`、`X_test_s` 都是源码里真实使用的变量名。
+- 当前流水线**有**训练/测试切分——与集成分类系列（Bagging/GBDT）一致。
+- `stratify=y` 确保 200 个测试样本中 4 个类别的分布比例与原始数据一致——在多分类场景下尤其重要。
+- 标准化采用监督学习标准做法：`fit_transform` 在训练集上计算 $\mu$ 和 $\sigma$，`transform` 在测试集上使用相同统计量。
+
+## 4. 数据设计意图：与 GBDT 的对比
+
+| 数据维度 | GBDT | LightGBM | 设计意图 |
+|---|---|---|---|
+| 样本数 | 500 | **1000** | 更大数据量——展示直方图加速优势 |
+| 特征维度 | 8 (4+2+2) | **20 (8+5+7)** | 更高维——展示 EFB 和列采样的价值 |
+| 类别数 | 3 | **4** | 更多类别——提高多分类复杂度 |
+| 类别间隔 | 0.7 | **0.6** | 更难分类——展示偏差缩减的必要性 |
+| 噪声特征数 | 2 | **7** | 更多噪声——展示特征重要性筛选能力 |
+
+### 理解重点
+
+- LightGBM 的数据设计在所有维度上都比 GBDT"更大更难"——这是有意为之，因为 LightGBM 的工程优化使其在高维数据上仍有显著的训练速度优势。
+- 20 维中 12 个非独立有效信号——特征重要性图表天然区分有效特征与冗余/噪声特征。
 
 ## 数据可视化
 
-![数据类别分布](../../../outputs/lightgbm/data_class_distribution.png)
-![数据相关性](../../../outputs/lightgbm/data_correlation.png)
-![数据特征空间](../../../outputs/lightgbm/data_feature_space_2d.png)
+![特征相关性热力图](../../../outputs/lightgbm/data_correlation.png)
 
 ## 常见坑
 
-1. 把当前 LightGBM 数据误写成回归数据，忽略它其实是 4 分类任务。
-2. 忽略 `stratify=y`，把当前多分类切分流程写成普通随机切分。
-3. 把 XGBoost 分册里的“无标准化”惯性套到当前 LightGBM 流程上。
+1. 把 `class_sep=0.6` 当成数据缺陷——低间隔是有意设计，分类难度过低无法体现偏差缩减的价值。
+2. 忽略 `stratify=y` 的重要性——四分类数据上不设分层抽样可能导致测试集中某类别过少。
+3. 在测试集上 `fit_transform` 而非 `transform`——标准信息泄露。
+4. 忘记 `lightgbm_data` 是模块级全局变量——直接修改会污染其他模块。
 
 ## 小结
 
-- 当前 LightGBM 数据来自 `EnsembleData.lightgbm()`，底层使用的是 `make_classification(...)`。
-- 数据表由 20 个特征和标签列 `label` 组成，其中包含有效、冗余和噪声特征。
-- 读懂数据结构、分层切分和标准化顺序，是理解后续 LightGBM 训练与分类评估的前提。
+- 当前 LightGBM 数据来自 `make_classification(n_samples=1000, n_features=20, n_informative=8, n_classes=4, class_sep=0.6)`：20 个连续特征、四分类、高维较高难度。
+- 数据流为：`make_classification` → DataFrame（`x1`~`x20` + `label`）→ 分层训练/测试切分 → 训练集拟合标准化器 / 测试集变换。
+- `n_features=20` 和 `class_sep=0.6` 的设计意图是充分展示 LightGBM 在高维中等难度数据上的直方图加速速度和特征筛选能力。
