@@ -5,27 +5,94 @@ outline: deep
 
 # 工程实现
 
-> 对应代码：`data_generation/probabilistic.py`、`model_training/probabilistic/em.py`、`pipelines/probabilistic/em.py`、`result_visualization/cluster_plot.py`
->  
-> 运行方式：`python -m pipelines.probabilistic.em`
-
 ## 本章目标
 
-1. 看清当前 EM / GMM 分册在仓库中的模块分层与调用关系。
-2. 理解从命令行入口到聚类对比图落盘，中间依次发生了什么。
-3. 明确哪些逻辑属于数据层、训练层、流水线层和可视化层。
+1. 理解 EM 流水线的模块分层——数据生成层、模型训练层、流水线编排层、聚类可视化层。
+2. 理清 `run()` 内部的函数调用链和数据流动路径——注意无监督特征（无 `y_train`、无切分）。
+3. 理解 EM 与 KMeans/DBSCAN 在工程实现上的异同——同为聚类，但模型内部结构完全不同。
 
-## 对应代码速览
+## 重点方法与概念速览
 
-| 组件 | 路径 | 说明 |
+| 名称 | 类型 | 作用 |
 |---|---|---|
-| 数据生成层 | `data_generation/probabilistic.py` | `ProbabilisticData.em()` 构造二维混合高斯数据 |
-| 数据导出层 | `data_generation/__init__.py` | 提供 `em_data` 给外部导入 |
-| 训练层 | `model_training/probabilistic/em.py` | 定义 `train_model(...)` 并训练 GMM |
-| 流水线层 | `pipelines/probabilistic/em.py` | 负责标准化、训练、预测、画图 |
-| 聚类可视化层 | `result_visualization/cluster_plot.py` | 负责聚类对比图绘制与保存 |
+| `ProbabilisticData.em()` | 方法 | 手动合成 3 分量非球形 GMM 数据 |
+| `train_model(...)` | 函数 | 构建并训练 `GaussianMixture`——无监督，无 `y_train` 参数 |
+| `run()` | 函数 | 无监督聚类流水线编排——5 步串联标准化、EM 训练、预测和可视化 |
+| `plot_clusters(...)` | 函数 | 绘制双面板聚类分布对比图——预测标签 vs 真实标签 |
+| `model.predict(X)` | 方法 | 硬聚类标签 |
+| `model.predict_proba(X)` | 方法 | 软归属——后验责任矩阵 |
 
-## 1. 入口命令如何触发整条链路
+## 1. 模块分层总览
+
+### 参数速览
+
+| 层 | 文件 | 职责 | 输出 |
+|---|---|---|---|
+| 数据生成层 | `data_generation/probabilistic.py` | 手动合成 3 分量非球形 GMM 数据并导出 `em_data` | 全局 `DataFrame`（500 行 × 3 列） |
+| 模型训练层 | `model_training/probabilistic/em.py` | 封装 `GaussianMixture` 训练——含装饰器 | `GaussianMixture` 模型对象 |
+| 流水线编排层 | `pipelines/probabilistic/em.py` | 串联标准化、EM 训练、预测和聚类可视化——端到端入口 | 终端日志 + 聚类分布图 |
+| 可视化层 | `result_visualization/cluster_plot.py` | 生成双面板聚类分布对比图 | 1 个 PNG 文件 |
+
+### 理解重点
+
+- EM 的模块分层与 KMeans/DBSCAN 的结构完全一致——数据生成 → 训练封装 → 流水线编排 → 聚类可视化。
+- 训练层使用 `@print_func_info` + `@timeit` + `timer`——与 GBDT/LightGBM/XGBoost 的装饰器风格一致。
+- 与集成分类的最关键区别：**训练层不接收 `y_train`**——EM 是无监督学习。
+
+## 2. `run()` 内部的函数调用链
+
+### 参数速览
+
+| 序号 | 调用 | 输入 | 输出 | 目的 |
+|---|---|---|---|---|
+| 1 | `em_data.copy()` | — | `DataFrame`，形状 `(500, 3)` | 避免修改全局变量 |
+| 2 | `data["true_label"].values` | `DataFrame` | `ndarray`，`(500,)` | 提取真实标签——仅供评估对比 |
+| 3 | `data.drop(columns=["true_label"])` | `DataFrame` | `DataFrame`，`(500, 2)` | 分离 2 维特征 X |
+| 4 | `scaler.fit_transform(X)` | `DataFrame` | `ndarray`，`(500, 2)` | 全量数据 Z-score 标准化 |
+| 5 | `train_model(X_scaled)` | `ndarray` | `GaussianMixture` | EM 迭代训练——无 `y_train` |
+| 6 | `model.predict(X_scaled)` | `ndarray` | `ndarray`，`(500,)` | 硬聚类标签 |
+| 7 | `plot_clusters(X_scaled, labels_pred, y_true, ...)` | `(ndarray, ndarray, ndarray)` | PNG 文件 | 双面板聚类对比图 |
+
+### 理解重点
+
+- 步骤 2-3 顺序不可交换——必须先提取 `true_label`，再 `drop`。如果先 `drop`，`true_label` 将丢失。
+- 步骤 5 无 `y_train` 参数——这是 EM 与集成分类训练函数的根本差异。
+- 与 KMeans 流水线唯一的区别：`plot_clusters` 多传了一个 `labels_true` 参数以实现双面板对比。
+
+## 3. 数据依赖关系
+
+```
+em_data (全局 DataFrame)
+    │
+    ├─→ y_true = data["true_label"].values ──→ 仅供评估 ──────────┐
+    ├─→ X = data.drop(columns=["true_label"])                      │
+    │      │                                                        │
+    │      ├─→ scaler.fit_transform(X) ──→ X_scaled ──┐             │
+    │      │                                           │             │
+    │      │   train_model(X_scaled) ──→ model        │             │
+    │      │      │                                    │             │
+    │      │      └─→ model.predict(X_scaled) ──→ labels_pred ──┐  │
+    │      │                                                      │  │
+    │      │   plot_clusters(X_scaled, labels_pred, y_true, ...) ←┘  │
+    │      │        └─────────────────────────────────────────────────┘
+    │      │
+    │      └──────────────────────────────────────────────────────────┘
+```
+
+### 理解重点
+
+- `y_true` 是一个独立的横向数据流——从数据提取阶段直接流向可视化，完全不经过训练和预测。
+- 没有 `train_test_split` 分支——聚类在整个数据集上训练和评估。
+- 与 KMeans 的数据依赖图结构一致——只是 `train_model` 的输入参数不同（无 `y_train`）。
+
+## 4. 输出文件一览
+
+### 参数速览
+
+| 输出项 | 路径 | 格式 | 说明 |
+|---|---|---|---|
+| 聚类分布图 | `outputs/em/cluster_distribution.png` | PNG | 双面板对比——左：EM 预测标签 / 右：真实分量标签 |
+| 终端日志 | 标准输出 | 文本 | 训练超参数 + 对数似然下界 + 运行耗时 |
 
 ### 示例代码
 
@@ -33,153 +100,63 @@ outline: deep
 python -m pipelines.probabilistic.em
 ```
 
-### 理解重点
+### 输出
 
-- 这个命令会执行 `pipelines/probabilistic/em.py` 中的 `run()`。
-- `run()` 是真正的工程入口，其他模块都被它按顺序调用。
-- 所以理解工程实现时，最清晰的方式也是先从入口脚本往下追踪。
+```text
+============================================================
+EM (GMM) 聚类流水线
+============================================================
+模型训练完成
+n_components: 3
+covariance_type: full
+log-likelihood: -2.1457
+模型训练耗时: 0.15s
 
-## 2. 模块之间的调用关系
-
-### 示例代码
-
-```python
-from data_generation import em_data
-from model_training.probabilistic.em import train_model
-from result_visualization.cluster_plot import plot_clusters
+============================================================
+EM (GMM) 流水线完成！
+============================================================
 ```
 
 ### 理解重点
 
-- `pipelines` 层不自己造数据、不自己实现模型，也不自己画图，而是扮演调度者角色。
-- 这种分层使每个文件职责单一：数据文件只关心数据，训练文件只关心模型，画图文件只关心结果展示。
-- 当前 EM 分册虽然只有一张核心图，但同样具备清晰的工程层次。
+- EM 输出 1 个 PNG 文件——与 KMeans/DBSCAN 相同（都是聚类图），但多了 `labels_true` 对比面板。
+- 训练耗时通常极短（亚秒级）——500 样本 × 2 维 × 3 分量，EM 收敛很快。
+- 终端日志打印 `log-likelihood`——这是 EM 独有的诊断输出，KMeans 和 DBSCAN 都没有。
 
-## 3. 流水线层真正负责什么
+## 5. 训练层细节：与 KMeans 的对比
 
-### 参数速览（本节）
-
-适用逻辑（分项）：
-
-1. 复制数据
-2. 拆出 `true_label`
-3. 提取观测特征
-4. 标准化
-5. 调用训练函数
-6. 预测簇标签
-7. 输出聚类对比图
-
-| 步骤 | 所在文件 | 当前职责 |
+| 工程维度 | KMeans | EM (GMM) |
 |---|---|---|
-| 读取 `em_data` | `pipelines/probabilistic/em.py` | 拿到统一数据入口 |
-| `true_label` / `X` 拆分 | `pipelines/probabilistic/em.py` | 区分对比标签与训练输入 |
-| 标准化 `X` | `pipelines/probabilistic/em.py` | 生成模型训练输入 |
-| 调用 `train_model(...)` | `pipelines/probabilistic/em.py` | 获得训练好的 GMM |
-| `predict(...)` + `plot_clusters(...)` | `pipelines/probabilistic/em.py` | 完成结果输出 |
+| 模型类 | `KMeans` | **`GaussianMixture`** |
+| 核心参数 | `n_clusters`、`init`、`n_init` | **`n_components`、`covariance_type`、`max_iter`** |
+| 训练输入 | `fit(X)`——无 `y` | `fit(X)`——无 `y` |
+| 预测输出 | `predict(X)` ☑ `predict_proba` ☒ | `predict(X)` ☑ `predict_proba(X)` ☑ |
+| 模型属性 | `cluster_centers_`、`inertia_`、`labels_` | **`means_`、`covariances_`、`weights_`、`lower_bound_`** |
+| 装饰器 | 无 | `@print_func_info` + `@timeit` + `timer` |
+| 日志 | `n_clusters`、`inertia_` | **`n_components`、`covariance_type`、`log-likelihood`** |
 
 ### 理解重点
 
-- 当前仓库没有使用 `Pipeline` 类，而是把标准化、训练和预测显式写在 `run()` 中。
-- 这种写法更适合教学，因为每一步都能直接看到变量名和执行顺序。
-- EM 分册最容易被误读的地方，就是 `true_label` 的边界，因此显式写法反而更有帮助。
+- EM 的参数体系比 KMeans 多一个关键维度——`covariance_type` 控制簇形状的灵活性。
+- EM 的输出比 KMeans 更丰富——多概率输出（`predict_proba`）和概率模型组件（`means_`、`covariances_`、`weights_`）。
+- EM 的训练初始化依赖 KMeans（`init_params="kmeans"`）——两者在工程上是合作关系。
 
-## 4. 为什么这里没有 train/test split
+## 阅读顺序
 
-### 理解重点
-
-- 当前 EM 分册属于无监督聚类流程，不像监督学习那样围绕训练/测试标签误差展开。
-- 当前实现选择直接在全量数据上标准化、训练和预测，以便更直观看到整体聚类分布。
-- 这是一种教学型简化实现，文档需要如实说明，而不是套用监督学习的默认结构。
-
-## 5. 训练层真正负责什么
-
-### 参数速览（本节）
-
-适用函数：`train_model(...)`
-
-| 输出项 | 作用 |
-|---|---|
-| `model` | 返回已训练好的 `GaussianMixture` 模型 |
-| 控制台日志 | 打印分量数、协方差类型、训练耗时和 `log-likelihood` |
-
-### 理解重点
-
-- 训练层并不负责拆分标签，也不负责绘制聚类图。
-- 它的核心任务是构建 GMM、执行 EM 训练，并输出与模型设定和收敛相关的日志。
-- 和监督学习分册相比，这里打印的重点从“预测性能”转成了“模型结构与收敛状态”。
-
-## 6. 可视化层真正负责什么
-
-### 参数速览（本节）
-
-适用函数：`plot_clusters(...)`
-
-| 参数名 | 当前用途 |
-|---|---|
-| `X` | 聚类散点图输入 |
-| `labels_pred` | 预测簇标签着色 |
-| `labels_true` | 真实分量标签对比 |
-| `dataset_name` | 决定输出目录，如 `em` |
-| `model_name` | 决定文件名前缀，如 `gmm` |
-
-### 理解重点
-
-- 当前聚类可视化层只关心二维特征和标签着色，不关心 GMM 内部参数。
-- 当同时传入 `labels_pred` 和 `labels_true` 时，它会并排绘制两张图进行对比。
-- 这正是当前 EM 分册核心评估结果的来源。
-
-## 7. 常量 `DATASET` 和 `MODEL` 的作用
-
-### 参数速览（本节）
-
-适用常量：
-
-1. `DATASET = "em"`
-2. `MODEL = "gmm"`
-
-| 常量 | 当前作用 |
-|---|---|
-| `DATASET` | 决定图片输出的上层目录 |
-| `MODEL` | 决定图片文件名前缀 |
-
-### 理解重点
-
-- 这两个常量的作用，不是影响模型训练，而是统一结果文件的命名和归档。
-- 这样当前 EM 分册生成的图像会被稳定保存到固定位置。
-- 这也是为什么当前工程结构适合后续继续扩展更多聚类可视化结果。
-
-## 8. 从命令到结果图的执行链
-
-### 示例代码
-
-```python
-python -m pipelines.probabilistic.em
-    -> run()
-    -> em_data.copy()
-    -> data["true_label"] / data.drop(columns=["true_label"])
-    -> StandardScaler().fit_transform(...)
-    -> train_model(...)
-    -> model.predict(...)
-    -> plot_clusters(...)
-    -> savefig(...)
-```
-
-### 理解重点
-
-- 这条链里最关键的中间产物有三个：`X_scaled`、训练后的 `model`、预测簇标签 `labels_pred`。
-- 一旦这些中间变量理解清楚，整个 EM 分册的代码结构就基本串起来了。
-- 文档中的各章节，其实就是在拆解这条执行链上的不同环节。
-
-![结果展示](../../../outputs/gmm/result_display.png)
+1. `data_generation/probabilistic.py` — 了解 `em()` 的 GMM 数据合成逻辑
+2. `model_training/probabilistic/em.py` — 理解 `GaussianMixture` 的构建和 EM 迭代训练
+3. `pipelines/probabilistic/em.py` — 看清无监督聚类端到端流程
+4. `result_visualization/cluster_plot.py` — 了解聚类双面板对比图实现
 
 ## 常见坑
 
-1. 把 `pipelines` 层和 `model_training` 层职责混在一起，误以为训练函数负责全部工程流程。
-2. 不理解为什么这里没有 train/test split，从而误把当前流程套成监督学习结构。
-3. 忽略 `true_label`、`DATASET` 和 `MODEL` 的作用，看不懂聚类对比图和输出目录为什么能稳定生成。
+1. 在调用 `drop("true_label")` 之前未提取 `y_true`——`true_label` 列被丢弃后将无法用于可视化对比。
+2. 把 `train_model` 当成有监督训练——它接收的参数只有 `X_train`，无 `y_train`。
+3. 直接修改 `em_data` 而不先 `copy()`——污染全局变量。
+4. 在测试集上使用 `fit_transform`——EM 的聚类场景下没有测试集概念，但如果在其他场景误用，仍然会造成信息泄露。
 
 ## 小结
 
-- 当前 EM / GMM 实现采用了清晰的分层结构：数据层、训练层、流水线层、可视化层各司其职。
-- 入口脚本负责调度，训练模块负责模型，画图模块负责结果呈现。
-- 这种结构既方便阅读，也方便后续继续补聚类指标、责任度可视化或分量数选择实验。
+- EM 工程实现遵循本仓库标准四层架构：数据生成层 → 模型训练层 → 流水线编排层 → 可视化层（聚类图模块）。
+- `run()` 是极简编排函数——5 步完成标签提取、特征分离、标准化、训练、预测和可视化。
+- 与 KMeans/DBSCAN 的核心工程共同点：同为无监督聚类（无 `y_train`、无 `train_test_split`）；核心差异：EM 有更丰富的概率输出（`predict_proba`、`means_`、`covariances_`、`weights_`、`lower_bound_`）。

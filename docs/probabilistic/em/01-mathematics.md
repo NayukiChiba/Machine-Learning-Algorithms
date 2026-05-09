@@ -5,187 +5,172 @@ outline: deep
 
 # 数学原理
 
-> 对应代码：`model_training/probabilistic/em.py`
->  
-> 相关对象：`GaussianMixture`、`train_model(...)`
-
 ## 本章目标
 
-1. 理解 EM 为什么适合用来估计含隐变量的 GMM 参数。
-2. 理解 GMM、ELBO、E 步、M 步与收敛性之间的数学关系。
-3. 把这些公式和当前源码中的 `n_components`、`covariance_type`、`lower_bound_` 对应起来。
+1. 理解高斯混合模型（GMM）的生成过程——$\pi_k$ 选分量 → $\mathcal{N}(\boldsymbol{\mu}_k, \boldsymbol{\Sigma}_k)$ 生成样本。
+2. 理解 EM 算法的两步迭代——E 步（计算责任）和 M 步（最大化参数）。
+3. 理解对数似然的下界保证——EM 保证对数似然单调不减。
 
 ## 重点方法与概念速览
 
 | 名称 | 类型 | 作用 |
 |---|---|---|
-| GMM | 概率模型 | 用多个高斯分布的加权和建模数据 |
-| EM | 迭代算法 | 交替估计隐变量和参数 |
-| ELBO | 下界目标 | 把难直接优化的对数似然转成可交替优化的形式 |
-| 责任度 | 后验概率 | 表示样本属于各分量的概率 |
-| `lower_bound_` | 源码属性 | 当前训练收敛后的平均对数似然下界 |
+| 高斯混合模型 | 生成模型 | $p(\mathbf{x}) = \sum_{k=1}^{K} \pi_k \mathcal{N}(\mathbf{x} \mid \boldsymbol{\mu}_k, \boldsymbol{\Sigma}_k)$——$K$ 个高斯分布的加权和 |
+| 隐变量 $z_{ik}$ | 概率框架 | 指示样本 $i$ 是否由分量 $k$ 生成——GMM 的"未观测变量" |
+| E 步 | 期望计算 | 计算后验责任 $\gamma(z_{ik})$——"在当前参数下，样本 $i$ 属于分量 $k$ 的概率" |
+| M 步 | 参数最大化 | 用责任加权更新 $\boldsymbol{\mu}_k$、$\boldsymbol{\Sigma}_k$、$\pi_k$——最大化完全数据对数似然的期望 |
+| 对数似然下界 | 收敛保证 | $\log p(\mathbf{X} \mid \Theta)$ 在每次 EM 迭代中单调不减 |
+| 协方差类型 | 模型假设 | `full`（完全协方差）允许椭圆形簇——比 KMeans 的球面假设更灵活 |
 
-## 1. 核心思想
+## 1. 高斯混合模型的生成过程
 
-EM（Expectation-Maximization）是一种用于含隐变量概率模型的参数估计迭代算法。GMM 是 EM 最经典的应用：用多个高斯分布的加权和来建模数据分布。
+GMM 假设数据由 $K=3$ 个高斯分量按以下过程生成：
+
+1. 以概率 $\pi_k$ 选择一个高斯分量：
+   $$
+   p(z_k = 1) = \pi_k, \quad \sum_{k=1}^{K} \pi_k = 1
+   $$
+2. 从所选分量的高斯分布中采样：
+   $$
+   p(\mathbf{x} \mid z_k = 1) = \mathcal{N}(\mathbf{x} \mid \boldsymbol{\mu}_k, \boldsymbol{\Sigma}_k)
+   $$
+
+边缘分布为：
+$$
+p(\mathbf{x}) = \sum_{k=1}^{K} \pi_k \mathcal{N}(\mathbf{x} \mid \boldsymbol{\mu}_k, \boldsymbol{\Sigma}_k)
+$$
 
 ### 理解重点
 
-- 当前源码中的 `GaussianMixture(...)`，本质上就是在做 GMM 参数估计。
-- 文档里的“隐变量”，在当前分册中对应“每个样本到底来自哪个高斯分量”。
-- EM 之所以重要，是因为这个分量归属在训练时并不可见。
+- $\pi_k$ 是**混合权重**——$\pi_k \ge 0$，$\sum_k \pi_k = 1$。当前数据 $\pi = [0.5, 0.3, 0.2]$。
+- $\boldsymbol{\mu}_k = [\mu_{k1}, \mu_{k2}]^T$ 是第 $k$ 个分量的均值（2 维）。
+- $\boldsymbol{\Sigma}_k$ 是 $2 \times 2$ 的协方差矩阵——`covariance_type="full"` 允许每个分量的协方差各不相同。
 
-## 2. 高斯混合模型
+## 2. 最大似然的挑战
 
-### 参数速览（本节）
+直接最大化对数似然：
+$$
+\log p(\mathbf{X} \mid \Theta) = \sum_{i=1}^{N} \log \sum_{k=1}^{K} \pi_k \mathcal{N}(\mathbf{x}_i \mid \boldsymbol{\mu}_k, \boldsymbol{\Sigma}_k)
+$$
 
-适用模型：GMM
+困难在于：$\log \sum$ 内部有求和——导数为零的方程没有闭式解，因为隐变量 $z_{ik}$ 未被观测。
 
-| 参数名 | 数学含义 | 在源码中的对应 |
+### 理解重点
+
+- 如果有标签（知道每个样本属于哪个分量），参数估计简化为加权样本均值和协方差——有闭式解。
+- 无标签时，EM 通过**迭代猜测**（E 步）和**用猜测更新参数**（M 步）来绕过这个困难。
+
+## 3. E 步：计算后验责任
+
+给定当前参数 $\Theta^{(t)}$，计算每个样本属于每个分量的后验概率（责任）：
+
+$$
+\gamma(z_{ik})^{(t+1)} = \frac{\pi_k^{(t)} \mathcal{N}(\mathbf{x}_i \mid \boldsymbol{\mu}_k^{(t)}, \boldsymbol{\Sigma}_k^{(t)})}
+{\sum_{j=1}^{K} \pi_j^{(t)} \mathcal{N}(\mathbf{x}_i \mid \boldsymbol{\mu}_j^{(t)}, \boldsymbol{\Sigma}_j^{(t)})}
+$$
+
+- $\gamma(z_{ik}) \in [0, 1]$，且 $\sum_k \gamma(z_{ik}) = 1$——每个样本对各分量的责任和为 1
+- 高斯密度：$\mathcal{N}(\mathbf{x} \mid \boldsymbol{\mu}, \boldsymbol{\Sigma}) = \frac{1}{(2\pi)^{d/2}|\boldsymbol{\Sigma}|^{1/2}} \exp\left(-\frac{1}{2}(\mathbf{x}-\boldsymbol{\mu})^T \boldsymbol{\Sigma}^{-1}(\mathbf{x}-\boldsymbol{\mu})\right)$
+
+### 理解重点
+
+- 责任 $\gamma(z_{ik})$ 就是**软赋值**——样本 $i$ 对三个分量各有部分归属。
+- 与 KMeans 的硬赋值对比：KMeans 输出 $\gamma_{ik} \in \{0, 1\}$，EM 输出 $\gamma_{ik} \in [0, 1]$。
+- 当前 `covariance_type="full"` 使 $\boldsymbol{\Sigma}_k$ 可以是任意正定矩阵——每个分量的高斯密度是倾斜的椭圆形。
+
+## 4. M 步：最大化参数
+
+用 E 步计算的责任 $\gamma_{ik}$ 作为权重，重新估计参数：
+
+**有效样本数**：
+$$
+N_k = \sum_{i=1}^{N} \gamma(z_{ik})
+$$
+
+**均值更新**：
+$$
+\boldsymbol{\mu}_k^{(t+1)} = \frac{1}{N_k} \sum_{i=1}^{N} \gamma(z_{ik}) \mathbf{x}_i
+$$
+
+**协方差更新**（`covariance_type="full"`）：
+$$
+\boldsymbol{\Sigma}_k^{(t+1)} = \frac{1}{N_k} \sum_{i=1}^{N} \gamma(z_{ik}) (\mathbf{x}_i - \boldsymbol{\mu}_k^{(t+1)})(\mathbf{x}_i - \boldsymbol{\mu}_k^{(t+1)})^T
+$$
+
+**混合权重更新**：
+$$
+\pi_k^{(t+1)} = \frac{N_k}{N}
+$$
+
+### 理解重点
+
+- 每个参数更新都是**责任加权**——$\gamma_{ik}$ 越大的样本对分量 $k$ 的参数更新贡献越大。
+- 这相当于"软计数"——不是每个点固定属于一个分量，而是按比例贡献于多个分量。
+- `full` 协方差给每个分量最大自由度——可以学习任意方向的椭圆形状。
+
+## 5. 对数似然的单调性
+
+EM 算法保证对数似然在每次迭代中**单调不减**：
+$$
+\log p(\mathbf{X} \mid \Theta^{(t+1)}) \ge \log p(\mathbf{X} \mid \Theta^{(t)})
+$$
+
+这是因为 EM 实际上在最大化对数似然的一个**下界**函数（ELBO）：
+$$
+\mathcal{L}(\Theta, q) = \sum_i \sum_k \gamma_{ik} \log \frac{\pi_k \mathcal{N}(\mathbf{x}_i \mid \boldsymbol{\mu}_k, \boldsymbol{\Sigma}_k)}{\gamma_{ik}} \le \log p(\mathbf{X} \mid \Theta)
+$$
+
+### 理解重点
+
+- 对数似然单调不减是 EM 收敛的保证——但只保证收敛到**局部最大值**，不保证全局最优。
+- 当前源码中 `model.lower_bound_` 记录了收敛时的对数似然下界值。
+- 在实际中，初始化的均值和协方差可能会使 EM 收敛到不同的局部最优——这类似于 KMeans 的 `n_init`。
+
+## 6. 协方差类型对比
+
+| `covariance_type` | 协方差约束 | 簇形状 | 参数数（$K$ 分量、$d$ 维） |
+|---|---|---|---|
+| `full` | 无约束 | 任意椭圆 | $K \times \frac{d(d+1)}{2}$ |
+| `tied` | 所有分量共享 | 相同椭圆 | $\frac{d(d+1)}{2}$ |
+| `diag` | 对角矩阵 | 轴对齐椭圆 | $K \times d$ |
+| `spherical` | $\sigma_k^2 \mathbf{I}$ | 球形（同 KMeans） | $K \times 1$ |
+
+当前源码使用 `full`——每个分量有独立的 $2 \times 2$ 协方差矩阵（3 个参数每个）。
+
+## 7. 数学原理如何映射到当前源码
+
+| 数学概念 | 数学符号 | 代码实现 |
 |---|---|---|
-| $K$ | 高斯分量数 | `n_components` |
-| $\pi_k$ | 第 $k$ 个分量的混合系数 | 分量权重 |
-| $\boldsymbol{\mu}_k$ | 第 $k$ 个分量的均值 | 分量中心 |
-| $\boldsymbol{\Sigma}_k$ | 第 $k$ 个分量的协方差矩阵 | 协方差结构 |
+| 生成模型 | $p(\mathbf{x}) = \sum_k \pi_k \mathcal{N}(\mathbf{x} \mid \boldsymbol{\mu}_k, \boldsymbol{\Sigma}_k)$ | `GaussianMixture(n_components=3, covariance_type="full")` |
+| 隐变量 | $z_{ik}$ | 内部矩阵——E 步计算 |
+| 后验责任 | $\gamma(z_{ik})$ | `model.predict_proba(X)` |
+| 混合权重 | $\pi_k$ | `model.weights_` |
+| 分量均值 | $\boldsymbol{\mu}_k$ | `model.means_` |
+| 分量协方差 | $\boldsymbol{\Sigma}_k$ | `model.covariances_` |
+| 对数似然下界 | $\log p(\mathbf{X} \mid \Theta)$ | `model.lower_bound_` |
+| 最大迭代 | $t_{\max}$ | `max_iter=200` |
+| 收敛判断 | $\|\Theta^{(t+1)} - \Theta^{(t)}\| < \epsilon$ | 内部自动判断 |
+| 标准化 | $z_j = (x_j - \mu_j)/\sigma_j$ | `StandardScaler` |
 
-### 模型定义
+## 8. EM vs KMeans 数学对比
 
-$$
-p(\mathbf{x}) = \sum_{k=1}^{K} \pi_k \, \mathcal{N}(\mathbf{x} \mid \boldsymbol{\mu}_k, \boldsymbol{\Sigma}_k)
-$$
-
-- $\pi_k$：第 $k$ 个高斯的混合系数，满足 $\sum_k \pi_k = 1$，且 $\pi_k \geq 0$
-- $\mathcal{N}(\mathbf{x} \mid \boldsymbol{\mu}_k, \boldsymbol{\Sigma}_k)$：多元高斯密度
-
-$$
-\mathcal{N}(\mathbf{x} \mid \boldsymbol{\mu}, \boldsymbol{\Sigma}) = \frac{1}{(2\pi)^{d/2} |\boldsymbol{\Sigma}|^{1/2}} \exp\left(-\frac{1}{2}(\mathbf{x} - \boldsymbol{\mu})^T \boldsymbol{\Sigma}^{-1}(\mathbf{x} - \boldsymbol{\mu})\right)
-$$
-
-### 理解重点
-
-- 当前分册中的二维混合高斯数据，正好对应这个模型的最直观实例。
-- `n_components=3` 在源码里就是对公式中 $K=3$ 的具体实现。
-- `covariance_type='full'` 则对应对协方差结构的完整建模能力。
-
-## 3. 隐变量视角
-
-引入隐变量 $z_i \in \{1, \dots, K\}$ 表示样本 $\mathbf{x}_i$ 来自哪个分量。
-
-### 理解重点
-
-- 当前训练数据里虽然有 `true_label`，但那只是数据生成时记录下来的参考标签，训练时并不会传给模型。
-- 从模型视角看，真正需要估计的就是这个不可见的分量归属。
-- 这正是 EM 要解决的问题。
-
-## 4. 为什么不能直接做普通 MLE
-
-对数似然为：
-
-$$
-\ln L = \sum_{i=1}^{N} \ln \left[\sum_{k=1}^{K} \pi_k \, \mathcal{N}(\mathbf{x}_i \mid \boldsymbol{\mu}_k, \boldsymbol{\Sigma}_k)\right]
-$$
-
-对数内部带有求和项，因此无法像线性模型那样直接展开并得到简单闭式解。
-
-### 理解重点
-
-- 困难点不在高斯分布本身，而在“一个样本可能来自多个分量的混合表达”。
-- 正是这个“对数内的求和”使直接最大似然变得不方便。
-- EM 的价值，就是把这个难问题转换成一个可交替求解的问题。
-
-## 5. EM 算法的理论基础
-
-### Jensen 不等式
-
-对于凹函数 $\ln$：
-
-$$
-\ln \left(\sum_k q_k \frac{p_k}{q_k}\right) \geq \sum_k q_k \ln \frac{p_k}{q_k}
-$$
-
-构造对数似然的下界（ELBO），EM 通过交替最大化下界来逼近似然极大值。
-
-### ELBO（Evidence Lower Bound）
-
-$$
-\ln L \geq \sum_{i=1}^N \sum_{k=1}^K \gamma_{ik} \ln \frac{\pi_k \, \mathcal{N}(\mathbf{x}_i \mid \boldsymbol{\mu}_k, \boldsymbol{\Sigma}_k)}{\gamma_{ik}} = \text{ELBO}
-$$
-
-当 $\gamma_{ik} = P(z_i = k \mid \mathbf{x}_i)$（后验概率）时，下界取等号。
-
-### 理解重点
-
-- ELBO 的作用，是把原本难处理的对数似然变成一个可以交替优化的目标。
-- 当前源码虽然没有显式写出 ELBO 公式，但训练后打印的 `lower_bound_` 与这个下界直接相关。
-- 这就是数学下界与工程日志之间最直接的连接点。
-
-## 6. E 步（Expectation）
-
-计算隐变量的后验概率，也就是责任度：
-
-$$
-\gamma_{ik} = \frac{\pi_k \, \mathcal{N}(\mathbf{x}_i \mid \boldsymbol{\mu}_k, \boldsymbol{\Sigma}_k)}{\sum_{j=1}^{K} \pi_j \, \mathcal{N}(\mathbf{x}_i \mid \boldsymbol{\mu}_j, \boldsymbol{\Sigma}_j)}
-$$
-
-### 理解重点
-
-- 责任度表示样本 $i$ 属于第 $k$ 个分量的概率。
-- 这正是 GMM 训练过程属于“软聚类”的根本原因。
-- 当前流水线最终虽然输出硬标签，但训练核心仍然是这组软责任度。
-
-## 7. M 步（Maximization）
-
-利用责任度更新参数：
-
-$$
-N_k = \sum_{i=1}^N \gamma_{ik}
-$$
-
-$$
-\boldsymbol{\mu}_k^{\text{new}} = \frac{1}{N_k} \sum_{i=1}^N \gamma_{ik} \, \mathbf{x}_i
-$$
-
-$$
-\boldsymbol{\Sigma}_k^{\text{new}} = \frac{1}{N_k} \sum_{i=1}^N \gamma_{ik} (\mathbf{x}_i - \boldsymbol{\mu}_k^{\text{new}})(\mathbf{x}_i - \boldsymbol{\mu}_k^{\text{new}})^T
-$$
-
-$$
-\pi_k^{\text{new}} = \frac{N_k}{N}
-$$
-
-### 理解重点
-
-- M 步的本质，是把 E 步得到的软归属概率重新汇总成新的模型参数。
-- 更新后的均值、协方差和权重会再次进入下一轮 E 步。
-- 这就是 EM 交替迭代的核心闭环。
-
-## 8. 收敛性
-
-每次迭代 $\ln L$ 单调不减。EM 算法收敛到局部极大值，不保证全局最优。
-
-### 理解重点
-
-- 当前源码中的 `max_iter=200`，就是给这种迭代过程设置一个上限。
-- `random_state=42` 则帮助固定初始化与局部解路径，使结果更可复现。
-- 训练日志中的 `lower_bound_`，可以理解为当前实现里最接近“收敛下界”观测值的工程输出。
-
-## 9. 数学原理如何映射到当前源码
-
-### 理解重点
-
-- 公式里的 $K$，在工程里对应 `n_components`。
-- 协方差矩阵建模方式，在工程里对应 `covariance_type`。
-- ELBO/对数似然下界，在工程里对应 `model.lower_bound_` 的训练日志输出。
-- E 步和 M 步本身没有在仓库里手写实现，而是由 `GaussianMixture.fit(...)` 内部完成。
+| 维度 | KMeans | EM (GMM) |
+|---|---|---|
+| 目标函数 | $\min \sum_{i} \sum_{k} r_{ik} \|\mathbf{x}_i - \boldsymbol{\mu}_k\|^2$ | $\max \sum_i \log \sum_k \pi_k \mathcal{N}(\mathbf{x}_i \mid \boldsymbol{\mu}_k, \boldsymbol{\Sigma}_k)$ |
+| 赋值 | 硬赋值 $r_{ik} \in \{0, 1\}$ | 软赋值 $\gamma_{ik} \in [0, 1]$ |
+| 簇形状 | 球形（等距离衰减各向同性） | 椭圆形（全协方差各向异性） |
+| 不确定性 | 无 | 有——$1 - \max_k \gamma_{ik}$ 量化置信度 |
+| 参数数 | $K \times d$（均值） | $K \times (1 + d + d(d+1)/2)$（权重 + 均值 + 协方差） |
 
 ## 常见坑
 
-1. 把 `true_label` 误当成 E 步需要的输入，实际上 EM 训练不依赖这个参考列。
-2. 只记住 E 步和 M 步公式，却不把它们和 `n_components`、`covariance_type`、`lower_bound_` 这些源码对象对应起来。
-3. 误以为 EM 能保证全局最优，忽略了它通常只收敛到局部极大值。
+1. 混淆 EM 与 KMeans——EM 输出概率归属（软聚类），KMeans 输出确定归属（硬聚类）。
+2. 在 `covariance_type="spherical"` 下期待椭圆形簇——球形协方差等价于 KMeans 的簇形状假设。
+3. 忽略 EM 收敛到局部最优的风险——不同初始化可能导致不同的聚类结果。
+4. 认为 `max_iter=200` 不够——200 次对于 2 维 3 分量数据通常足够收敛。
 
 ## 小结
 
-- EM / GMM 的数学核心，是在隐变量不可见的前提下，通过 E 步和 M 步交替优化对数似然下界。
-- GMM 提供概率模型结构，EM 提供可执行的参数估计过程。
-- 当前源码中的 `GaussianMixture` 参数设定和 `lower_bound_` 日志，正是这些数学思想在工程层面的直接映射。
+- EM 算法的数学核心链：GMM 生成模型 $p(\mathbf{x}) = \sum_k \pi_k \mathcal{N}(\mathbf{x} \mid \boldsymbol{\mu}_k, \boldsymbol{\Sigma}_k)$ → 隐变量 → E 步计算责任 $\gamma(z_{ik})$ → M 步责任加权更新参数 → 对数似然单调递增 → 局部收敛。
+- 与 KMeans 的根本区别：概率软赋值（$\gamma_{ik}$ 连续）vs 距离硬赋值（$r_{ik}$ 离散）、椭圆协方差 vs 球形距离。
+- 当前源码 `GaussianMixture(n_components=3, covariance_type="full", max_iter=200)` 是 GMM 最灵活的教学配置——允许每个分量有独立的全协方差矩阵。
