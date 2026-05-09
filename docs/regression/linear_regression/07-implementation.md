@@ -5,195 +5,138 @@ outline: deep
 
 # 工程实现
 
-> 对应代码：`data_generation/regression.py`、`model_training/regression/linear_regression.py`、`pipelines/regression/linear_regression.py`、`result_visualization/residual_plot.py`、`result_visualization/learning_curve.py`
->  
-> 运行方式：`python -m pipelines.regression.linear_regression`
-
 ## 本章目标
 
-1. 看清当前线性回归分册在仓库中的模块分层与调用关系。
-2. 理解从命令行入口到结果图落盘，中间依次发生了什么。
-3. 明确哪些逻辑属于数据层、训练层、流水线层和可视化层。
+1. 理解线性回归流水线的模块分层——数据层、训练层、流水线注册层、运行器层和可视化层。
+2. 理清从命令行入口到结果图落盘的完整调用链。
+3. 理解线性回归与决策树回归在工程实现上的关键差异——最简训练函数、无标准化、无可视化差异。
 
-## 对应代码速览
+## 重点方法与概念速览
 
-| 组件 | 路径 | 说明 |
+| 名称 | 类型 | 作用 |
 |---|---|---|
-| 数据生成层 | `data_generation/regression.py` | `RegressionData.linear_regression()` 构造数据 |
-| 数据导出层 | `data_generation/__init__.py` | 提供 `linear_regression_data` 给外部导入 |
-| 训练层 | `model_training/regression/linear_regression.py` | 定义 `train_model(...)` 并训练线性回归模型 |
-| 流水线层 | `pipelines/regression/linear_regression.py` | 负责切分、训练、预测、画图 |
-| 残差可视化层 | `result_visualization/residual_plot.py` | 负责残差图绘制与保存 |
-| 学习曲线可视化层 | `result_visualization/learning_curve.py` | 负责学习曲线绘制与保存 |
+| `RegressionDatasetFactory` | 类 | 数据工厂——`loadLinearRegressionDataset()` 手工合成线性房价数据 |
+| `trainLinearRegressionModel(...)` | 函数 | 构建并训练 `LinearRegression`——本仓库最简训练函数（3 行） |
+| `PipelineSpec` | 数据类 | 声明式流水线配置——关联数据集、训练器、预处理、可视化 |
+| `RegressionRunner` | 类 | 回归流水线运行器——读取 `PipelineSpec`，依次执行各阶段 |
+| `plot_residuals(...)` | 函数 | 残差图绘制 |
+| `plot_learning_curve(...)` | 函数 | 学习曲线绘制 |
 
-## 1. 入口命令如何触发整条链路
+## 1. 模块分层总览
 
-### 示例代码
+### 参数速览
 
-```bash
-python -m pipelines.regression.linear_regression
-```
+| 层 | 文件 | 职责 | 输出 |
+|---|---|---|---|
+| 数据层 | `src/mlAlgorithms/datasets/tabular/regressionDatasets.py` | `loadLinearRegressionDataset()`——按显式线性公式生成 200 样本 | `DataFrame`，形状 `(200, 4)` |
+| 数据目录层 | `src/mlAlgorithms/datasets/datasetCatalog.py` | `DatasetSpec("regression.linear_regression", ...)`——注册数据集描述与加载器 | 数据集元信息 |
+| 训练层 | `src/mlAlgorithms/training/regression/regressionModels.py` | `trainLinearRegressionModel(...)`——构建 `LinearRegression()` 并 fit | `LinearRegression` 模型对象 |
+| 流水线注册层 | `src/mlAlgorithms/catalog/pipelines.py` | `PipelineSpec("regression.linear_regression", ...)`——关联所有组件 | 流水线配置 |
+| 运行器层 | `src/mlAlgorithms/workflows/regressionRunner.py` | 读取 PipelineSpec → 加载数据 → 预处理（无）→ 训练 → 评估 → 可视化 | 终端日志 + 图像文件 |
+| 可视化层 | `src/mlAlgorithms/visualization/` | 绘制残差图、学习曲线 | PNG 图像文件 |
 
 ### 理解重点
 
-- 这个命令会执行 `pipelines/regression/linear_regression.py` 中的 `run()`。
-- `run()` 是真正的工程入口，其他模块都被它按顺序调用。
-- 所以理解工程实现时，最清晰的方式也是先从入口脚本往下追踪。
+- 线性回归是当前代码库中**工程结构最简**的回归流水线——训练函数仅 3 行，预处理为 `None`，评估可视化仅 2 项。
+- 与决策树回归的差异：决策树多了 `featureImportance` 和 `treeStructure` 两项可视化，训练函数更复杂（3 个超参数 + 结构日志）。
+- 这种极简设计是有意的——线性回归作为回归学习的起点，工程结构越简单越利于理解核心调用链。
 
-## 2. 模块之间的调用关系
-
-### 示例代码
+## 2. `PipelineSpec` 配置详情
 
 ```python
-from data_generation import linear_regression_data
-from model_training.regression.linear_regression import train_model
-from result_visualization.residual_plot import plot_residuals
-from result_visualization.learning_curve import plot_learning_curve
-```
-
-### 理解重点
-
-- `pipelines` 层不自己造数据、不自己实现模型，也不自己画图，而是扮演调度者角色。
-- 这种分层使每个文件职责单一：数据文件只关心数据，训练文件只关心模型，画图文件只关心结果展示。
-- 当前线性回归分册结构虽然简单，但已经具备清晰的工程层次。
-
-## 3. 流水线层真正负责什么
-
-### 参数速览（本节）
-
-适用逻辑（分项）：
-
-1. 复制数据
-2. 拆分特征与标签
-3. 切分训练/测试集
-4. 调用训练函数
-5. 预测测试集
-6. 输出残差图与学习曲线
-
-| 步骤 | 所在文件 | 当前职责 |
-|---|---|---|
-| 读取 `linear_regression_data` | `pipelines/regression/linear_regression.py` | 拿到统一数据入口 |
-| `X` / `y` 拆分 | `pipelines/regression/linear_regression.py` | 明确特征与标签 |
-| 训练/测试切分 | `pipelines/regression/linear_regression.py` | 生成训练和评估输入 |
-| 调用 `train_model(...)` | `pipelines/regression/linear_regression.py` | 获得训练好的模型 |
-| `predict(...)` + 两种画图函数 | `pipelines/regression/linear_regression.py` | 完成结果输出 |
-
-### 理解重点
-
-- 当前仓库没有使用 `Pipeline` 类，也没有把预处理单独抽成步骤对象。
-- 这种显式写法更适合教学，因为每一步都能直接看到变量名和执行顺序。
-- 对线性回归这种基础分册来说，这种简单实现反而更利于理解。
-
-## 4. 训练层真正负责什么
-
-### 参数速览（本节）
-
-适用函数：`train_model(...)`
-
-| 输出项 | 作用 |
-|---|---|
-| `model` | 返回已训练好的 `LinearRegression` 模型 |
-| 控制台日志 | 打印截距和各特征系数 |
-
-### 理解重点
-
-- 训练层并不负责切分数据，也不负责计算残差图或学习曲线。
-- 它的核心任务只有两个：构建 `LinearRegression()`，拟合训练数据。
-- 同时它还承担了教学型日志输出职责，这也是为什么要打印截距和系数。
-
-## 5. 可视化层真正负责什么
-
-### 参数速览（本节）
-
-适用函数（分项）：
-
-1. `plot_residuals(...)`
-2. `plot_learning_curve(...)`
-
-| 参数名 | 当前用途 |
-|---|---|
-| `dataset_name` | 决定保存目录，如 `linear_regression` |
-| `model_name` | 决定文件名前缀，如 `linear_regression` |
-| `title` | 决定图上的展示标题 |
-
-### 理解重点
-
-- 残差图函数只关心真实值和预测值，不关心模型内部细节。
-- 学习曲线函数只关心模型实例、训练数据和评分方式，不直接依赖训练后的 `model` 对象。
-- 这种设计说明当前工程实现已经在复用同一套通用可视化工具。
-
-## 6. 为什么学习曲线单独传一个新的 `LinearRegression()`
-
-### 示例代码
-
-```python
-plot_learning_curve(
-    LinearRegression(),
-    X_train,
-    y_train,
-    scoring="r2",
-    ...
+PipelineSpec(
+    "regression.linear_regression",     # pipeline ID
+    TaskType.REGRESSION,                # 任务类型
+    "regression.linear_regression",     # dataset ID
+    RunnerType.REGRESSION,              # 运行器类型
+    trainLinearRegressionModel,         # 训练函数
+    None,                               # 预处理 —— 无标准化
+    "randomSplit",                      # 切分策略
+    "default",                          # 后处理
+    "regression",                       # 输出目录前缀
+    "regression",                       # 可视化目录前缀
+    ["correlationHeatmap", "featureTargetScatter"],  # 训练前可视化
+    ["featureImportance"],              # 训练后诊断可视化
+    ["learningCurve"],                  # 学习可视化
+    "linear_regression",                # 结果存储子目录
 )
 ```
 
 ### 理解重点
 
-- `plot_learning_curve(...)` 内部会调用 `sklearn.model_selection.learning_curve(...)`，它需要一个可重复训练的模型实例。
-- 因此这里传入的是新的 `LinearRegression()`，而不是已经在完整训练集上拟合完成的 `model`。
-- 这说明学习曲线和测试集预测虽然都属于“评估”，但两者的执行方式并不相同。
+- `None` 预处理是线性回归与其他回归模型（SVR、正则化）的关键工程差异——但需区分：当前选择是因为数据量纲接近且关系简单，不代表所有场景下线性回归都不需要标准化。
+- `["featureImportance"]` 在训练后可视化中——对线性回归来说，"特征重要性"即 `coef_` 的绝对值可视化（系数柱状图）。
+- `["learningCurve"]` 使用 `_buildLearningCurveFactory` 工厂函数——传入新的 `LinearRegression()` 实例做 CV。
 
-## 7. 常量 `DATASET` 和 `MODEL` 的作用
+## 3. 数据依赖关系
 
-### 参数速览（本节）
-
-适用常量：
-
-1. `DATASET = "linear_regression"`
-2. `MODEL = "linear_regression"`
-
-| 常量 | 当前作用 |
-|---|---|
-| `DATASET` | 决定图片输出的上层目录 |
-| `MODEL` | 决定图片文件名前缀 |
-
-### 理解重点
-
-- 这两个常量的作用，不是影响模型训练，而是统一结果文件的命名和归档。
-- 这样同一算法分册下生成的残差图和学习曲线会被放到稳定位置。
-- 这也是为什么当前工程结构适合继续扩展更多图表或指标输出。
-
-## 8. 从命令到结果图的执行链
-
-### 示例代码
-
-```python
-python -m pipelines.regression.linear_regression
-    -> run()
-    -> linear_regression_data.copy()
-    -> train_test_split(...)
-    -> train_model(...)
-    -> model.predict(...)
-    -> plot_residuals(...)
-    -> plot_learning_curve(LinearRegression(), ...)
-    -> savefig(...)
+```
+loadLinearRegressionDataset()
+    │
+    ├─→ X = data.drop(columns=["price"])
+    ├─→ y = data["price"]
+    ├─→ feature_names = list(X.columns)
+    │
+    ├─→ train_test_split(test_size=0.2)
+    │       │
+    │       ├─→ X_train, y_train ──→ model.fit() ──→ model (coef_, intercept_)
+    │       │       │
+    │       │       └─→ plot_learning_curve(LinearRegression(), X_train, y_train)
+    │       │
+    │       └─→ X_test ──→ model.predict() ──→ y_pred
+    │               │
+    │               └─→ plot_residuals(y_test, y_pred)
+    │
+    └─→ model ──→ 终端日志: coef_ + intercept_ 打印
 ```
 
 ### 理解重点
 
-- 这条链里最关键的中间产物有三个：`X_train` / `X_test`、训练后的 `model`、测试集预测 `y_pred`。
-- 一旦这些中间变量理解清楚，整个 linear_regression 分册的代码结构就基本串起来了。
-- 文档中的各章节，其实就是在拆解这条执行链上的不同环节。
+- 数据依赖图比决策树回归更简单——没有 `featureImportance` 和 `treeStructure` 两条分支。
+- `y_test` 仅用于评估对比——不参与训练，只在残差图中与 `y_pred` 对比。
+- `model` 的核心输出是 `coef_` 和 `intercept_`——终端日志直接打印，是流水线最核心的训练产物。
 
-![运行结果](../../../outputs/linear_regression/result_display.png)
+## 4. 运行器层的执行链
+
+| 序号 | 步骤 | 说明 |
+|---|---|---|
+| 1 | 根据 `datasetId` 查找 `DatasetSpec` | 获取数据加载器和描述信息 |
+| 2 | 调用 `loadLinearRegressionDataset()` | 加载 `(200, 4)` DataFrame |
+| 3 | 拆分 X / y + 保存 `feature_names` | 为后续日志和可视化作准备 |
+| 4 | `train_test_split(test_size=0.2)` | 随机切分——无标准化 |
+| 5 | 调用 `trainLinearRegressionModel(X_train, y_train)` | SVD 闭式求解——打印 `coef_` 和 `intercept_` |
+| 6 | `model.predict(X_test)` | 获取测试集预测值 |
+| 7 | `plot_residuals(y_test, y_pred)` |  残差诊断图 |
+| 8 | `plot_learning_curve(LinearRegression(), X_train, y_train, scoring="r2")` | 学习曲线 |
+
+### 理解重点
+
+- 步骤 5 是本仓库最短的训练步骤——3 行代码，SVD 闭式解，瞬间完成，无迭代日志。
+- 步骤 8 的学习曲线使用新 `LinearRegression()` 实例——`_buildLearningCurveFactory("regression.linear_regression")` 返回的工厂函数。
+- 与决策树回归的执行链对比：少了 `plot_feature_importance` 和 `plot_tree_structure` 两个步骤。
+
+## 5. 线性回归 vs 决策树回归 vs SVR 工程对比
+
+| 工程维度 | 线性回归 | 决策树回归 | SVR |
+|---|---|---|---|
+| 训练函数 | `trainLinearRegressionModel` | `trainDecisionTreeRegressionModel` | `trainSvrRegressionModel` |
+| 模型类 | `LinearRegression` | `DecisionTreeRegressor` | `SVR` |
+| 训练函数行数 | **3 行** | ~5 行 | ~4 行 |
+| 预处理 | `None` | `None` | `standardScaler` |
+| 超参数数 | 0 | 3 | 4 |
+| 训练后诊断 | `["featureImportance"]` | `["featureImportance"]` | `[]` |
+| 学习可视化 | `["learningCurve"]` | `["learningCurve", "treeStructure"]` | `["learningCurve"]` |
+| 数据量 | 200（手工合成） | 20640（真实数据） | 200（合成非线性） |
+| 训练方式 | SVD 闭式解 | CART 贪心递归 | 凸优化（SMO 类算法） |
 
 ## 常见坑
 
-1. 把 `pipelines` 层和 `model_training` 层职责混在一起，误以为训练函数负责全部工程流程。
-2. 不理解为什么学习曲线不用训练好的 `model`，从而误读 `plot_learning_curve(...)` 的工作方式。
-3. 忽略 `DATASET` 和 `MODEL` 的作用，看不懂图像文件为什么会落到固定目录。
+1. 误以为运行器层直接导入可视化函数——实际上是通过诊断/学习可视化列表配置，由运行器根据列表动态调用。
+2. 将 `PipelineSpec` 中的旧路径引用（如 `data_generation/`）当成当前代码库的实际结构——实际代码在 `src/mlAlgorithms/` 下。
+3. 把 `trainLinearRegressionModel` 的极简实现误解为功能缺失——3 行代码是因为 `LinearRegression()` 无需超参数，这是设计上的有意简洁。
 
 ## 小结
 
-- 当前线性回归实现采用了清晰的分层结构：数据层、训练层、流水线层、可视化层各司其职。
-- 入口脚本负责调度，训练模块负责模型，画图模块负责结果呈现。
-- 这种结构既方便阅读，也方便后续继续补指标打印或更复杂的回归实验。
+- 线性回归工程实现采用声明式流水线架构——`PipelineSpec` 配置所有组件，`RegressionRunner` 按序编排执行。
+- 与决策树回归/SVR 的工程差异：（1）训练函数最简（3 行）；（2）预处理为 `None`（无标准化）；（3）可视化最少（无 treeStructure）；（4）数据为手工合成小规模。
+- 这种极简设计使线性回归成为理解整个回归流水线架构的最佳入口——先看懂最简单的，再对比复杂的。

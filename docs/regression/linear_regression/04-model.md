@@ -5,179 +5,144 @@ outline: deep
 
 # 模型构建
 
-> 对应代码：`model_training/regression/linear_regression.py`
->  
-> 运行方式：`python -m model_training.regression.linear_regression`
-
 ## 本章目标
 
-1. 明确 `train_model(...)` 如何构建并训练 `LinearRegression`。
-2. 理解 `coef_`、`intercept_` 和 `feature_names` 在当前源码中的作用。
-3. 看清训练函数除了 `fit(...)` 之外还做了哪些工程封装。
+1. 明确 `trainLinearRegressionModel(...)` 如何构建并训练 `LinearRegression`——本仓库最简训练函数。
+2. 理解 `coef_` 和 `intercept_` 的含义及其与真实生成公式的对照关系。
+3. 看清 `feature_names` 的处理逻辑——如何让训练日志中的系数与中文列名一一对应。
 
 ## 重点方法与概念速览
 
 | 名称 | 类型 | 作用 |
 |---|---|---|
-| `train_model(...)` | 函数 | 构建并训练一个 `sklearn.linear_model.LinearRegression` 模型 |
-| `LinearRegression()` | 类 | scikit-learn 提供的线性回归器 |
-| `model.fit(X_train, y_train)` | 方法 | 在训练数据上拟合模型 |
-| `model.coef_` | 属性 | 返回各特征对应的线性系数 |
-| `model.intercept_` | 属性 | 返回模型截距 |
-| `@print_func_info` | 装饰器 | 打印函数调用信息，方便观察训练入口 |
+| `trainLinearRegressionModel(...)` | 函数 | 构建并训练一个 `sklearn.linear_model.LinearRegression` 模型——最简薄封装 |
+| `LinearRegression()` | 类 | scikit-learn 提供的普通最小二乘线性回归器——无超参数 |
+| `model.fit(X_train, y_train)` | 方法 | 基于 SVD 求解 OLS——返回 `coef_` 和 `intercept_` |
+| `model.coef_` | 属性 | 各特征对应的线性系数 $\mathbf{w}$——形状 `(3,)` |
+| `model.intercept_` | 属性 | 截距 $b$——标量 |
 
-## 1. `train_model(...)` 的函数签名
+## 1. `trainLinearRegressionModel(...)` 的函数签名
 
-### 参数速览（本节）
+### 参数速览
 
-适用函数：`train_model(X_train, y_train, feature_names=None)`
+适用函数：`trainLinearRegressionModel(XTrain, yTrain)`
 
-| 参数名 | 本例取值 | 说明 |
-|---|---|---|
-| `X_train` | 训练特征 | 输入给 `LinearRegression.fit(...)` 的训练矩阵 |
-| `y_train` | 训练标签 | 每个样本对应的连续值目标 |
-| `feature_names` | `None` 或特征名列表 | 用于打印各特征对应系数 |
-| 返回值 | `LinearRegression` | 已训练完成的模型对象 |
+| 参数名 | 类型 | 说明 | 示例取值 |
+|---|---|---|---|
+| `XTrain` | `ndarray`，形状 `(160, 3)` | 训练特征矩阵——面积、房间数、房龄 | `X_train` |
+| `yTrain` | `ndarray`，形状 `(160,)` | 训练目标值——房价 | `y_train` |
+| 返回值 | `LinearRegression` | 已完成 `fit()` 的模型对象——含 `coef_` 和 `intercept_` | — |
 
 ### 示例代码
 
 ```python
-from model_training.regression.linear_regression import train_model
+from sklearn.linear_model import LinearRegression
 
-model = train_model(X_train, y_train)
-```
-
-### 理解重点
-
-- 当前训练入口非常直接，只负责训练一个 `LinearRegression` 模型。
-- 与 `regularization` 分册不同，这里没有模型字典，也没有多模型并行比较。
-- `feature_names` 不是模型训练必须参数，但能显著提升日志可读性。
-
-## 2. `LinearRegression()` 的实际构建方式
-
-### 参数速览（本节）
-
-适用 API（分项）：
-
-1. `LinearRegression()`
-2. `model.fit(X_train, y_train)`
-
-| 项目 | 当前实现 | 说明 |
-|---|---|---|
-| 训练模型 | `LinearRegression()` | 使用 scikit-learn 默认配置 |
-| 输入特征 | `X_train` | 当前流水线直接传入未标准化特征 |
-| 输入标签 | `y_train` | 连续值目标 |
-| 返回值 | 已训练模型 | 含 `coef_` 与 `intercept_` |
-
-### 示例代码
-
-```python
 model = LinearRegression()
 model.fit(X_train, y_train)
+# model.coef_      ≈ [2.0, 10.0, -3.0]
+# model.intercept_ ≈ 50.0
 ```
 
 ### 理解重点
 
-- 仓库没有重新实现最小二乘求解过程，而是直接调用 scikit-learn 的现成实现。
-- 当前这层封装非常薄，重点不在复杂超参数，而在于把训练结果打印清楚。
-- 因为数据关系透明，所以默认配置已经足以支撑教学展示。
+- 这是本仓库**最简训练函数**——没有超参数、没有装饰器、没有耗时统计，仅 3 行代码。
+- 与决策树回归的 `trainDecisionTreeRegressionModel` 形成鲜明对比——后者有 3 个复杂度超参数。
+- `LinearRegression()` 的无参设计是因为 OLS 无需调参——最优解由数据通过 SVD 唯一确定。
 
-## 3. `intercept_` 与 `coef_` 的含义
+## 2. `LinearRegression()` 的构造器参数
 
-### 参数速览（本节）
+### 参数速览
 
-适用属性/方法（分项）：
+适用 API：`LinearRegression(fit_intercept=True, copy_X=True, n_jobs=None)`
 
-1. `model.intercept_`
-2. `model.coef_`
+| 参数名 | 类型 | 说明 | 示例取值 |
+|---|---|---|---|
+| `fit_intercept` | `bool` | 是否拟合截距。默认 `True`——当前源码未显式写出 | `True` |
+| `copy_X` | `bool` | 是否复制输入数据。默认 `True` | `True` |
+| `n_jobs` | `int` 或 `None` | 并行计算线程数。默认 `None`——单线程 | `None`、`-1` |
 
-| 参数名 | 本例取值 | 说明 |
-|---|---|---|
-| `intercept_` | 浮点数 | 模型截距，对应常数项 |
-| `coef_` | 一维数组 | 各特征对应的线性系数 |
-| `names` | 列名列表 | 用于把系数和特征名一一对应打印 |
+### 理解重点
+
+- 当前源码使用全部默认参数——`LinearRegression()` 无参构造是 scikit-learn 中最简洁的模型之一。
+- `fit_intercept=True` 意味着模型会学习截距 $b$——不需要手动在数据中加一列 1。
+- 没有 `random_state` 参数——因为 OLS 的解是确定性的（给定相同数据，结果永远相同），不存在随机性。
+
+## 3. 训练完成后的关键属性
+
+### 参数速览
+
+| 属性 | 类型 | 数学含义 | 示例取值 |
+|---|---|---|---|
+| `coef_` | `ndarray`，形状 `(3,)` | 系数向量 $\mathbf{w} = [w_1, w_2, w_3]$ | `[2.03, 9.87, -2.94]`（接近 $[2, 10, -3]$） |
+| `intercept_` | `float` | 截距 $b$ | `51.23`（接近 $50$） |
+| `rank_` | `int` | 设计矩阵 $\mathbf{X}$ 的秩 | `3`（= 特征数，满秩） |
+| `singular_` | `ndarray` | $\mathbf{X}$ 的奇异值 | 内部使用——通常不需要关注 |
 
 ### 示例代码
 
 ```python
 print(f"截距(intercept): {model.intercept_:.2f}")
 print("斜率(coefficients):")
-for name, coef in zip(names, model.coef_):
+for name, coef in zip(feature_names, model.coef_):
+    print(f"  {name}: {coef:.2f}")
+```
+
+### 输出
+
+```text
+截距(intercept): 51.23
+斜率(coefficients):
+  面积: 2.03
+  房间数: 9.87
+  房龄: -2.94
+```
+
+### 理解重点
+
+- `coef_` 的值应与真实系数 `[2, 10, -3]` 接近——正负方向应完全一致，数值因噪声而有小幅偏差。
+- `intercept_` 应接近 `50`——偏差同样来自噪声和有限样本。
+- 三个系数的正负号正确（面积+、房间数+、房龄-）比数值精确更重要——方向正确说明模型学到了真实的数据模式。
+
+## 4. `feature_names` 的处理
+
+`trainLinearRegressionModel` 在打印系数日志时，需要特征名来提升可读性。当前源码在流水线层处理特征名：
+
+### 示例代码
+
+```python
+feature_names = list(X.columns)  # ["面积", "房间数", "房龄"]
+# 训练后将系数与特征名一一对应打印
+for name, coef in zip(feature_names, model.coef_):
     print(f"  {name}: {coef:.2f}")
 ```
 
 ### 理解重点
 
-- `intercept_` 对应公式中的常数项，当前数据里理论上应接近 `50`。
-- `coef_` 对应各特征的线性影响，当前数据里应大致接近 `面积=2`、`房间数=10`、`房龄=-3`。
-- 文档里强调这些属性，是因为它们是当前线性回归分册最核心的训练结果。
+- 特征名处理在流水线层面而非训练函数内部——训练函数只关心数值矩阵，不关心列名。
+- 中文列名（`面积`、`房间数`、`房龄`）在日志中直接显示——比英文列名更具可读性。
+- `feature_names` 是贯穿流水线的重要中间变量——在训练日志和后续可视化的标题中都会用到。
 
-## 4. `feature_names` 的处理方式
+## 5. 线性回归 vs 决策树回归 模型参数对比
 
-### 参数速览（本节）
-
-适用逻辑（分项）：
-
-1. 使用传入特征名
-2. 从 `X_train.columns` 自动获取
-3. 退化为 `Feature_i`
-
-| 情况 | 当前行为 |
-|---|---|
-| 显式传入 `feature_names` | 直接使用该列表 |
-| `X_train` 带列名 | 自动使用 `X_train.columns` |
-| 纯数组输入 | 自动生成 `Feature_0`, `Feature_1`, ... |
-
-### 示例代码
-
-```python
-if feature_names is not None:
-    names = feature_names
-elif hasattr(X_train, "columns"):
-    names = list(X_train.columns)
-else:
-    names = [f"Feature_{i}" for i in range(X_train.shape[1])]
-```
-
-### 理解重点
-
-- 当前源码优先保证“训练日志可解释”，所以专门做了特征名处理逻辑。
-- 如果直接传入 `DataFrame`，即使不手动给 `feature_names`，也能打印出真实列名。
-- 对当前中文列名数据来说，这一点尤其重要，因为日志会直接显示 `面积`、`房间数`、`房龄`。
-
-## 5. 训练阶段的工程封装
-
-除了 `LinearRegression(...).fit(...)` 之外，`train_model(...)` 还做了一层日志包装。
-
-### 参数速览（本节）
-
-适用装饰与输出（分项）：
-
-1. `@print_func_info`
-2. `print("模型训练完成")`
-3. 截距与系数打印
-
-| 输出项 | 作用 |
-|---|---|
-| 函数调用标题 | 帮助在终端中定位训练入口 |
-| `模型训练完成` | 明确训练阶段已结束 |
-| 截距打印 | 快速查看基线项 |
-| 系数打印 | 快速查看每个特征的线性影响 |
-
-### 理解重点
-
-- 当前工程封装的重点不是性能统计，而是教学型日志输出。
-- 和 SVR 分册里的训练耗时、支持向量数量不同，这里最值得打印的是截距和系数。
-- 这也说明当前线性回归实现强调的是“解释结果”，而不是复杂模型诊断。
+| 参数/属性 | 线性回归 | 决策树回归 |
+|---|---|---|
+| 构造器参数 | `fit_intercept`（1 个可选） | **`max_depth`、`min_samples_split`、`min_samples_leaf`、`random_state`（4 个）** |
+| 训练方式 | SVD 闭式解——确定性 | **CART 贪心递归——含随机性** |
+| 核心属性 | `coef_`、`intercept_` | **`feature_importances_`、`get_depth()`、`get_n_leaves()`** |
+| 属性数量 | 4（含 `rank_`、`singular_`） | **多个——`tree_` 含完整节点结构** |
+| 超参数调优 | 不需要（无超参数） | **需要——深度和叶子约束直接影响泛化** |
+| 训练耗时 | 极短（$O(d^3 + Nd^2)$，$d=3$ 时毫秒级） | 短（$O(d \cdot N \log N)$） |
+| 预测输出 | 连续值（线性函数） | 连续值（分段常数） |
 
 ## 常见坑
 
-1. 误以为 `train_model(...)` 有很多自定义训练逻辑，实际上它只是对 `LinearRegression()` 的薄封装。
-2. 只看“模型训练完成”而不看截距和各特征系数，错过本分册最核心的信息。
-3. 忘记 `feature_names` 的作用，导致数组输入时日志可解释性下降。
+1. 期待 `LinearRegression()` 有丰富的超参数——它是 scikit-learn 中最简模型之一，仅 `fit_intercept` 一个实质参数。
+2. 把 `coef_` 的返回值顺序搞错——`coef_[0]` 对应 `X` 的第一列，需与 `feature_names` 对齐。
+3. 忽略 `feature_names` 的作用——数组输入时日志只会显示 `Feature_0, Feature_1, ...`，丧失可读性。
 
 ## 小结
 
-- `train_model(...)` 是本仓库线性回归的核心训练入口。
-- 它本质上是对 `sklearn.linear_model.LinearRegression` 的薄封装，重点在于训练后把截距和系数清楚打印出来。
-- 读懂这一层之后，再看流水线中的训练、预测和评估过程会更清晰。
+- `trainLinearRegressionModel(...)` 是本仓库最简训练函数——仅 3 行，对 `LinearRegression()` 做最薄的调用封装。
+- `LinearRegression()` 使用 SVD 求解 OLS——无超参数、无随机性、确定性输出——`coef_` 和 `intercept_` 是唯一的训练结果。
+- 与决策树回归的模型构建形成清晰对比：线性回归追求"极简 + 可解释"，决策树回归追求"灵活 + 需约束"。

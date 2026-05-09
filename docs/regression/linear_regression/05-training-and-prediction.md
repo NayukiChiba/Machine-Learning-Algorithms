@@ -5,236 +5,109 @@ outline: deep
 
 # 训练与预测
 
-> 对应代码：`pipelines/regression/linear_regression.py`、`model_training/regression/linear_regression.py`
->  
-> 运行方式：`python -m pipelines.regression.linear_regression`
-
 ## 本章目标
 
-1. 明确当前流水线从取数到生成图像的完整执行顺序。
-2. 理解训练阶段、预测阶段、残差图和学习曲线分别由哪个函数负责。
-3. 明确当前线性回归实现没有标准化步骤。
+1. 理解线性回归流水线的完整执行顺序——从数据加载到残差图和学习曲线输出。
+2. 理解 OLS 的训练过程——SVD 闭式求解，无需迭代，无收敛判断。
+3. 理解 `predict` 的预测方式——简单的矩阵乘法 $\hat{y} = \mathbf{X}\mathbf{w} + b$。
 
 ## 重点方法与概念速览
 
 | 名称 | 类型 | 作用 |
 |---|---|---|
-| `run()` | 函数 | 线性回归端到端流水线入口 |
-| `train_test_split(...)` | 函数 | 拆分训练集与测试集 |
-| `train_model(...)` | 函数 | 训练线性回归模型 |
-| `model.predict(X_test)` | 方法 | 对测试集做回归预测 |
-| `plot_residuals(...)` | 函数 | 绘制残差分析图 |
-| `plot_learning_curve(...)` | 函数 | 绘制学习曲线 |
+| `trainLinearRegressionModel(...)` | 函数 | 构建并训练线性回归模型——基于 SVD 的闭式求解 |
+| `model.fit(X_train, y_train)` | 方法 | 求解 $\min_{\mathbf{w},b} \|\mathbf{y} - \mathbf{X}\mathbf{w} - b\|^2$——一次计算完成 |
+| `model.predict(X_test)` | 方法 | 对测试集做矩阵乘法预测——$\hat{y} = \mathbf{X}\mathbf{w} + b$ |
+| `plot_residuals(...)` | 函数 | 绘制预测-真实散点图 + 残差分布图 |
+| `plot_learning_curve(...)` | 函数 | 绘制训练/验证 R² 随样本量变化的曲线 |
 
-## 1. 端到端入口 `run()`
+## 1. 完整流水线流程
 
-### 参数速览（本节）
+### 流程概述
 
-适用函数：`run()`
+```
+loadLinearRegressionDataset()
+    │
+    ├─ ① X = data.drop(columns=["price"]), y = data["price"]
+    ├─ ② X_train, X_test, y_train, y_test = train_test_split(test_size=0.2)
+    ├─ ③ model = trainLinearRegressionModel(X_train, y_train)
+    ├─ ④ y_pred = model.predict(X_test)
+    ├─ ⑤ plot_residuals(y_test, y_pred)
+    └─ ⑥ plot_learning_curve(LinearRegression(), X_train, y_train, scoring="r2")
+```
 
-| 项目 | 当前实现 |
-|---|---|
-| 数据源 | `linear_regression_data.copy()` |
-| 标签列 | `price` |
-| 切分方式 | `test_size=0.2, random_state=42` |
-| 训练入口 | `train_model(X_train, y_train)` |
-| 预测入口 | `model.predict(X_test)` |
-| 可视化入口 | `plot_residuals(...)`、`plot_learning_curve(...)` |
+### 参数速览
 
-### 示例代码
+| 步骤 | 操作 | 输入 | 输出 | 说明 |
+|---|---|---|---|---|
+| 加载数据 | `loadLinearRegressionDataset` | — | `DataFrame`，`(200, 4)` | 手工合成线性房价 |
+| 特征标签拆分 | `drop` + 列选择 | `DataFrame` | `X` `(200, 3)`、`y` `(200,)` | 标签列 `price` |
+| 数据切分 | `train_test_split` | `X`、`y` | `X_train` `(160, 3)`、`X_test` `(40, 3)` | `test_size=0.2`，无标准化 |
+| 训练 | `trainLinearRegressionModel` | `X_train`、`y_train` | `LinearRegression` | SVD 闭式求解——瞬间完成 |
+| 预测 | `model.predict` | `X_test` | `y_pred` `(40,)` | 矩阵乘法 |
+| 残差图 | `plot_residuals` | `y_test`、`y_pred` | PNG 图像 | 误差分布诊断 |
+| 学习曲线 | `plot_learning_curve` | 新 `LinearRegression()`、`X_train`、`y_train` | PNG 图像 | 样本量-得分趋势 |
 
-```python
-def run():
-    data = linear_regression_data.copy()
-    X = data.drop(columns=["price"])
-    y = data["price"]
+### 理解重点
+
+- 这是本仓库**最简流水线**——仅 6 步，无标准化、无特征重要性、无树结构，聚焦于系数解释和残差诊断。
+- 训练步骤耗时极短（毫秒级）——3 个特征 × 160 样本的 SVD 求解计算量极小。
+- 与决策树回归流水线的对比：决策树多出特征重要性和树结构图两步，训练为贪心递归而非闭式求解。
+
+## 2. 训练细节：SVD 闭式求解
+
+### 算法流程
+
+```
+输入 X_train (160, 3), y_train (160,)
+    ↓
+① 构建设计矩阵: X̃ = [1, X_train] → (160, 4)
+② 对 X̃ 做奇异值分解: X̃ = U Σ V^T
+③ 计算: w̃* = V Σ^{-1} U^T y_train
+④ 返回: coef_ = w̃*[1:], intercept_ = w̃*[0]
 ```
 
 ### 理解重点
 
-- 整个分册的运行入口就是 `pipelines/regression/linear_regression.py` 里的 `run()`。
-- 这个函数不负责实现线性回归求解本身，而是把取数、训练、预测和画图串成一条流程。
-- 相比更复杂的流水线，这里的执行链非常短，适合初学时逐步跟读。
+- scikit-learn 的 `LinearRegression` 使用 `scipy.linalg.lstsq`（基于 SVD 或 QR 分解）求解——比直接计算 $(\mathbf{X}^T\mathbf{X})^{-1}$ 的数值稳定性更好。
+- 训练是**一次性**的——没有迭代、没有收敛判断、没有 `n_iter` 或 `tol` 参数。
+- 这是 OLS 与所有迭代式训练算法（EM、Baum-Welch、梯度下降）的根本区别——OLS 保证找到全局最优解，且一步到位。
 
-## 2. 训练前的数据准备顺序
+## 3. 预测细节：矩阵乘法
 
-### 参数速览（本节）
+对测试样本矩阵 $\mathbf{X}_{\text{test}}$：
 
-适用 API（分项）：
+$$
+\hat{\mathbf{y}} = \mathbf{X}_{\text{test}} \mathbf{w} + b = \tilde{\mathbf{X}}_{\text{test}} \tilde{\mathbf{w}}
+$$
 
-1. `train_test_split(X, y, test_size=0.2, random_state=42)`
+### 理解重点
 
-| 参数名 | 本例取值 | 说明 |
+- 预测完全不涉及训练数据——模型参数 $\mathbf{w}$ 和 $b$ 已经固化在 `coef_` 和 `intercept_` 中。
+- 预测复杂度为 $O(N_{\text{test}} \cdot d) = O(40 \times 3)$——几乎瞬时。
+- 与决策树回归的预测对比：线性回归做矩阵乘法（全局统一公式），决策树沿树走到叶子（局部 if-else 路径）。
+
+## 4. 与决策树回归训练流程的对比
+
+| 步骤 | 线性回归 | 决策树回归 |
 |---|---|---|
-| `test_size` | `0.2` | 测试集占比 |
-| `random_state` | `42` | 保证可复现划分 |
-| 返回值 | `X_train`、`X_test`、`y_train`、`y_test` | 训练/测试集拆分结果 |
-
-### 示例代码
-
-```python
-X_train, X_test, y_train, y_test = train_test_split(
-    X, y, test_size=0.2, random_state=42
-)
-```
-
-### 理解重点
-
-- 当前流水线在数据切分后直接开始训练，没有额外的标准化步骤。
-- 这一点和 `svr`、`regularization` 分册不同，文档里必须明确区分。
-- 因为当前数据关系简单、维度低且量纲相对直观，所以这里保留了最基础的线性回归流程。
-
-## 3. 训练阶段：调用 `train_model(...)`
-
-### 参数速览（本节）
-
-适用函数：`train_model(X_train, y_train)`
-
-| 参数名 | 本例取值 | 说明 |
-|---|---|---|
-| `X_train` | 训练特征 | 当前直接传入原始训练特征 |
-| `y_train` | 训练标签 | 连续值目标 |
-| 返回值 | `model` | 已训练好的 `LinearRegression` 模型 |
-
-### 示例代码
-
-```python
-model = train_model(X_train, y_train)
-```
-
-### 理解重点
-
-- 当前实现没有把训练和预测揉成同一个函数，而是先得到训练好的模型，再单独调用 `predict(...)`。
-- 训练阶段最重要的副产物，不只是 `model` 对象，还有控制台里打印出的截距和系数。
-- 因为数据关系透明，这些训练日志本身就具有很强解释价值。
-
-## 4. 预测阶段：直接调用 `predict(...)`
-
-### 参数速览（本节）
-
-适用流程（分项）：
-
-1. `y_pred = model.predict(X_test)`
-
-| 参数名 | 本例取值 | 说明 |
-|---|---|---|
-| `model` | 已训练完成模型 | 来自 `train_model(...)` 返回值 |
-| `X_test` | 测试特征 | 当前直接传入未标准化测试集 |
-| `y_pred` | 预测值数组 | 用于残差图分析 |
-
-### 示例代码
-
-```python
-y_pred = model.predict(X_test)
-```
-
-### 理解重点
-
-- 当前仓库没有额外封装 `predict_model(...)`，而是直接使用 scikit-learn 统一的 `predict(...)` 接口。
-- 由于本分册没有标准化步骤，所以预测阶段也直接使用原始测试特征。
-- 这让整条流程更容易对应到“训练一个线性函数，然后代入新样本求值”的直觉。
-
-## 5. 预测后的残差图输出
-
-### 参数速览（本节）
-
-适用函数：`plot_residuals(y_test, y_pred, title=..., dataset_name=..., model_name=...)`
-
-| 参数名 | 本例取值 | 说明 |
-|---|---|---|
-| `y_test` | 测试标签 | 真实值 |
-| `y_pred` | 预测值 | 模型对测试集的输出 |
-| `title` | `"线性回归 残差分析"` | 图标题 |
-| `dataset_name` | `"linear_regression"` | 输出目录名 |
-| `model_name` | `"linear_regression"` | 输出文件名前缀 |
-
-### 示例代码
-
-```python
-plot_residuals(
-    y_test,
-    y_pred,
-    title="线性回归 残差分析",
-    dataset_name=DATASET,
-    model_name=MODEL,
-)
-```
-
-### 理解重点
-
-- 残差图用来检查预测值和真实值之间的误差分布。
-- `DATASET` 和 `MODEL` 都是固定字符串，因此当前线性回归会把图输出到稳定的路径下。
-- 这一步是测试集预测之后才发生的，不属于训练过程本身。
-
-## 6. 学习曲线是如何接入流水线的
-
-### 参数速览（本节）
-
-适用函数：`plot_learning_curve(LinearRegression(), X_train, y_train, scoring='r2', ...)`
-
-| 参数名 | 本例取值 | 说明 |
-|---|---|---|
-| `model` | `LinearRegression()` | 传入一个新的未训练模型实例 |
-| `X` | `X_train` | 使用训练集画学习曲线 |
-| `y` | `y_train` | 使用训练标签画学习曲线 |
-| `scoring` | `"r2"` | 当前分册使用的评分指标 |
-
-### 示例代码
-
-```python
-plot_learning_curve(
-    LinearRegression(),
-    X_train,
-    y_train,
-    scoring="r2",
-    title="线性回归 学习曲线",
-    dataset_name=DATASET,
-    model_name=MODEL,
-)
-```
-
-### 理解重点
-
-- 学习曲线不是基于训练好的 `model` 直接画出来的，而是由 `plot_learning_curve(...)` 内部重新做不同训练规模下的交叉验证。
-- 当前函数输入的是 `X_train` 和 `y_train`，不是测试集。
-- 这一步的作用，是观察样本量变化时训练得分和验证得分如何变化，而不是直接给出一次测试预测结果。
-
-## 7. 用伪代码看完整流程
-
-### 示例代码
-
-```python
-data = linear_regression_data.copy()
-X = data.drop(columns=["price"])
-y = data["price"]
-
-X_train, X_test, y_train, y_test = train_test_split(...)
-
-model = train_model(X_train, y_train)
-y_pred = model.predict(X_test)
-
-plot_residuals(...)
-plot_learning_curve(LinearRegression(), X_train, y_train, scoring="r2", ...)
-```
-
-### 理解重点
-
-- 当前线性回归流水线的主线非常清楚：取数、切分、训练、预测、画残差图、画学习曲线。
-- 这条链路里最关键的中间变量是 `model` 和 `y_pred`。
-- 只要把这条流程走清楚，整个 linear_regression 分册的工程部分就基本读懂了。
-
-## 训练诊断可视化
-
-![学习曲线](../../../outputs/linear_regression/learning_curve.png)
+| 数据 | 手工合成 `(200, 3)` | 真实数据 `(20640, 8)` |
+| 标准化 | 无 | 无 |
+| 训练算法 | SVD 闭式解——一次性完成 | CART 贪心递归——逐层分裂 |
+| 训练复杂度 | $O(d^3 + Nd^2)$——极快 | $O(d \cdot N \log N)$——快 |
+| 是否需要 `random_state` | 否——确定性解 | **是——分裂涉及随机性** |
+| 收敛判断 | 不需要——闭式解一次到位 | **需要 `max_depth`/`min_samples_split` 等早停** |
+| 预测 | $\hat{y} = \mathbf{X}\mathbf{w} + b$（矩阵乘法） | **沿树走到叶子 → 返回叶子均值** |
+| 评估可视化 | 残差图 + 学习曲线 | **残差图 + 特征重要性 + 学习曲线 + 树结构** |
 
 ## 常见坑
 
-1. 把其他分册里的标准化流程误套到当前线性回归实现上。
-2. 误以为学习曲线是用测试集直接画的，实际上它基于训练集和交叉验证。
-3. 只看到模型训练成功，没有继续看残差图和学习曲线这两类结果输出。
+1. 在 `LinearRegression()` 上期待看到 `n_iter` 或训练耗时——它是一次性闭式求解，没有迭代过程。
+2. 把 `plot_learning_curve` 传入已训练的 `model`——学习曲线需要未训练的模型实例做交叉验证。
+3. 在 200 样本上期待看到学习曲线中训练/验证得分的巨大差异——线性回归参数少（4 个），小样本下也不容易过拟合。
 
 ## 小结
 
-- 当前流水线把数据准备、单模型训练、测试集预测和两种可视化输出串成了一条完整路径。
-- 训练函数负责“得到模型”，流水线函数负责“组织执行和产出结果”。
-- 把这一层执行顺序读清楚，后续看评估与工程实现章节就会更顺。
+- 线性回归流水线为最简 6 步：加载 → 拆分 → 切分 → 训练 → 预测 → 残差图 + 学习曲线——无标准化、无特征重要性、无树结构。
+- `fit()` 的核心是 SVD 闭式求解——一次计算，无迭代，无收敛判断，是 OLS 区别于所有迭代式算法的最本质特征。
+- `predict()` 是简单的矩阵乘法——测试样本与固定参数做线性组合，计算量极小。
