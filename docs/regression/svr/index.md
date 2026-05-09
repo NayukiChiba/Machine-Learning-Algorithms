@@ -1,73 +1,55 @@
 ---
-title: SVR 支持向量回归 — 总览
+title: SVR 支持向量回归 — 概述
 outline: deep
 ---
 
 # SVR 支持向量回归
 
-> 对应代码：`pipelines/regression/svr.py`、`model_training/regression/svr.py`
->  
-> 运行方式：`python -m pipelines.regression.svr`
-
 ## 本章目标
 
-1. 明确本分册对应的 SVR 源码入口与运行方式。
-2. 理解当前 SVR 文档各章节分别负责解释什么内容。
-3. 建立从数据、模型、训练到评估的整体阅读路线。
+1. 理解 SVR 在回归分册中的定位——唯一使用核方法的非线性回归模型。
+2. 了解 SVR 的核心机制：ε-不敏感管道 + RBF 核映射 + 支持向量稀疏性。
+3. 明确 SVR 与线性回归、决策树回归、正则化回归的关键差异。
 
-## 对应代码速览
+## 重点方法与概念速览
 
-| 组件 | 路径 | 说明 |
+| 名称 | 类型 | 作用 |
 |---|---|---|
-| 数据生成 | `data_generation/regression.py` | `RegressionData.svr()` 生成 Friedman1 非线性回归数据 |
-| 数据导出 | `data_generation/__init__.py` | 导出 `svr_data` |
-| 训练封装 | `model_training/regression/svr.py` | `train_model(...)` 封装 `sklearn.svm.SVR` 训练 |
-| 端到端流水线 | `pipelines/regression/svr.py` | 完成数据切分、标准化、训练、预测、可视化 |
-| 残差可视化 | `result_visualization/residual_plot.py` | 绘制预测-真实与残差分布图 |
-| 学习曲线可视化 | `result_visualization/learning_curve.py` | 绘制训练/验证得分曲线 |
+| `trainSvrRegressionModel(...)` | 函数 | 构建并训练 `SVR(C=10.0, epsilon=0.1, kernel='rbf', gamma='scale')`——本仓库最简训练函数之一（2 行） |
+| `SVR(C=10.0, epsilon=0.1)` | 类 | scikit-learn 提供的 ε-支持向量回归器——基于 RBF 核的非线性拟合 |
+| ε-不敏感管道 | 概念 | 宽度为 2ε 的管道——管道内的预测误差不计入损失 |
+| RBF 核 | 核函数 | $K(\mathbf{x}_i, \mathbf{x}_j) = \exp(-\gamma\|\mathbf{x}_i - \mathbf{x}_j\|^2)$——将数据映射到高维空间 |
+| `model.support_` | 属性 | 支持向量的训练集索引——模型稀疏性的直接证据 |
 
-## 默认配置速览（来自源码）
+## SVR 与本仓库其他回归模型的定位对比
 
-| 项目 | 当前实现 |
-|---|---|
-| 训练模型 | `SVR(C=10.0, epsilon=0.1, kernel='rbf', gamma='scale', degree=3, coef0=0.0)` |
-| 数据切分 | `train_test_split(..., test_size=0.2, random_state=42)` |
-| 特征预处理 | `StandardScaler` 仅在训练集 `fit`，测试集 `transform` |
-| 评估方式 | 残差图 + 学习曲线（`scoring='r2'`） |
+| 维度 | 线性回归 | 正则化回归 | 决策树回归 | SVR |
+|---|---|---|---|---|
+| 核心能力 | 无偏线性拟合 | 带约束的线性拟合 | 非线性分段常数 | **核化非线性——RBF 映射到高维空间** |
+| 拟合方式 | 全局线性公式 | 全局惩罚线性公式 | 局部 if-else 规则 | **全局核函数加权——仅支持向量参与** |
+| 稀疏性 | 无 | Lasso 可清零系数 | 无 | **支持向量稀疏——仅部分样本参与预测** |
+| 需要标准化 | 否（当前） | **是** | 否 | **是——RBF 核对尺度敏感** |
+| 超参数数 | 0 | 1~2（α + l1_ratio） | 3 | **4（C, ε, kernel, γ）** |
+| 训练方式 | SVD 闭式解 | 坐标下降 / 闭式解 | CART 贪心递归 | **SMO 类凸优化——迭代求解对偶问题** |
+| 独有诊断 | coef_ 对照真实公式 | 近零系数计数 | 树结构可视化 | **支持向量数量——模型复杂度的直观信号** |
+| 教学定位 | 回归起点 | 约束与选择的艺术 | 非线性对比 | **核方法的回归入口** |
 
-## 阅读路线
+## 文件导航
 
-1. [数学原理](/regression/svr/01-mathematics)
-2. [数据构成](/regression/svr/02-data)
-3. [思路与直觉](/regression/svr/03-intuition)
-4. [模型构建](/regression/svr/04-model)
-5. [训练与预测](/regression/svr/05-training-and-prediction)
-6. [评估与诊断](/regression/svr/06-evaluation)
-7. [工程实现](/regression/svr/07-implementation)
-8. [练习与参考文献](/regression/svr/08-exercises-and-references)
+| 文件 | 内容 | 核心问题 |
+|---|---|---|
+| [01-mathematics](01-mathematics.md) | ε-不敏感损失、原始/对偶问题、核技巧、SMO | ε-管道如何让 SVR 产生稀疏支持向量？ |
+| [02-data](02-data.md) | Friedman1 非线性合成数据——200 样本 × 10 特征 | 为什么 SVR 需要非线性数据来展示核函数价值？ |
+| [03-intuition](03-intuition.md) | 管道直觉、核映射直觉、支持向量直觉 | 为什么只有管道外的点才影响模型？ |
+| [04-model](04-model.md) | `trainSvrRegressionModel` 构建 `SVR`——4 个超参数 | C、ε、kernel、γ 各控制什么？ |
+| [05-training-and-prediction](05-training-and-prediction.md) | 标准化 → SMO 求解对偶问题 → 核函数加权预测 | SVR 的预测为什么只依赖支持向量？ |
+| [06-evaluation](06-evaluation.md) | 残差图 + 学习曲线 + 支持向量数量 | 支持向量数量如何反映模型复杂度？ |
+| [07-implementation](07-implementation.md) | PipelineSpec 配置 + 运行器执行链 | SVR 为什么没有特征重要性？ |
+| [08-exercises-and-references](08-exercises-and-references.md) | 自检问题 + 动手练习 + 参考文献 | 调 C/ε/γ 观察支持向量数量变化 |
 
-## 如何运行
+## 学习路线
 
-### 示例代码
-
-```bash
-python -m pipelines.regression.svr
-```
-
-### 理解重点
-
-- 这个命令会串起当前 SVR 分册中最核心的工程流程。
-- 运行后会生成残差图和学习曲线，并在控制台打印训练日志。
-
-## 先修
-
-- [库生态总览](/foundations/overview)
-- [NumPy 基础与数组概念](/foundations/numpy/01-basics)
-- [预处理](/foundations/sklearn/02-preprocessing)
-- [术语表](/appendix/glossary)
-
-## 小结
-
-- 本分册严格对应当前仓库中的 SVR 源码实现。
-- 阅读时建议始终把文档内容与 `pipelines/regression/svr.py` 和 `model_training/regression/svr.py` 对照起来看。
-- 如果已经熟悉整体入口，可以直接从“模型构建”或“训练与预测”章节开始阅读。
+1. **先看线性回归**：SVR 是线性回归在核方法方向上的扩展——理解线性公式后再看核映射更自然。
+2. **理解 ε-管道**：SVR 最核心的概念不是核函数，而是 ε-不敏感管道——它决定了哪些样本成为支持向量。
+3. **关注支持向量数量**：`model.support_.shape[0]` 是 SVR 独有的诊断信息——它比任何数值指标都更直接地反映模型复杂度。
+4. **注意 SVR 没有特征重要性**：与线性回归（coef_）和决策树（feature_importances_）不同，RBF 核的 SVR 无法直接输出特征重要性——`PipelineSpec` 中训练后诊断列表为 `[]`。

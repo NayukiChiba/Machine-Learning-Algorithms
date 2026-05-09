@@ -5,205 +5,148 @@ outline: deep
 
 # 训练与预测
 
-> 对应代码：`pipelines/regression/svr.py`
->  
-> 运行方式：`python -m pipelines.regression.svr`
-
 ## 本章目标
 
-1. 用源码视角梳理 SVR 流水线中的训练步骤。
-2. 明确预测阶段的输入要求、输出形式和前置处理。
-3. 理解当前实现中哪些步骤是必须的，哪些地方可以作为调参入口。
+1. 理解 SVR 流水线的完整执行顺序——从数据加载到残差图和学习曲线输出。
+2. 理解 SVR 的训练过程——SMO 迭代求解对偶问题，不可见但关键。
+3. 理解 SVR 的预测方式——支持向量与测试点的核函数加权求和，而非矩阵乘法。
 
 ## 重点方法与概念速览
 
 | 名称 | 类型 | 作用 |
 |---|---|---|
-| `train_test_split(...)` | 函数 | 将样本拆成训练集和测试集 |
-| `StandardScaler()` | 类 | 对特征做标准化 |
-| `train_model(...)` | 函数 | 训练一个 `SVR` 模型 |
-| `model.predict(...)` | 方法 | 对标准化后的输入特征做回归预测 |
-| `svr_data.copy()` | 表达式 | 取得当前 SVR 数据副本，避免直接改原始数据 |
+| `loadSvrDataset()` | 方法 | 生成 Friedman1 非线性数据——返回 `(200, 11)` DataFrame |
+| `StandardScaler` | 预处理 | Z-score 标准化——RBF 核距离计算的前置条件 |
+| `trainSvrRegressionModel(...)` | 函数 | 构建并 `fit` SVR 模型——SMO 迭代求解 |
+| `model.predict(X_test_s)` | 方法 | 支持向量与测试点的核函数加权求和预测 |
+| `plot_residuals(...)` | 函数 | 残差诊断图 |
+| `plot_learning_curve(...)` | 函数 | 学习曲线——使用新 `SVR(...)` 实例 |
 
-## 1. 训练流程总览
+## 1. 完整流水线流程
 
-本仓库 `pipelines/regression/svr.py` 中的训练主流程如下：
+### 流程概述
 
-1. `data = svr_data.copy()`
-2. `X = data.drop(columns=['price'])`
-3. `y = data['price']`
-4. `train_test_split(..., test_size=0.2, random_state=42)`
-5. `StandardScaler().fit_transform(X_train)`
-6. `StandardScaler().transform(X_test)`
-7. `model = train_model(X_train_s, y_train)`
-
-### 示例代码
-
-```python
-data = svr_data.copy()
-X = data.drop(columns=["price"])
-y = data["price"]
-
-X_train, X_test, y_train, y_test = train_test_split(
-    X, y, test_size=0.2, random_state=42
-)
-
-scaler = StandardScaler()
-X_train_s = scaler.fit_transform(X_train)
-X_test_s = scaler.transform(X_test)
-
-model = train_model(X_train_s, y_train)
 ```
+loadSvrDataset()
+    │
+    ├─ ① X = data.drop(columns=["price"]), y = data["price"]
+    ├─ ② X_train, X_test, y_train, y_test = train_test_split(test_size=0.2)
+    ├─ ③ scaler = StandardScaler(); X_train_s = scaler.fit_transform(X_train)
+    ├─ ④ X_test_s = scaler.transform(X_test)
+    ├─ ⑤ model = trainSvrRegressionModel(X_train_s, y_train)
+    ├─ ⑥ y_pred = model.predict(X_test_s)
+    ├─ ⑦ plot_residuals(y_test, y_pred)
+    └─ ⑧ plot_learning_curve(SVR(C=10.0, epsilon=0.1, kernel='rbf', gamma='scale'), X_train_s, y_train, scoring='r2')
+```
+
+### 参数速览
+
+| 步骤 | 操作 | 输入 | 输出 | 说明 |
+|---|---|---|---|---|
+| 加载数据 | `loadSvrDataset` | — | `DataFrame`，`(200, 11)` | Friedman1 非线性数据 |
+| 特征标签拆分 | `drop` + 列选择 | `DataFrame` | `X(200,10)`, `y(200,)` | 标签列 `price` |
+| 数据切分 | `train_test_split` | `X`, `y` | `X_train(160,10)`, `X_test(40,10)` | `test_size=0.2` |
+| 标准化 | `StandardScaler` | `X_train`, `X_test` | `X_train_s`, `X_test_s` | **SVR（RBF 核）必需** |
+| 训练 | `trainSvrRegressionModel` | `X_train_s`, `y_train` | `SVR` 模型 | SMO 迭代求解 |
+| 预测 | `model.predict` | `X_test_s` | `y_pred(40,)` | 核函数加权求和 |
+| 残差图 | `plot_residuals` | `y_test`, `y_pred` | PNG 图像 | 误差分布诊断 |
+| 学习曲线 | `plot_learning_curve` | 新 `SVR(...)`, `X_train_s`, `y_train` | PNG 图像 | 样本量-得分趋势 |
 
 ### 理解重点
 
-- 这里的核心顺序是“先切分，再标准化，再训练”。
-- `train_model(...)` 的输入不是原始特征，而是标准化后的 `X_train_s`。
-- 当前流程已经是一条最小可运行的 SVR 回归基线。
+- SVR 流水线为 8 步——与线性回归（6 步）相比多了标准化（③④），与正则化回归（8 步）步骤数相同但无多模型循环。
+- 标准化必须在切分之后——与正则化回归一致。
+- SVR 没有特征重要性可视化——`PipelineSpec` 中训练后诊断列表为 `[]`。RBF 核的权重在对偶空间无法映射回原始特征。
 
-## 2. 训练集/测试集切分
+## 2. 标准化：RBF 核训练的关键前置
 
-### 参数速览（本节）
+### 参数速览
 
-适用 API：`train_test_split(X, y, test_size=0.2, random_state=42)`
+| 参数名 | 类型 | 说明 | 示例取值 |
+|---|---|---|---|
+| `X_train` | `ndarray(160, 10)` | 未标准化的训练特征 | 原始 Friedman1 各列 |
+| `X_train_s` | `ndarray(160, 10)` | 标准化后——每列 μ=0, σ=1 | — |
+| `X_test_s` | `ndarray(40, 10)` | 使用训练集统计量标准化 | — |
 
-| 参数名 | 本例取值 | 说明 |
+### 理解重点
+
+- RBF 核计算 $\exp(-\gamma\|\mathbf{x}_i - \mathbf{x}_j\|^2)$——欧氏距离对尺度极敏感。若某特征量级为 100 而其他为 0.1，该特征将完全主导核计算。
+- 标准化使所有特征在核距离中平等——这是 RBF 核 SVR 必须标准化的数学原因。
+- `fit_transform` 仅用于训练集，`transform` 用于测试集——这是数据泄露的基本防护。
+
+## 3. 训练细节：SMO 迭代求解
+
+### 参数速览
+
+| 参数名 | 类型 | 说明 | 示例取值 |
+|---|---|---|---|
+| 优化算法 | — | SMO（Sequential Minimal Optimization） | scikit-learn 内部实现 |
+| 优化变量 | — | $\alpha_i, \alpha_i^*$——共 $2 \times 160 = 320$ 个变量 | — |
+| 目标 | — | 最大化对偶问题——凸二次规划 | — |
+| 终止条件 | — | 对偶间隙 < `tol`（默认 1e-3） | `tol=1e-3` |
+
+### 理解重点
+
+- SVR 的训练是**不可见的迭代过程**——不像决策树那样可以观察分裂步骤，也不像线性回归的一步到位。
+- 训练复杂度约 $O(N^2 \cdot d)$ 到 $O(N^3)$——在 160 样本上毫秒级完成。
+- 训练过程是**确定性**的——对偶问题为凸优化，给定相同数据必然收敛到相同解。因此 `SVR` 无需 `random_state` 参数。
+- 训练完成后，大部分样本的 $\alpha_i - \alpha_i^* = 0$——它们被 ε-管道"忽视"，不参与预测。
+
+## 4. 预测细节：核函数加权求和
+
+### 参数速览
+
+| 参数名 | 类型 | 说明 | 示例取值 |
+|---|---|---|---|
+| `X_test_s` | `ndarray(40, 10)` | 标准化后的测试特征 | — |
+| `model.support_` | `ndarray(nSV,)` | 支持向量索引——仅这些样本参与预测 | — |
+| `model.dual_coef_` | `ndarray(1, nSV)` | $\alpha_i - \alpha_i^*$ 的值——支持向量的权重 | — |
+| `y_pred` | `ndarray(40,)` | 预测值 | — |
+
+$$
+f(\mathbf{x}) = \sum_{i \in \text{SV}} (\alpha_i - \alpha_i^*) K(\mathbf{x}_i, \mathbf{x}) + b
+$$
+
+### 理解重点
+
+- 预测**不是** $\mathbf{X}\mathbf{w} + b$ 的矩阵乘法——而是与支持向量逐一计算核函数再加权求和。
+- 预测复杂度 $O(nSV \cdot N_{\text{test}} \cdot d)$——支持向量越多预测越慢。
+- 支持向量占比（nSV / N_train）直接决定了预测成本——通常为 30%~60%。
+- 这与线性回归形成鲜明对比——线性回归的预测是固定 $O(N_{\text{test}} \cdot d)$，与训练集大小无关。
+
+## 5. SVR 预测 vs 线性回归预测 对比
+
+| 预测维度 | 线性回归 | SVR（RBF 核） |
 |---|---|---|
-| `X` | `data.drop(columns=['price'])` | 全量特征矩阵 |
-| `y` | `data['price']` | 全量标签向量 |
-| `test_size` | `0.2` | 20% 样本划为测试集 |
-| `random_state` | `42` | 固定随机切分，保证结果可复现 |
-| 返回值 | `X_train, X_test, y_train, y_test` | 切分后的训练集与测试集 |
+| 公式 | $\hat{y} = \mathbf{X}\mathbf{w} + b$ | **$\hat{y} = \sum(\alpha_i - \alpha_i^*)K(\mathbf{x}_i, \mathbf{x}) + b$** |
+| 复杂度 | $O(N_{\text{test}} \cdot d)$ | **$O(nSV \cdot N_{\text{test}} \cdot d)$** |
+| 依赖训练集 | 否——参数已固化为 $\mathbf{w}$ | **是——需要存储支持向量集** |
+| 参与计算的样本 | 无——仅用参数 | **仅支持向量——管道内样本被忽略** |
+| 内存占用 | $O(d)$——仅存储系数 | **$O(nSV \cdot d)$——存储支持向量** |
 
-### 示例代码
+## 6. SVR vs 线性回归 vs 正则化回归 训练对比
 
-```python
-X_train, X_test, y_train, y_test = train_test_split(
-    X, y, test_size=0.2, random_state=42
-)
-```
-
-### 理解重点
-
-- 切分必须发生在标准化之前，否则会引入数据泄露。
-- 固定 `random_state=42` 可以让实验结果更稳定，便于复现和比较。
-
-## 3. 标准化处理
-
-### 参数速览（本节）
-
-适用 API（分项）：
-
-1. `StandardScaler().fit_transform(X_train)`
-2. `StandardScaler().transform(X_test)`
-
-| 参数名 | 本例取值 | 说明 |
-|---|---|---|
-| `X_train` | 训练特征 | 在训练集上拟合均值和标准差，并完成变换 |
-| 返回值（`fit_transform`） | `X_train_s` | 标准化后的训练特征 |
-| `X_test` | 测试特征 | 使用训练集统计量做同样的变换 |
-| 返回值（`transform`） | `X_test_s` | 标准化后的测试特征 |
-
-### 示例代码
-
-```python
-scaler = StandardScaler()
-X_train_s = scaler.fit_transform(X_train)
-X_test_s = scaler.transform(X_test)
-```
-
-### 理解重点
-
-- SVR 尤其是 RBF 核对特征尺度非常敏感，因此标准化几乎是必做步骤。
-- `fit_transform` 只能用于训练集，测试集只能 `transform`。
-- 预测新数据时也必须复用同一个 `scaler` 的统计量。
-
-## 4. 模型训练
-
-### 参数速览（本节）
-
-适用函数：`train_model(X_train_s, y_train, C=10.0, epsilon=0.1, kernel='rbf', gamma='scale', degree=3, coef0=0.0)`
-
-| 参数名 | 本例取值 | 说明 |
-|---|---|---|
-| `X_train_s` | 标准化训练集 | 训练输入特征 |
-| `y_train` | 训练标签 | 模型学习目标 |
-| `C` | 默认 `10.0` | 惩罚系数 |
-| `epsilon` | 默认 `0.1` | 不敏感区间 |
-| `kernel` | 默认 `'rbf'` | 核函数类型 |
-| `gamma` | 默认 `'scale'` | 核函数参数 |
-| 返回值 | `SVR` | 已训练模型 |
-
-### 示例代码
-
-```python
-model = train_model(X_train_s, y_train)
-```
-
-### 理解重点
-
-- 当前流水线默认不做自动调参，而是直接使用源码中的基线参数。
-- 若要优先提升效果，通常从 `C`、`epsilon`、`gamma` 和 `kernel` 开始尝试。
-
-## 5. 预测流程
-
-### 参数速览（本节）
-
-适用 API：`model.predict(X_test_s)`
-
-| 参数名 | 本例取值 | 说明 |
-|---|---|---|
-| `X_test_s` | 标准化测试集 | 与训练时同分布、同预处理的输入特征 |
-| 返回值 | `ndarray` | 每个样本对应的预测回归值 |
-
-### 示例代码
-
-```python
-y_pred = model.predict(X_test_s)
-```
-
-### 理解重点
-
-- 预测阶段的关键不是代码复杂度，而是输入必须沿用训练阶段相同的标准化方式。
-- `y_pred` 会被后续残差图和学习曲线相关步骤继续使用。
-
-## 6. 从训练到预测的完整片段
-
-### 示例代码
-
-```python
-data = svr_data.copy()
-X = data.drop(columns=["price"])
-y = data["price"]
-
-X_train, X_test, y_train, y_test = train_test_split(
-    X, y, test_size=0.2, random_state=42
-)
-scaler = StandardScaler()
-X_train_s = scaler.fit_transform(X_train)
-X_test_s = scaler.transform(X_test)
-
-model = train_model(X_train_s, y_train)
-y_pred = model.predict(X_test_s)
-```
-
-### 理解重点
-
-- 这段代码已经覆盖了当前 SVR 流水线中训练与预测的最核心部分。
-- 后续可视化评估完全建立在 `y_test` 和 `y_pred` 之上。
-
-## 训练诊断可视化
-
-![学习曲线](../../../outputs/svr/learning_curve.png)
+| 训练维度 | 线性回归 | 正则化回归 | SVR |
+|---|---|---|---|
+| 数据 | 合成 `(200, 3)` | 真实+构造 `(442, 21)` | **合成非线性 `(200, 10)`** |
+| 标准化 | 无 | **`StandardScaler`** | **`StandardScaler`** |
+| 训练算法 | SVD 闭式解 | 坐标下降（Lasso/EN）+ 闭式解（Ridge） | **SMO——序列最小优化** |
+| 训练模型数 | 1 | 3（并行） | **1** |
+| 收敛判断 | 不需要 | `max_iter`（Lasso/EN） | **对偶间隙 < tol** |
+| 预测 | $\mathbf{X}\mathbf{w} + b$ | $\mathbf{X}\mathbf{w} + b$ | **$\sum(\alpha_i - \alpha_i^*)K(\mathbf{x}_i, \mathbf{x}) + b$** |
+| 评估可视化 | 残差图 + 学习曲线 | 残差图 + 特征重要性 | **残差图 + 学习曲线** |
+| 独有诊断 | coef_ 对照真实公式 | 近零系数计数 | **支持向量数量 + 占比** |
 
 ## 常见坑
 
-1. 对测试集单独 `fit_transform(...)`，导致训练和预测使用了不同统计量。
-2. 直接把原始 `X_test` 传给 `predict(...)`，跳过标准化。
-3. 修改了训练参数，却没有同步观察残差图和学习曲线变化。
+1. 期待 SVR（RBF 核）输出 `coef_`——线性核才有 `coef_`，RBF 核的权重在 `dual_coef_` 中，不可直接解释。
+2. 预测时传未标准化的 `X_test`——RBF 核的欧氏距离对尺度敏感，未标准化会导致预测结果严重偏离。
+3. 忽略支持向量数量——如果 nSV 接近 N_train（如 > 90%），说明模型近乎"记住"了所有训练样本，可能严重过拟合。
+4. 认为 SVR 也是一步到位——训练过程是 SMO 迭代，虽然对 160 样本几乎瞬时，但对大规模数据会显著变慢。
 
 ## 小结
 
-- 当前 SVR 训练与预测流程非常短，但对数据处理顺序要求很严格。
-- 真正影响结果稳定性的关键点是：正确切分、正确标准化、再用一致的特征空间做预测。
-- 读完本章后，可以继续结合评估章节观察 `y_pred` 的效果。
+- SVR 流水线为 8 步：加载 → 拆分 → 切分 → 标准化 → 训练 → 预测 → 残差图 → 学习曲线。无特征重要性。
+- 标准化是 SVR（RBF 核）的硬性要求——欧氏距离对特征尺度敏感。
+- 训练使用 SMO 迭代求解凸二次规划——确定性过程，220 个变量（2N）在小样本上瞬时完成。
+- 预测是支持向量与测试点的核函数加权求和——与线性回归的矩阵乘法本质不同，复杂度依赖支持向量数量。

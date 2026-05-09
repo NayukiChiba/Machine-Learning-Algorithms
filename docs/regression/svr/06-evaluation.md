@@ -5,120 +5,75 @@ outline: deep
 
 # 评估与诊断
 
-> 对应代码：`pipelines/regression/svr.py`、`result_visualization/residual_plot.py`、`result_visualization/learning_curve.py`
->  
-> 运行方式：`python -m pipelines.regression.svr`
-
 ## 本章目标
 
-1. 明确本仓库 SVR 当前实际使用的评估方式。
-2. 理解残差图和学习曲线各自能回答什么问题。
-3. 找到与当前源码一致的诊断和调参入口。
+1. 理解当前 SVR 流水线的两类评估输出——残差图和学习曲线。
+2. 理解支持向量数量作为 SVR 独有的诊断指标的价值。
+3. 明确当前流水线**已实现**和**未实现**的评估项——SVR（RBF 核）没有特征重要性。
 
 ## 重点方法与概念速览
 
 | 名称 | 类型 | 作用 |
 |---|---|---|
-| `plot_residuals(...)` | 函数 | 绘制预测 vs 真实散点图与残差分布图 |
-| `plot_learning_curve(...)` | 函数 | 绘制训练得分与验证得分随样本数变化的曲线 |
-| `scoring='r2'` | 参数 | 指定学习曲线使用回归 `R^2` 评分 |
-| `y_pred = model.predict(X_test_s)` | 表达式 | 生成用于评估的预测结果 |
+| `plot_residuals(...)` | 函数 | 生成预测-真实散点图 + 残差分布图——诊断非线性拟合质量 |
+| `plot_learning_curve(...)` | 函数 | 生成训练/验证 R² 曲线——诊断泛化趋势 |
+| `residuals = y_true - y_pred` | 派生量 | 衡量每个样本的预测误差 |
+| `model.support_.shape[0]` | 派生量 | 支持向量数量——SVR 独有的模型复杂度诊断 |
 
-## 1. 当前仓库的评估入口
+## 1. 残差图
 
-本仓库当前 SVR 流水线没有单独打印 MAE、RMSE 之类的数值指标，而是通过两类图形来做诊断：
+### 参数速览
 
-1. 残差分析图：`plot_residuals(...)`
-2. 学习曲线：`plot_learning_curve(...)`
+适用函数：`plot_residuals(y_test, y_pred, title, dataset_name, model_name)`
+
+| 参数名 | 类型 | 说明 | 示例取值 |
+|---|---|---|---|
+| `y_test` | `ndarray`，形状 `(40,)` | 测试集真实值——Friedman1 目标 | — |
+| `y_pred` | `ndarray`，形状 `(40,)` | SVR 模型预测值 | `model.predict(X_test_s)` |
+| `title` | `str` | 图标题 | `"SVR 残差分析"` |
+| `dataset_name` | `str` | 输出目录名 | `"svr"` |
+| `model_name` | `str` | 输出文件名前缀 | `"svr"` |
 
 ### 示例代码
 
 ```python
 y_pred = model.predict(X_test_s)
+residuals = y_test - y_pred
 
-plot_residuals(
-    y_test, y_pred, title="SVR 残差分析", dataset_name=DATASET, model_name=MODEL
-)
+# 左图: 预测值 vs 真实值散点图（对角线 = 完美预测）
+ax1.scatter(y_test, y_pred, alpha=0.6)
 
-plot_learning_curve(
-    SVR(kernel="rbf", C=10.0),
-    X_train_s,
-    y_train,
-    scoring="r2",
-    title="SVR 学习曲线",
-    dataset_name=DATASET,
-    model_name=MODEL,
-)
+# 右图: 残差 vs 预测值散点图（红线 = 零残差）
+ax2.scatter(y_pred, residuals, alpha=0.6)
+ax2.axhline(y=0, color="r", linestyle="--")
 ```
 
 ### 理解重点
 
-- 这里的评估重点是“看图判断模型状态”，不是直接输出一个分数就结束。
-- 残差图更关注误差结构，学习曲线更关注数据规模与泛化趋势。
+- 对于 SVR 在 Friedman1 数据上，残差图应显示较好的非线性拟合——点应大致沿对角线分布。
+- 右图（残差 vs 预测）重点观察残差是否有系统性弯曲——若残差呈现 U 形或正弦形模式，说明 RBF 核的 γ 或 ε 设置不当。
+- 残差图回答的是"预测误差分布如何"——与支持向量数量回答的"模型多复杂"是互补视角。
+- 对于非线性数据，残差图的波动通常比线性回归稍大——非线性拟合本身就比纯线性公式更难覆盖所有变化。
 
-## 2. 残差图：`plot_residuals(...)`
+## 2. 学习曲线
 
-### 参数速览（本节）
+### 参数速览
 
-适用函数：`plot_residuals(y_true, y_pred, title='SVR 残差分析', dataset_name='svr', model_name='svr', figsize=(14, 5))`
+适用函数：`plot_learning_curve(estimator, X, y, scoring, cv, title, dataset_name, model_name)`
 
-| 参数名 | 本例取值 | 说明 |
-|---|---|---|
-| `y_true` | `y_test` | 测试集真实值 |
-| `y_pred` | `model.predict(X_test_s)` | 测试集预测值 |
-| `title` | `'SVR 残差分析'` | 图标题前缀 |
-| `dataset_name` | `'svr'` | 输出子目录名 |
-| `model_name` | `'svr'` | 输出文件名前缀 |
-| `figsize` | `(14, 5)` | 图像尺寸 |
-| 返回值 | `None` | 保存图像并在控制台打印保存路径 |
-
-### 示例代码
-
-```python
-plot_residuals(
-    y_test,
-    y_pred,
-    title="SVR 残差分析",
-    dataset_name="svr",
-    model_name="svr",
-)
-```
-
-### 结果输出（示例）
-
-```text
-残差图已保存至: <残差图路径>
-```
-
-### 理解重点
-
-- 该函数会生成两个子图：预测值 vs 真实值、预测值 vs 残差。
-- 如果点云明显偏离 `y=x` 对角线，说明整体拟合不足。
-- 如果残差分布出现弯曲趋势或方差随预测值变化，通常说明当前参数或核函数仍需调整。
-
-## 3. 学习曲线：`plot_learning_curve(...)`
-
-### 参数速览（本节）
-
-适用函数：`plot_learning_curve(model, X, y, cv=5, scoring='r2', title='SVR 学习曲线', dataset_name='svr', model_name='svr')`
-
-| 参数名 | 本例取值 | 说明 |
-|---|---|---|
-| `model` | `SVR(kernel='rbf', C=10.0)` | 用于生成学习曲线的未训练模型 |
-| `X` | `X_train_s` | 训练特征 |
-| `y` | `y_train` | 训练标签 |
-| `cv` | 默认 `5` | 交叉验证折数 |
-| `scoring` | `'r2'` | 回归评分指标 |
-| `title` | `'SVR 学习曲线'` | 图标题 |
-| `dataset_name` | `'svr'` | 输出子目录名 |
-| `model_name` | `'svr'` | 输出文件名前缀 |
-| 返回值 | `None` | 保存图像并在控制台打印保存路径 |
+| 参数名 | 类型 | 说明 | 示例取值 |
+|---|---|---|---|
+| `estimator` | `SVR` | **未训练的**新 SVR 实例——学习曲线内部多次 fit | `SVR(C=10.0, epsilon=0.1, kernel='rbf', gamma='scale')` |
+| `X` | `ndarray(160, 10)` | 训练集特征——标准化后 | `X_train_s` |
+| `y` | `ndarray(160,)` | 训练集目标 | `y_train` |
+| `scoring` | `str` | 评分指标 | `"r2"` |
+| `cv` | `int` | 交叉验证折数 | `5`（默认） |
 
 ### 示例代码
 
 ```python
 plot_learning_curve(
-    SVR(kernel="rbf", C=10.0),
+    SVR(C=10.0, epsilon=0.1, kernel="rbf", gamma="scale"),
     X_train_s,
     y_train,
     scoring="r2",
@@ -128,56 +83,106 @@ plot_learning_curve(
 )
 ```
 
-### 结果输出（示例）
-
-```text
-学习曲线已保存至: <学习曲线路径>
-```
-
 ### 理解重点
 
-- 学习曲线使用的是未训练的 `SVR(kernel='rbf', C=10.0)`，而不是前面已经训练好的模型对象。
-- `scoring='r2'` 明确说明这里是在看回归拟合质量，而不是分类准确率。
-- 训练曲线和验证曲线差距很大时，往往提示过拟合；两条曲线都低时，往往提示欠拟合。
+- 学习曲线传入的是**新 `SVR(...)` 实例**——而非已训练的 `model`。`_buildLearningCurveFactory("regression.svr")` 返回的工厂函数确保每次 CV 都从头训练。
+- 对于 SVR + Friedman1（160 训练样本 + 10 特征）：训练和验证曲线间通常有一定的间隙——因为 SVR（RBF 核）在 160 样本上开始需要更多数据来稳定泛化。
+- 如果训练 R² 远高于验证 R²——过拟合信号，考虑增大 ε 或减小 C。
+- 如果训练和验证 R² 都低——欠拟合信号，考虑减小 ε 或增大 C，或检查 γ 设置。
 
-## 4. 当前实现中的直接调参入口
+## 3. 支持向量数量：SVR 独有的诊断指标
 
-当前代码中最直接的调参位置有两个：
+### 参数速览
 
-1. `train_model(...)` 中的 `C`、`epsilon`、`kernel`、`gamma`
-2. `plot_learning_curve(...)` 里重新创建的 `SVR(kernel='rbf', C=10.0)`
+| 指标 | 计算方式 | 诊断含义 |
+|---|---|---|
+| nSV | `model.support_.shape[0]` | 支持向量的绝对数量 |
+| nSV 占比 | `nSV / len(y_train)` | 支持向量占训练样本的比例 |
+| nSV 偏低（< 30%） | — | ε 管道宽——模型简单，可能欠拟合 |
+| nSV 适中（30%~60%） | — | 模型复杂度合理——多数样本被管道容忍 |
+| nSV 偏高（> 75%） | — | ε 管道窄或 C 大——模型复杂，可能过拟合 |
 
 ### 示例代码
 
 ```python
-model = train_model(X_train_s, y_train, C=20.0, epsilon=0.2, gamma="scale")
-
-plot_learning_curve(
-    SVR(kernel="rbf", C=20.0),
-    X_train_s,
-    y_train,
-    scoring="r2",
-    title="SVR 学习曲线",
-    dataset_name=DATASET,
-    model_name=MODEL,
-)
+n_sv = model.support_.shape[0]
+sv_ratio = n_sv / len(y_train)
+print(f"支持向量数量: {n_sv}/{len(y_train)} ({sv_ratio:.1%})")
 ```
 
 ### 理解重点
 
-- 如果训练模型和学习曲线里的模型参数不一致，图上的诊断就不能完全对应实际训练结果。
-- 因此调参时要尽量同步修改这两个位置。
+- 支持向量数量比 R² 更直接地反映 SVR 的复杂度——R² 告诉你"预测多准"，nSV 告诉你"模型多复杂"。
+- 如果 nSV 接近 N_train（如 150/160），模型几乎"记住"了每个样本——过拟合风险极高。
+- 如果 nSV 极低（如 5/160），ε 管道覆盖了绝大多数样本——模型可能过于简单。
+- nSV 是 SVR 独有的诊断——线性回归和决策树没有等效指标。
 
-![残差图](../../../outputs/svr/residual_plot.png)
+## 4. SVR 没有特征重要性：原因与替代
+
+### 参数速览
+
+| 评估项 | 状态 | 原因 |
+|---|---|---|
+| 特征重要性（RBF 核） | **无法输出** | RBF 核将数据映射到无限维空间——权重存在于对偶空间，不可映射回原始特征 |
+| 特征重要性（线性核） | 可输出（`coef_`） | 线性核 SVR 有 `coef_` 属性——相当于带 ε-管道的线性回归 |
+
+### 理解重点
+
+- `PipelineSpec` 中 SVR 的训练后诊断列表为 `[]`——不是遗漏，而是 RBF 核确实无法输出特征重要性。
+- 这与线性回归（有 `coef_`）、决策树（有 `feature_importances_`）、正则化回归（有 `coef_` + 近零计数）形成鲜明对比。
+- RBF 核的可解释性代价：获得了非线性拟合能力，但失去了"哪个特征更重要"的判断。
+- 如果需要特征重要性，可以考虑切换为线性核（`kernel='linear'`）——但会丧失非线性拟合能力。
+
+## 5. 残差图 + 学习曲线 + 支持向量数量：联合诊断
+
+### 参数速览
+
+| 残差图 | 学习曲线 | nSV | 联合诊断 |
+|---|---|---|---|
+| 好 | 训练 ≈ 验证 | 适中 | **模型健康——拟合与泛化平衡** |
+| 好 | 训练 ≫ 验证 | 高 | **过拟合——模型复杂但泛化差，需增大 ε 或减小 C** |
+| 差 | 训练 ≈ 验证（两者都低） | 低 | **欠拟合——模型太简单，需减小 ε 或增大 C** |
+| 系统性弯曲（如 U 形） | 训练 ≈ 验证 | — | **非线性捕捉不足——尝试调整 γ** |
+
+### 理解重点
+
+- 单独看任何一个指标都可能给出片面判断——三者联合解读才有完整图景。
+- nSV 是最快的诊断入口——如果 nSV 在 50~80（30%~50%），通常说明模型复杂度合理。
+- 残差图的系统性弯曲是最明确的"核函数/参数不匹配"信号——应优先于 R² 数值被关注。
+
+## 6. 已实现 vs 未实现的评估
+
+### 参数速览
+
+| 评估项 | 状态 | 原因 |
+|---|---|---|
+| 残差图 | 已实现 | 回归模型的核心诊断工具 |
+| 学习曲线 | 已实现 | `_buildLearningCurveFactory("regression.svr")` |
+| 支持向量数量打印 | 已实现 | 训练日志中打印——`model.support_.shape[0]` |
+| 特征重要性 | **不适用** | RBF 核 SVR 无法输出特征重要性 |
+| MSE / MAE / R² 数值打印 | **未实现** | 当前流水线侧重图形化诊断 |
+| 交叉验证 R² 均值 | **未实现** | 学习曲线内部使用 CV，但未单独输出均值 |
+
+## 7. SVR vs 线性回归 vs 正则化回归 评估对比
+
+| 评估维度 | 线性回归 | 正则化回归 | SVR |
+|---|---|---|---|
+| 核心可视化 | 残差图 + 学习曲线 | 残差图 + 特征重要性 | **残差图 + 学习曲线** |
+| 模型解释 | coef_ + intercept_ | coef_ + intercept_ + 近零计数 | **support_ + dual_coef_——核空间不可解释** |
+| 独有诊断 | 系数与真实公式对照 | 近零系数计数——L1 稀疏化 | **支持向量数量 + 占比——模型复杂度** |
+| 特征重要性 | coef_ 直接输出 | coef_ 直接输出 | **无（RBF 核）——需切换为线性核** |
+| 定量指标 | 无显式打印 | 无显式打印 | 无显式打印 |
 
 ## 常见坑
 
-1. 只看某一张图，不结合残差图和学习曲线一起判断。
-2. 修改了 `train_model(...)` 的参数，却忘记同步修改学习曲线里的 `SVR(...)`。
-3. 误以为当前仓库已经输出了完整数值指标报告，实际上默认实现主要是图形诊断。
+1. 期待 SVR（RBF 核）输出特征重要性——这是回归分册中唯一不适用特征重要性的模型。
+2. 只关注残差图不关注 nSV——nSV 偏低或偏高会直接揭示模型是否"偷懒"或"过劳"。
+3. 用训练好的 `model` 传入学习曲线——学习曲线需要新 `SVR(...)` 实例做内部 CV。
+4. 在 Friedman1 这类非线性数据上要求残差与线性回归一样规整——非线性拟合天然有更大波动。
 
 ## 小结
 
-- 当前 SVR 评估策略强调“图形诊断优先”。
-- 残差图帮助观察误差结构，学习曲线帮助判断欠拟合与过拟合。
-- 如果后续要补充 MAE、RMSE、`R^2` 数值打印，最自然的扩展点就在当前流水线预测完成之后。
+- SVR 有两类评估输出（残差图 + 学习曲线）+ 一项日志输出（支持向量数量）——三者构成完整的诊断体系。
+- 支持向量数量是 SVR 独有的诊断指标——比 R² 更直接地反映模型复杂度。
+- SVR（RBF 核）没有特征重要性——这是非线性核的可解释性代价，也是 `PipelineSpec` 训练后诊断列表为 `[]` 的原因。
+- 残差图 + 学习曲线 + nSV 的联合解读比单独依赖任何一个指标都更可靠。

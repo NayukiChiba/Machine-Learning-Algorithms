@@ -5,112 +5,97 @@ outline: deep
 
 # 数据构成
 
-> 对应代码：`data_generation/regression.py`、`data_generation/__init__.py`、`pipelines/regression/svr.py`
->  
-> 相关对象：`RegressionData.svr()`、`svr_data`
-
 ## 本章目标
 
-1. 明确本仓库 SVR 数据来自 `RegressionData.svr()` 的 Friedman1 生成逻辑。
-2. 明确特征列与标签列在流水线中的拆分方式。
-3. 明确训练集/测试集切分与标准化的顺序和边界。
+1. 明确 SVR 数据的来源——`loadSvrDataset()` 使用 `make_friedman1` 生成非线性合成数据。
+2. 理解 Friedman1 的数据特性——前 5 维有效特征 + 后 5 维噪声特征 + 非线性目标函数。
+3. 理解标准化在 SVR 中的必要性——RBF 核基于欧氏距离，对特征尺度敏感。
 
 ## 重点方法与概念速览
 
 | 名称 | 类型 | 作用 |
 |---|---|---|
-| `RegressionData.svr()` | 方法 | 生成 SVR 使用的非线性回归数据 |
-| `make_friedman1(...)` | 函数 | scikit-learn 提供的 Friedman1 数据生成器 |
-| `svr_data` | 变量 | 在 `data_generation/__init__.py` 中导出的数据对象 |
-| `price` | 列名 | 当前流水线中的回归目标列 |
+| `loadSvrDataset()` | 方法 | 调用 `make_friedman1` 生成 200 样本 × 10 特征的非线性回归数据 |
+| `make_friedman1(...)` | 函数 | scikit-learn 提供的 Friedman1 合成数据——目标函数高度非线性 |
+| `x1`~`x10` | 列名 | 特征列——`x1`~`x5` 为有效特征，`x6`~`x10` 为噪声特征 |
+| `price` | 列名 | 回归目标列——由 Friedman1 目标函数 + 噪声生成 |
+| `StandardScaler` | 预处理 | Z-score 标准化——SVR（RBF 核）的强制前置步骤 |
 
-## 1. 本仓库数据入口
+## 1. 数据入口：`loadSvrDataset()`
 
-- 数据变量：`data_generation/__init__.py` 中导出的 `svr_data`
-- 生成来源：`data_generation/regression.py` 中的 `RegressionData.svr()`
-- 流水线使用：`pipelines/regression/svr.py` 中的 `data = svr_data.copy()`
+### 参数速览
 
-### 理解重点
+适用函数：`loadSvrDataset()`
 
-- `svr_data` 在导入时就已经生成完成，因此流水线里直接 `.copy()` 使用即可。
-- 用 `.copy()` 的目的，是避免后续处理意外修改原始数据对象。
-
-## 2. 数据生成函数 `RegressionData.svr()`
-
-### 参数速览（本节）
-
-适用 API（分项）：
-
-1. `RegressionData.svr()`
-2. `make_friedman1(n_samples=self.n_samples, n_features=10, noise=self.svr_noise, random_state=self.random_state)`
-
-| 参数名 | 本例取值 | 说明 |
-|---|---|---|
-| `n_samples` | `200` | 样本数，来自 `RegressionData` 默认属性 |
-| `n_features` | `10` | 特征数，源码中固定为 10 |
-| `noise` | `1.0` | 标签噪声强度，来自 `self.svr_noise` |
-| `random_state` | `42` | 随机种子，保证数据可复现 |
-| 返回值 | `DataFrame` | 含 `x1` ~ `x10` 与 `price` 的数据表 |
+| 参数名 | 类型 | 说明 | 示例取值 |
+|---|---|---|---|
+| `nSamples` | `int` | 样本总数——来自 `RegressionDatasetFactory` 默认属性 | `200` |
+| `n_features` | `int` | 特征数——源码中固定为 10 | `10` |
+| `noise` | `float` | 标签噪声标准差 | `1.0` |
+| `randomState` | `int` | 随机种子——保证数据可复现 | `42` |
+| 返回值 | `DataFrame` | 形状 `(200, 11)`——10 特征列 + 1 标签列 | — |
 
 ### 示例代码
 
 ```python
-X, y = make_friedman1(
-    n_samples=self.n_samples,
-    n_features=10,
-    noise=self.svr_noise,
-    random_state=self.random_state,
-)
-columns = [f"x{i + 1}" for i in range(X.shape[1])]
-df = DataFrame(X, columns=columns)
-df["price"] = y
+def loadSvrDataset(self) -> DataFrame:
+    X, y = make_friedman1(
+        n_samples=self.nSamples,
+        n_features=10,
+        noise=1.0,
+        random_state=self.randomState,
+    )
+    columns = [f"x{i + 1}" for i in range(X.shape[1])]
+    data = DataFrame(X, columns=columns)
+    data["price"] = y
+    return data
 ```
 
 ### 理解重点
 
-- Friedman1 是典型的非线性回归数据，很适合展示 RBF 核的拟合能力。
-- 前 5 个特征有效，后 5 个特征偏噪声，这一点源码注释里也明确写出。
+- Friedman1 的目标函数是 $y = 10\sin(\pi x_1 x_2) + 20(x_3 - 0.5)^2 + 10x_4 + 5x_5 + \varepsilon$——高度非线性，包含乘积项、平方项和正弦项。
+- 前 5 个特征（`x1`~`x5`）参与目标函数的生成——是真正的信号特征。
+- 后 5 个特征（`x6`~`x10`）是独立均匀随机变量——不参与目标函数，属于噪声特征。
+- 这种"有效特征 + 噪声特征"的数据结构，使得 SVR 的 RBF 核价值得以体现——线性模型无法捕捉非线性信号。
 
-## 3. 特征列与标签列
+## 2. Friedman1 数据特性
 
-当前数据表结构如下：
+### 参数速览
 
-- 特征列：`x1` ~ `x10`
-- 标签列：`price`
+| 特性 | 值 | 说明 |
+|---|---|---|
+| 样本数 | 200 | 小规模——适合 SVR 训练（SMO 复杂度 $O(N^2)$~$O(N^3)$） |
+| 特征数 | 10 | 中等维度——5 个有效 + 5 个噪声 |
+| 有效特征 | `x1`~`x5` | 参与目标函数的非线性组合 |
+| 噪声特征 | `x6`~`x10` | 独立均匀分布——不含信号 |
+| 目标函数 | $10\sin(\pi x_1 x_2) + 20(x_3 - 0.5)^2 + 10x_4 + 5x_5$ | 含乘积、平方、正弦——高度非线性 |
+| 标签噪声 | $\mathcal{N}(0, 1^2)$ | 叠加在目标函数上的高斯噪声 |
+
+### 理解重点
+
+- 目标函数中 $x_1$ 和 $x_2$ 以乘积形式出现——特征交互效应，线性模型无法捕捉。
+- $\sin(\pi x_1 x_2)$ 是非线性的周期性分量——RBF 核的局部性天然适合拟合这种结构。
+- 200 样本是刻意的小规模设计——SVR 的 SMO 训练复杂度随样本量平方增长，小样本保证训练瞬时完成。
+- 与线性回归的合成数据（3 特征 × 纯线性公式）形成鲜明对比——SVR 的数据是故意非线性的。
+
+## 3. 特征切分与标准化
+
+### 参数速览
+
+| 参数名 | 类型 | 说明 | 示例取值 |
+|---|---|---|---|
+| `test_size` | `float` | 测试集占比 | `0.2` |
+| `random_state` | `int` | 切分随机种子 | `42` |
+| 训练集形状 | — | `X_train`: `(160, 10)`, `y_train`: `(160,)` | — |
+| 测试集形状 | — | `X_test`: `(40, 10)`, `y_test`: `(40,)` | — |
+| `StandardScaler` | 预处理 | 将每列特征标准化为均值 0、标准差 1 | — |
 
 ### 示例代码
 
 ```python
 X = data.drop(columns=["price"])
 y = data["price"]
-```
 
-### 理解重点
-
-- 当前流水线使用 `price` 作为统一的回归标签列名。
-- 因此训练代码不需要关心 Friedman1 原始返回值的变量名，而是直接按表格字段拆分。
-
-## 4. 切分与标准化
-
-### 参数速览（本节）
-
-适用 API（分项）：
-
-1. `train_test_split(X, y, test_size=0.2, random_state=42)`
-2. `StandardScaler().fit_transform(X_train)`
-3. `StandardScaler().transform(X_test)`
-
-| 参数名 | 本例取值 | 说明 |
-|---|---|---|
-| `test_size` | `0.2` | 测试集占比 |
-| `random_state` | `42` | 保证可复现划分 |
-| `X_train` | 训练特征 | 只在训练集上拟合标准化统计量 |
-| `X_test` | 测试特征 | 使用训练集统计量做变换 |
-| 返回值 | `X_train_s`、`X_test_s` | 标准化后的训练和测试特征 |
-
-### 示例代码
-
-```python
 X_train, X_test, y_train, y_test = train_test_split(
     X, y, test_size=0.2, random_state=42
 )
@@ -122,23 +107,54 @@ X_test_s = scaler.transform(X_test)
 
 ### 理解重点
 
-- 标准化必须发生在切分之后，否则会造成数据泄露。
-- 当前文档中的 `X_train_s`、`X_test_s` 都是源码里真实使用的变量名。
+- SVR 的 RBF 核基于欧氏距离 $\|\mathbf{x}_i - \mathbf{x}_j\|^2$——如果某特征量级远大于其他，会主导距离计算。
+- 标准化使所有特征在核计算中拥有平等权重——这是 SVR 强制 `"standardScaler"` 的根本原因。
+- 标准化在切分之后执行——`fit_transform` 仅用于训练集，`transform` 用于测试集。
+- 与线性回归和决策树回归不同——它们不需要标准化（`PipelineSpec` 中预处理为 `None`）。
 
-## 数据可视化
+## 4. 数据特征总览
 
-![特征相关性热力图](../../../outputs/svr/data_correlation.png)
+### 参数速览
 
-![特征与目标变量关系](../../../outputs/svr/data_feature_vs_price.png)
+| 属性 | 值 |
+|---|---|
+| 样本总数 | 200 |
+| 特征总数 | 10（5 有效 + 5 噪声） |
+| 训练样本数 | 160（80%） |
+| 测试样本数 | 40（20%） |
+| 标签列名 | `price` |
+| 是否有缺失值 | 否——合成数据自动完整 |
+| 数据来源 | `sklearn.datasets.make_friedman1` |
+| 目标函数非线性程度 | 高——乘积 + 平方 + 正弦 |
+
+### 理解重点
+
+- 200 样本 × 10 特征——与线性回归的数据规模相同（200 × 3），但非线性结构完全不同。
+- 5 有效 + 5 噪声的特征结构——与正则化回归的三层结构（原始 + 共线 + 噪声）思路相近，但 SVR 不追求观察特征选择而是观察核函数的非线性拟合。
+- Friedman1 的目标函数已知——可以像线性回归一样通过对比真实公式评估模型（但非线性公式无法直接提取系数）。
+
+## 5. 数据设计意图：与线性回归/决策树回归/正则化回归的对比
+
+| 数据维度 | 线性回归 | 决策树回归 | 正则化回归 | SVR |
+|---|---|---|---|---|
+| 数据来源 | 手工合成 | 真实数据（California Housing） | 真实 + 人工干扰（diabetes + 共线 + 噪声） | **合成非线性（Friedman1）** |
+| 样本量 | 200 | 20640 | 442 | **200** |
+| 特征数 | 3 | 8 | 21（10+3+8） | **10（5 有效 + 5 噪声）** |
+| 特征关系 | 完全独立 | 自然相关 | 刻意构造共线 | **前 5 维以乘积/平方/正弦耦合** |
+| 标签生成 | 纯线性 + 高斯噪声 | 真实加州房价 | 真实糖尿病 + 噪声 | **非线性函数 + 高斯噪声** |
+| 标准化 | 否 | 否 | **是** | **是** |
+| 设计意图 | 透明验证 OLS | 大数据量树结构演示 | 观察稀疏化与收缩 | **展示 RBF 核的非线性拟合能力** |
 
 ## 常见坑
 
-1. 把 `price` 当成普通特征一起送进模型。
-2. 忽略 Friedman1 后 5 维偏噪声这一事实，错误理解特征重要性。
-3. 在切分之前就对全量数据做标准化。
+1. 忽略 Friedman1 的后 5 维是噪声——期待 SVR 对所有 10 个特征都学到"有意义"的权重。
+2. 忘记 SVR 必须标准化——直接将原始 `X_train` 传入 `SVR.fit()`，RBF 核距离计算被量级大的特征主导。
+3. 在切分之前标准化——`StandardScaler` 的均值和标准差包含了测试集信息，造成数据泄露。
+4. 期待从 SVR 的 `coef_` 中读出特征重要性——RBF 核的 SVR 没有 `coef_` 属性。
 
 ## 小结
 
-- 当前 SVR 数据来自 `RegressionData.svr()`，底层使用的是 `make_friedman1(...)`。
-- 数据表结构清晰：`x1` ~ `x10` 是特征，`price` 是标签。
-- 读懂数据来源和预处理顺序，是理解后续训练与评估章节的前提。
+- SVR 数据来自 `make_friedman1`——200 样本 × 10 特征，目标函数高度非线性（乘积 + 平方 + 正弦）。
+- 前 5 维为有效信号特征（`x1`~`x5`），后 5 维为噪声特征（`x6`~`x10`）——数据结构为展示 RBF 核的价值而设计。
+- 标准化是 SVR 的强制前置步骤——RBF 核的欧氏距离对特征尺度敏感。
+- 与线性回归数据的关键差异：SVR 的数据是非线性的——透明公式存在但无法从模型参数中直接提取。
