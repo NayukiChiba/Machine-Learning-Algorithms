@@ -5,226 +5,175 @@ outline: deep
 
 # 训练与预测
 
-> 对应代码：`pipelines/regression/regularization.py`、`model_training/regression/regularization.py`
->  
-> 运行方式：`python -m pipelines.regression.regularization`
-
 ## 本章目标
 
-1. 明确当前流水线从取数到生成残差图的完整执行顺序。
-2. 理解训练阶段和预测阶段分别由哪个文件、哪个函数负责。
-3. 理解三种模型如何在同一套预处理结果上被统一比较。
+1. 理解正则化回归流水线的完整执行顺序——从数据加载到残差图输出。
+2. 理解三种模型的训练过程——坐标下降（Lasso/EN）vs 闭式解（Ridge）。
+3. 理解预测阶段的统一循环——三模型共用同一份标准化测试数据。
 
 ## 重点方法与概念速览
 
 | 名称 | 类型 | 作用 |
 |---|---|---|
-| `run()` | 函数 | 正则化回归端到端流水线入口 |
-| `train_test_split(...)` | 函数 | 拆分训练集与测试集 |
-| `StandardScaler` | 类 | 对训练和测试特征做一致的标准化 |
-| `train_model(...)` | 函数 | 一次训练三种正则化模型 |
-| `model.predict(X_test_s)` | 方法 | 对测试集做回归预测 |
-| `plot_residuals(...)` | 函数 | 为每个模型绘制残差图 |
+| `loadRegularizationDataset()` | 方法 | 加载 diabetes + 共线 + 噪声特征——返回 `(442, 22)` DataFrame |
+| `StandardScaler` | 预处理 | Z-score 标准化——正则化回归训练前的强制步骤 |
+| `trainRegularizationModels(...)` | 函数 | 构建并 `fit` 三个正则化模型——返回模型字典 |
+| `model.predict(X_test_s)` | 方法 | 对标准化测试集做回归预测——$\hat{y} = \mathbf{X}\mathbf{w} + b$ |
+| `plot_residuals(...)` | 函数 | 为每个模型绘制残差诊断图 |
 
-## 1. 端到端入口 `run()`
+## 1. 完整流水线流程
 
-### 参数速览（本节）
+### 流程概述
 
-适用函数：`run()`
-
-| 项目 | 当前实现 |
-|---|---|
-| 数据源 | `regularization_data.copy()` |
-| 标签列 | `price` |
-| 切分方式 | `test_size=0.2, random_state=42` |
-| 训练入口 | `train_model(X_train_s, y_train, feature_names=feature_names)` |
-| 预测入口 | `model.predict(X_test_s)` |
-| 可视化入口 | `plot_residuals(...)` |
-
-### 示例代码
-
-```python
-def run():
-    data = regularization_data.copy()
-    X = data.drop(columns=["price"])
-    y = data["price"]
-    feature_names = list(X.columns)
 ```
+loadRegularizationDataset()
+    │
+    ├─ ① X = data.drop(columns=["price"]), y = data["price"]
+    ├─ ② X_train, X_test, y_train, y_test = train_test_split(test_size=0.2)
+    ├─ ③ scaler = StandardScaler(); X_train_s = scaler.fit_transform(X_train)
+    ├─ ④ X_test_s = scaler.transform(X_test)
+    ├─ ⑤ models = trainRegularizationModels(X_train_s, y_train)
+    ├─ ⑥ for name, model in models.items():
+    │       y_pred = model.predict(X_test_s)
+    │       plot_residuals(y_test, y_pred, ...)
+    └─ ⑦ plot_feature_importance(model, feature_names)  — 对每个模型
+```
+
+### 参数速览
+
+| 步骤 | 操作 | 输入 | 输出 | 说明 |
+|---|---|---|---|---|
+| 加载数据 | `loadRegularizationDataset` | — | `DataFrame`，`(442, 22)` | diabetes + 共线 + 噪声 |
+| 特征标签拆分 | `drop` + 列选择 | `DataFrame` | `X(442,21)`, `y(442,)` | 标签列 `price` |
+| 数据切分 | `train_test_split` | `X`, `y` | `X_train(353,21)`, `X_test(89,21)` | `test_size=0.2` |
+| 标准化 | `StandardScaler` | `X_train`, `X_test` | `X_train_s`, `X_test_s` | **正则化回归必需** |
+| 训练 | `trainRegularizationModels` | `X_train_s`, `y_train` | `dict[lasso/ridge/elasticnet]` | 一次训练三个模型 |
+| 预测 | `model.predict` | `X_test_s` | 各模型 `y_pred(89,)` | 循环三次 |
+| 残差图 | `plot_residuals` | `y_test`, `y_pred` | PNG 图像 | 每个模型一张 |
+| 特征重要性 | `plot_feature_importance` | `model`, `feature_names` | PNG 图像 | 系数柱状图 |
 
 ### 理解重点
 
-- 整个分册的运行入口就是 `pipelines/regression/regularization.py` 里的 `run()`。
-- 这个函数不负责实现模型本身，而是把数据、预处理、训练、预测、画图串成一条完整链路。
-- `feature_names` 会从这里一路传到训练函数，用于后续系数打印。
+- 正则化回归流水线比线性回归多两步——标准化（③④）和特征重要性图（⑦），但没有学习曲线。
+- 标准化在切分**之后**执行——先在训练集上 `fit_transform`，再对测试集仅 `transform`。
+- 三个模型共享完全相同的训练/测试数据——对比的公平性由统一的切分和标准化保证。
 
-## 2. 训练前的数据准备顺序
+## 2. 标准化：正则化回归训练的关键前置步骤
 
-### 参数速览（本节）
+### 参数速览
 
-适用 API（分项）：
+适用 API：`StandardScaler().fit_transform(X_train)` / `StandardScaler().transform(X_test)`
 
-1. `train_test_split(X, y, test_size=0.2, random_state=42)`
-2. `StandardScaler().fit_transform(X_train)`
-3. `StandardScaler().transform(X_test)`
-
-| 参数名 | 本例取值 | 说明 |
-|---|---|---|
-| `test_size` | `0.2` | 测试集占比 |
-| `random_state` | `42` | 保证可复现划分 |
-| `X_train_s` | 标准化训练特征 | 供三种模型共同训练 |
-| `X_test_s` | 标准化测试特征 | 供三种模型共同预测 |
+| 参数名 | 类型 | 说明 | 示例取值 |
+|---|---|---|---|
+| `X_train` | `ndarray(353, 21)` | 未标准化的训练特征 | 原始 diabetes + 构造特征 |
+| `X_train_s` | `ndarray(353, 21)` | 标准化后——每列均值 0、标准差 1 | — |
+| `X_test_s` | `ndarray(89, 21)` | 使用训练集统计量标准化 | — |
 
 ### 示例代码
 
 ```python
-X_train, X_test, y_train, y_test = train_test_split(
-    X, y, test_size=0.2, random_state=42
-)
 scaler = StandardScaler()
-X_train_s = scaler.fit_transform(X_train)
-X_test_s = scaler.transform(X_test)
+X_train_s = scaler.fit_transform(X_train)  # 计算 μ, σ 并变换
+X_test_s = scaler.transform(X_test)         # 仅变换——使用训练集的 μ, σ
 ```
 
 ### 理解重点
 
-- 三种模型使用完全相同的训练集、测试集和标准化结果，这样对比才公平。
-- 这里的 `scaler` 不会被打包进单独的预测函数里，而是直接在流水线中显式使用。
-- 正则化模型对特征量纲很敏感，因此标准化是训练前的关键步骤。
+- 正则化回归**必须标准化**——L1/L2 惩罚对系数量级敏感。未标准化的特征会导致惩罚不均匀：量级大的特征被过度惩罚，量级小的特征惩罚不足。
+- 这是正则化回归与线性回归、决策树回归最关键的工程差异——两者在 `PipelineSpec` 中的预处理分别为 `None` 和 `"standardScaler"`。
+- `fit_transform` vs `transform` 的区别是防止数据泄露——测试集的均值和标准差不应影响模型。
 
-## 3. 训练阶段：一次拿到三种模型
+## 3. 训练细节：三种算法，三种求解路径
 
-### 参数速览（本节）
+### 参数速览
 
-适用函数：`train_model(X_train_s, y_train, feature_names=feature_names)`
-
-| 参数名 | 本例取值 | 说明 |
-|---|---|---|
-| `X_train_s` | 标准化后的训练特征 | 三模型共享输入 |
-| `y_train` | 训练标签 | 三模型共享目标 |
-| `feature_names` | `list(X.columns)` | 用于打印每个特征的系数 |
-| 返回值 | `models` | `{"Lasso": ..., "Ridge": ..., "ElasticNet": ...}` |
-
-### 示例代码
-
-```python
-models = train_model(X_train_s, y_train, feature_names=feature_names)
-```
+| 模型 | 求解算法 | 是否有闭式解 | 是否需要迭代 | 收敛判断 |
+|---|---|---|---|---|
+| Ridge | SVD / 闭式解 | **是**——$\mathbf{w}^* = (\mathbf{X}^T\mathbf{X} + \lambda\mathbf{I})^{-1}\mathbf{X}^T\mathbf{y}$ | 否 | 不需要 |
+| Lasso | 坐标下降 | 否 | **是**——`max_iter=10000` | 对偶间隙 < `tol` |
+| ElasticNet | 坐标下降 | 否 | **是**——`max_iter=10000` | 对偶间隙 < `tol` |
 
 ### 理解重点
 
-- 当前实现没有把三种模型分成三套完全独立的流水线，而是先统一训练，再统一评估。
-- 这使得文档可以围绕“同一数据、不同正则化策略”的比较来展开。
-- 训练阶段最重要的副产物，不只是 `models` 字典，还有控制台里打印出来的系数信息。
+- Ridge 训练是**瞬时**的——21 维特征的闭式解计算量极小。
+- Lasso 和 ElasticNet 是**迭代**的——坐标下降逐维度优化，`max_iter=10000` 确保充分收敛。
+- 三种模型都保证找到全局最优解——Ridge 的目标函数是强凸的，Lasso/EN 是凸的（坐标下降收敛到全局最优）。
 
-## 4. 预测阶段：直接调用每个模型的 `predict(...)`
+## 4. 预测细节：统一的线性公式
 
-### 参数速览（本节）
+三种模型的预测公式完全相同：
 
-适用流程（分项）：
+$$
+\hat{y} = \mathbf{X}_{\text{test}} \mathbf{w} + b
+$$
 
-1. `for name, model in models.items()`
-2. `y_pred = model.predict(X_test_s)`
+### 参数速览
 
-| 参数名 | 本例取值 | 说明 |
-|---|---|---|
-| `name` | `Lasso` / `Ridge` / `ElasticNet` | 当前正在评估的模型名 |
-| `model` | 已训练完成模型 | 从 `models` 字典中取出 |
-| `X_test_s` | 标准化后的测试特征 | 与训练时保持同分布和同预处理 |
-| `y_pred` | 预测值数组 | 用于残差分析 |
-
-### 示例代码
-
-```python
-for name, model in models.items():
-    y_pred = model.predict(X_test_s)
-```
+| 参数名 | 类型 | 说明 | 示例取值 |
+|---|---|---|---|
+| `X_test_s` | `ndarray(89, 21)` | 标准化后的测试特征 | — |
+| `model.coef_` | `ndarray(21,)` | 各模型的系数向量——形态因正则化策略而异 | Lasso：部分零 / Ridge：全非零 |
+| `model.intercept_` | `float` | 截距项——不受正则化惩罚 | — |
+| `y_pred` | `ndarray(89,)` | 预测值 | — |
 
 ### 理解重点
 
-- 当前仓库没有额外封装 `predict_model(...)`，而是直接使用 scikit-learn 统一的 `predict(...)` 接口。
-- 这种写法很简单，但前提是你必须保证传入的还是训练时同样标准化过的特征。
-- 一旦跳过 `scaler.transform(X_test)`，预测结果会失去可比性，甚至明显变差。
+- 预测公式与普通线性回归完全一致——都是 $\mathbf{X}\mathbf{w} + b$ 的矩阵乘法。
+- 差异不在预测公式，而在 $\mathbf{w}$ 的形态——Lasso 的 $\mathbf{w}$ 有零分量，Ridge 的 $\mathbf{w}$ 整体收缩。
+- 预测复杂度 $O(N_{\text{test}} \cdot d) = O(89 \times 21)$——几乎瞬时。
 
-## 5. 预测后的残差图输出
-
-### 参数速览（本节）
-
-适用函数：`plot_residuals(y_test, y_pred, title=..., dataset_name=..., model_name=...)`
-
-| 参数名 | 本例取值 | 说明 |
-|---|---|---|
-| `y_test` | 测试标签 | 真实值 |
-| `y_pred` | 当前模型预测值 | 用于与真实值对比 |
-| `title` | `f"{name} 残差分析"` | 图标题 |
-| `dataset_name` | `"regularization"` | 结果保存目录名 |
-| `model_name` | `name.lower()` | 输出文件名前缀 |
+## 5. 多模型预测循环
 
 ### 示例代码
 
 ```python
-plot_residuals(
-    y_test,
-    y_pred,
-    title=f"{name} 残差分析",
-    dataset_name=DATASET,
-    model_name=name.lower(),
-)
-```
-
-### 理解重点
-
-- 残差图是在预测之后逐模型生成的，所以每个模型都会单独得到一份结果图。
-- `DATASET = "regularization"` 会把图片统一保存到正则化分册对应的目录下。
-- `name.lower()` 则把模型名映射到更稳定的文件名前缀，例如 `lasso_residual.png`。
-
-## 6. 用伪代码看完整流程
-
-### 示例代码
-
-```python
-data = regularization_data.copy()
-X = data.drop(columns=["price"])
-y = data["price"]
-
-X_train, X_test, y_train, y_test = train_test_split(...)
-X_train_s = scaler.fit_transform(X_train)
-X_test_s = scaler.transform(X_test)
-
-models = train_model(X_train_s, y_train, feature_names=feature_names)
+models = trainRegularizationModels(X_train_s, y_train, randomState=42)
 
 for name, model in models.items():
     y_pred = model.predict(X_test_s)
-    plot_residuals(...)
+    plot_residuals(
+        y_test, y_pred,
+        title=f"{name} 残差分析",
+        dataset_name="regularization",
+        model_name=name,
+    )
+    plot_feature_importance(
+        model, feature_names,
+        title=f"{name} 系数",
+        dataset_name="regularization",
+        model_name=name,
+    )
 ```
 
 ### 理解重点
 
-- 训练和预测的核心思路并不复杂，重点在于顺序不能错。
-- 先切分、后标准化、再训练、再预测、最后画图，这是当前实现的固定主线。
-- 文档后面提到的所有诊断结论，都是建立在这条执行顺序正确的前提下。
+- 循环结构是正则化回归流水线的独特特征——其他回归模型只训练和评估一个模型。
+- 每个模型都生成独立的残差图和系数图——便于横向对比三种正则化策略的差异。
+- `model_name=name` 使输出文件自动按模型名命名（`lasso_residual.png`、`ridge_coefficients.png` 等）。
 
-## 训练诊断可视化
+## 6. 正则化回归 vs 线性回归 vs 决策树回归 训练对比
 
-### ElasticNet
-
-![弹性网络学习曲线](../../../outputs/elasticnet/learning_curve.png)
-
-### Lasso
-
-![Lasso 学习曲线](../../../outputs/lasso/learning_curve.png)
-
-### Ridge
-
-![Ridge 学习曲线](../../../outputs/ridge/learning_curve.png)
+| 训练维度 | 线性回归 | 决策树回归 | 正则化回归 |
+|---|---|---|---|
+| 数据 | 合成 `(200, 3)` | 真实 `(20640, 8)` | **真实+构造 `(442, 21)`** |
+| 标准化 | 无 | 无 | **`StandardScaler`——强制** |
+| 训练算法 | SVD 闭式解 | CART 贪心递归 | **坐标下降（Lasso/EN）+ 闭式解（Ridge）** |
+| 训练模型数 | 1 | 1 | **3（并行训练）** |
+| 收敛判断 | 不需要 | `max_depth` 等早停 | **`max_iter=10000`（Lasso/EN）** |
+| 预测 | $\hat{y} = \mathbf{X}\mathbf{w} + b$ | 沿树走到叶子返回均值 | **$\hat{y} = \mathbf{X}\mathbf{w} + b$（同线性回归）** |
+| 评估可视化 | 残差图 + 学习曲线 | 残差图 + 特征重要性 + 学习曲线 + 树结构 | **残差图 + 特征重要性——无学习曲线** |
 
 ## 常见坑
 
-1. 训练阶段使用 `X_train_s`，预测阶段却误把未标准化的 `X_test` 传给 `predict(...)`。
-2. 误以为每个模型有独立训练入口，实际三者都由同一个 `train_model(...)` 返回。
-3. 只运行到训练成功为止，没有继续观察每个模型生成的残差图。
+1. 训练时传 `X_train_s`，预测时却传了未标准化的 `X_test`——预测结果会严重偏离。
+2. 忘记标准化必须在切分之后——先标准化再切分会导致测试集信息泄露。
+3. 期待正则化回归也有学习曲线——当前 `PipelineSpec` 中学可视化列表为 `[]`，无学习曲线。
+4. 以为 Lasso 和 Ridge 的 `alpha` 可以直接比较——`alpha=0.15`（Lasso）和 `alpha=2.0`（Ridge）量级不同，因为 L1 和 L2 的惩罚尺度不同。
 
 ## 小结
 
-- 当前流水线把数据准备、三模型训练、统一预测和残差图输出串成了一条完整路径。
-- 训练函数负责“生成模型”，流水线函数负责“组织比较”。
-- 把这一层执行顺序读清楚，后续看评估与工程实现章节就会更顺。
+- 正则化回归流水线为 8 步：加载 → 拆分 → 切分 → 标准化 → 训练三模型 → 循环预测 → 残差图 → 系数图。
+- 标准化是正则化回归区别于线性回归和决策树回归的最关键工程差异——惩罚项对尺度敏感。
+- 训练阶段一次产出三个模型——Ridge 用闭式解瞬间完成，Lasso/EN 用坐标下降迭代求解。
+- 预测阶段与线性回归完全相同（$\mathbf{X}\mathbf{w} + b$）——差异在 $\mathbf{w}$ 的形态而非预测公式。

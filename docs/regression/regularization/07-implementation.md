@@ -5,160 +5,150 @@ outline: deep
 
 # 工程实现
 
-> 对应代码：`data_generation/regression.py`、`model_training/regression/regularization.py`、`pipelines/regression/regularization.py`、`result_visualization/residual_plot.py`
->  
-> 运行方式：`python -m pipelines.regression.regularization`
-
 ## 本章目标
 
-1. 看清当前正则化回归分册在仓库中的模块分层与调用关系。
-2. 理解从命令行入口到残差图落盘，中间依次发生了什么。
-3. 明确哪些逻辑属于数据层、训练层、流水线层和可视化层。
+1. 理解正则化回归流水线的模块分层——数据层、训练层、流水线注册层、运行器层和可视化层。
+2. 理清从命令行入口到结果图落盘的完整调用链，特别是多模型循环分支。
+3. 理解正则化回归与线性回归、决策树回归在工程实现上的关键差异——标准化 + 多模型 + 无学习曲线。
 
-## 对应代码速览
+## 重点方法与概念速览
 
-| 组件 | 路径 | 说明 |
+| 名称 | 类型 | 作用 |
 |---|---|---|
-| 数据生成层 | `data_generation/regression.py` | `RegressionData.regularization()` 构造数据 |
-| 数据导出层 | `data_generation/__init__.py` | 提供 `regularization_data` 给外部导入 |
-| 训练层 | `model_training/regression/regularization.py` | 定义 `train_model(...)` 并统一训练三模型 |
-| 流水线层 | `pipelines/regression/regularization.py` | 负责切分、标准化、训练、预测、画图 |
-| 可视化层 | `result_visualization/residual_plot.py` | 负责残差图绘制与保存 |
+| `RegressionDatasetFactory` | 类 | 数据工厂——`loadRegularizationDataset()` 构造 diabetes + 共线 + 噪声 |
+| `trainRegularizationModels(...)` | 函数 | 构建并训练三个正则化模型——返回 `dict` |
+| `PipelineSpec` | 数据类 | 声明式流水线配置——`multiModel=True` 标记多模型模式 |
+| `RegressionRunner` | 类 | 回归流水线运行器——多模型分支下循环评估每个模型 |
+| `plot_residuals(...)` | 函数 | 残差图绘制——每个模型独立调用 |
+| `plot_feature_importance(...)` | 函数 | 系数柱状图绘制——每个模型独立调用 |
 
-## 1. 入口命令如何触发整条链路
+## 1. 模块分层总览
 
-### 示例代码
+### 参数速览
 
-```bash
-python -m pipelines.regression.regularization
-```
+| 层 | 文件 | 职责 | 输出 |
+|---|---|---|---|
+| 数据层 | `src/mlAlgorithms/datasets/tabular/regressionDatasets.py` | `loadRegularizationDataset()`——加载 diabetes 并追加共线和噪声 | `DataFrame`，形状 `(442, 22)` |
+| 数据目录层 | `src/mlAlgorithms/datasets/datasetCatalog.py` | `DatasetSpec("regression.regularization", ...)`——注册数据集描述与加载器 | 数据集元信息 |
+| 训练层 | `src/mlAlgorithms/training/regression/regressionModels.py` | `trainRegularizationModels(...)`——构建三模型 `dict` 并 `fit` | `dict[str, 模型]` |
+| 流水线注册层 | `src/mlAlgorithms/catalog/pipelines.py` | `PipelineSpec("regression.regularization", ...)`——关联所有组件 | 流水线配置 |
+| 运行器层 | `src/mlAlgorithms/workflows/regressionRunner.py` | 读取 PipelineSpec → 加载 → 标准化 → 训练 → 循环评估 → 可视化 | 终端日志 + 图像文件 |
+| 可视化层 | `src/mlAlgorithms/visualization/` | 绘制残差图、系数图 | PNG 图像文件 |
 
 ### 理解重点
 
-- 这个命令会执行 `pipelines/regression/regularization.py` 中的 `run()`。
-- `run()` 是真正的工程入口，其他模块都被它按顺序调用。
-- 所以理解工程实现时，最清晰的方式不是从模型类开始，而是先从入口脚本往下追踪。
+- 正则化回归的工程结构比线性回归多两样：标准化和多模型循环——其余结构完全一致。
+- 与决策树回归的差异：决策树有学习曲线和树结构可视化，正则化回归有标准化和多模型但无学习曲线。
+- `multiModel=True` 是运行器层的关键分支标志——告诉 `RegressionRunner` 训练返回的是 `dict` 而非单个模型。
 
-## 2. 模块之间的调用关系
-
-### 示例代码
+## 2. `PipelineSpec` 配置详情
 
 ```python
-from data_generation import regularization_data
-from model_training.regression.regularization import train_model
-from result_visualization.residual_plot import plot_residuals
+PipelineSpec(
+    "regression.regularization",           # pipeline ID
+    TaskType.REGRESSION,                   # 任务类型
+    "regression.regularization",           # dataset ID
+    RunnerType.REGRESSION,                 # 运行器类型
+    trainRegularizationModels,             # 训练函数——返回 dict
+    "standardScaler",                      # 预处理——正则化强制标准化
+    "randomSplit",                         # 切分策略
+    "default",                             # 后处理
+    "regression",                          # 输出目录前缀
+    "regression",                          # 可视化目录前缀
+    ["correlationHeatmap", "featureTargetScatter"],  # 训练前可视化
+    ["featureImportance"],                 # 训练后诊断可视化——系数图
+    [],                                    # 学习可视化——无学习曲线
+    "ridge",                               # 结果存储子目录
+    metadata={"multiModel": True},         # 多模型标记——运行器据此分支
+)
 ```
 
 ### 理解重点
 
-- `pipelines` 层不自己造数据、不自己实现模型，也不自己画图，而是扮演调度者角色。
-- 这种分层使得每个文件职责相对单一：数据文件只关心数据，训练文件只关心模型训练，可视化文件只关心画图。
-- 也正因为如此，文档按“数据 → 模型 → 训练 → 评估 → 工程实现”的顺序组织会更自然。
+- `"standardScaler"` 是正则化回归与线性回归、决策树回归在 `PipelineSpec` 层面的关键差异——前者为 `"standardScaler"`，后两者为 `None`。
+- `metadata={"multiModel": True}` 告诉运行器训练函数返回的是模型字典——运行器会循环评估每个模型。
+- `[]` 学习可视化列表为空——正则化回归不生成学习曲线，这在回归分册中是独特的。
+- `"ridge"` 是结果存储子目录名——但实际输出包含 lasso/ridge/elasticnet 三个模型的各自文件。
 
-## 3. 流水线层真正负责什么
+## 3. 数据依赖关系
 
-### 参数速览（本节）
+```
+loadRegularizationDataset()
+    │
+    ├─→ X = data.drop(columns=["price"])
+    ├─→ y = data["price"]
+    ├─→ feature_names = list(X.columns)
+    │
+    ├─→ train_test_split(test_size=0.2)
+    │       │
+    │       ├─→ StandardScaler().fit_transform(X_train) ──→ X_train_s
+    │       ├─→ StandardScaler().transform(X_test) ──→ X_test_s
+    │       │
+    │       ├─→ trainRegularizationModels(X_train_s, y_train)
+    │       │       │
+    │       │       ├─→ models["lasso"] = Lasso(...).fit()
+    │       │       ├─→ models["ridge"] = Ridge(...).fit()
+    │       │       └─→ models["elasticnet"] = ElasticNet(...).fit()
+    │       │
+    │       └─→ for name, model in models.items():
+    │               │
+    │               ├─→ y_pred = model.predict(X_test_s)
+    │               ├─→ plot_residuals(y_test, y_pred)
+    │               └─→ plot_feature_importance(model, feature_names)
+```
 
-适用逻辑（分项）：
+### 理解重点
 
-1. 复制数据
-2. 拆分特征与标签
-3. 切分训练/测试集
-4. 标准化
-5. 训练三模型
-6. 循环预测与画图
+- 标准化分支（`fit_transform` / `transform`）是正则化回归独有的——线性回归和决策树回归的数据依赖图中没有这一分支。
+- 训练分支产出三个模型——后续所有可视化步骤循环执行三次。
+- 没有学习曲线分支——`plot_learning_curve` 不出现在此数据依赖图中。
 
-| 步骤 | 所在文件 | 当前职责 |
+## 4. 运行器层的执行链
+
+| 序号 | 步骤 | 说明 |
 |---|---|---|
-| 读取 `regularization_data` | `pipelines/regression/regularization.py` | 拿到统一数据入口 |
-| `X` / `y` 拆分 | `pipelines/regression/regularization.py` | 明确特征与标签 |
-| 切分与标准化 | `pipelines/regression/regularization.py` | 生成模型可直接使用的输入 |
-| 调用 `train_model(...)` | `pipelines/regression/regularization.py` | 获得三模型字典 |
-| 循环 `predict(...)` + `plot_residuals(...)` | `pipelines/regression/regularization.py` | 完成统一评估输出 |
+| 1 | 根据 `datasetId` 查找 `DatasetSpec` | 获取数据加载器和描述信息 |
+| 2 | 调用 `loadRegularizationDataset()` | 加载 `(442, 22)` DataFrame |
+| 3 | 拆分 X / y + 保存 `feature_names` | 为后续日志和可视化作准备 |
+| 4 | `train_test_split(test_size=0.2)` | 随机切分 |
+| 5 | `StandardScaler().fit_transform(X_train)` | 标准化训练集——**正则化回归独有** |
+| 6 | `StandardScaler().transform(X_test)` | 标准化测试集 |
+| 7 | 调用 `trainRegularizationModels(X_train_s, y_train)` | 训练三个模型——返回 `dict` |
+| 8 | 检测 `multiModel=True` → 进入多模型循环 | **多模型分支——其他回归模型无此步骤** |
+| 9 | 循环内：`model.predict(X_test_s)` | 每个模型独立预测 |
+| 10 | 循环内：`plot_residuals(y_test, y_pred)` | 每个模型独立生成残差图 |
+| 11 | 循环内：`plot_feature_importance(model, feature_names)` | 每个模型独立生成系数图 |
 
 ### 理解重点
 
-- 当前仓库没有使用 `Pipeline` 类，而是把预处理与训练步骤显式写在 `run()` 中。
-- 这种写法更适合教学，因为每一步都能直接看到变量名和执行顺序。
-- 代价是工程复用性稍弱，但对当前文档目标来说是合理取舍。
+- 步骤 5-6 是正则化回归与线性回归/决策树回归在运行器层的根本差异——多了标准化步骤。
+- 步骤 8 是多模型检测分支——运行器检查 `metadata["multiModel"]`，若为 `True` 则对 `models.items()` 循环评估。
+- 步骤 9-11 在循环内执行三次——相比线性回归的单模型路径，多出了两次 `predict` 和两次可视化调用。
 
-## 4. 训练层真正负责什么
+## 5. 正则化回归 vs 线性回归 vs 决策树回归 工程对比
 
-### 参数速览（本节）
-
-适用函数：`train_model(...)`
-
-| 输出项 | 作用 |
-|---|---|
-| `models` 字典 | 统一返回三种已训练模型 |
-| 控制台日志 | 打印 `alpha`、`l1_ratio`、截距、近零系数数目、各特征系数 |
-
-### 理解重点
-
-- 训练层并不负责切分数据，也不负责计算残差图。
-- 它的核心任务只有两个：构建模型对象，拟合训练数据。
-- 同时它还承担了教学型日志输出职责，这也是为什么 `feature_names` 会作为参数传进来。
-
-## 5. 可视化层真正负责什么
-
-### 参数速览（本节）
-
-适用函数：`plot_residuals(...)`
-
-| 参数名 | 当前用途 |
-|---|---|
-| `dataset_name` | 决定保存目录，如 `regularization` |
-| `model_name` | 决定文件名前缀，如 `lasso` |
-| `title` | 决定图上的展示标题 |
-
-### 理解重点
-
-- 可视化层不关心模型是 Lasso 还是 Ridge，它只接收真实值和预测值并统一画图。
-- `DATASET = "regularization"` 的作用，就是让这套结果图被保存到和当前分册对应的目录中。
-- 这说明当前工程实现已经在为“多算法共享同一套画图工具”做设计。
-
-## 6. 从命令到结果图的执行链
-
-### 示例代码
-
-```python
-python -m pipelines.regression.regularization
-    -> run()
-    -> regularization_data.copy()
-    -> train_test_split(...)
-    -> StandardScaler().fit_transform(...)
-    -> train_model(...)
-    -> model.predict(...)
-    -> plot_residuals(...)
-    -> savefig(...)
-```
-
-### 理解重点
-
-- 这条链里最关键的中间产物有三个：`X_train_s`/`X_test_s`、`models`、每个模型对应的 `y_pred`。
-- 一旦这三个中间变量理解清楚，整个 regularization 分册的代码结构就基本串起来了。
-- 文档中的各章节，其实就是在拆解这条执行链上的不同环节。
-
-### ElasticNet
-
-![弹性网络运行结果](../../../outputs/elasticnet/result_display.png)
-
-### Lasso
-
-![Lasso 运行结果](../../../outputs/lasso/result_display.png)
-
-### Ridge
-
-![Ridge 运行结果](../../../outputs/ridge/result_display.png)
+| 工程维度 | 线性回归 | 决策树回归 | 正则化回归 |
+|---|---|---|---|
+| 训练函数 | `trainLinearRegressionModel` | `trainDecisionTreeRegressionModel` | **`trainRegularizationModels`** |
+| 模型类 | `LinearRegression` | `DecisionTreeRegressor` | **`Lasso`, `Ridge`, `ElasticNet`** |
+| 训练函数行数 | 3 行 | ~5 行 | **~10 行** |
+| 预处理 | `None` | `None` | **`standardScaler`** |
+| 超参数数 | 0 | 3 | **Lasso: 1, Ridge: 1, EN: 2** |
+| 训练后诊断 | `["featureImportance"]` | `["featureImportance"]` | **`["featureImportance"]`** |
+| 学习可视化 | `["learningCurve"]` | `["learningCurve", "treeStructure"]` | **`[]`——无学习曲线** |
+| 数据量 | 200（手工合成） | 20640（真实数据） | **442（真实 + 构造）** |
+| 训练方式 | SVD 闭式解 | CART 贪心递归 | **坐标下降（Lasso/EN）+ 闭式解（Ridge）** |
+| PipelineSpec 元数据 | 无 | 无 | **`{"multiModel": True}`** |
 
 ## 常见坑
 
-1. 把 `pipelines` 层和 `model_training` 层的职责混在一起，误以为训练函数负责全部工程流程。
-2. 忽略 `dataset_name` 和 `model_name` 的作用，看不懂为什么每个模型会生成单独图片文件。
-3. 把当前显式写出的训练流程误记成 scikit-learn `Pipeline` 自动完成，导致后续扩展时判断失误。
+1. 误以为运行器对所有回归模型统一处理——`multiModel=True` 导致运行器走多模型循环分支，与单模型路径不同。
+2. 把 `"ridge"`（输出子目录名）理解成只输出 Ridge 的结果——实际三个模型都有独立输出。
+3. 期待正则化回归也有学习曲线——`PipelineSpec` 中学可视化列表明确为 `[]`。
+4. 忽略标准化在运行器层而非数据层执行——数据层返回原始值，运行器负责 `StandardScaler` 调用。
 
 ## 小结
 
-- 当前正则化回归实现采用了清晰的分层结构：数据层、训练层、流水线层、可视化层各司其职。
-- 入口脚本负责调度，训练模块负责模型，画图模块负责结果呈现。
-- 这种结构既方便阅读，也方便后续把评估指标或调参逻辑继续接到现有流水线上。
+- 正则化回归工程实现采用声明式流水线架构——`PipelineSpec` 配置所有组件，`RegressionRunner` 按 `multiModel=True` 分支执行。
+- 与线性回归/决策树回归的工程差异：（1）唯一使用 `standardScaler` 预处理；（2）唯一返回多模型 `dict`；（3）唯一没有学习曲线；（4）唯一使用 `multiModel` 元数据。
+- 标准化 + 多模型循环是正则化回归工程实现的两大核心特征——理解这两点就理解了正则化回归的工程全貌。

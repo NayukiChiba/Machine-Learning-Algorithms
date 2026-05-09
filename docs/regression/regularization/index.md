@@ -1,74 +1,56 @@
 ---
-title: 正则化回归 — 总览
+title: 正则化回归 — 概述
 outline: deep
 ---
 
 # 正则化回归
 
-> 对应代码：`pipelines/regression/regularization.py`、`model_training/regression/regularization.py`
->  
-> 运行方式：`python -m pipelines.regression.regularization`
-
 ## 本章目标
 
-1. 明确本分册对应的正则化回归源码入口与运行方式。
-2. 理解当前文档各章节分别解释哪一层实现细节。
-3. 建立从数据、模型、训练到诊断的整体阅读路线。
+1. 理解正则化回归在回归分册中的定位——线性回归的升级版，通过 L1/L2 惩罚约束系数。
+2. 了解正则化回归的三模型架构（Lasso / Ridge / ElasticNet）及其工程结构。
+3. 明确正则化回归与线性回归、决策树回归、SVR 的关键差异。
 
-## 对应代码速览
+## 重点方法与概念速览
 
-| 组件 | 路径 | 说明 |
+| 名称 | 类型 | 作用 |
 |---|---|---|
-| 数据生成 | `data_generation/regression.py` | `RegressionData.regularization()` 构造 diabetes + 共线性 + 噪声特征数据 |
-| 数据导出 | `data_generation/__init__.py` | 导出 `regularization_data` |
-| 训练封装 | `model_training/regression/regularization.py` | `train_model(...)` 一次训练 `Lasso`、`Ridge`、`ElasticNet` |
-| 端到端流水线 | `pipelines/regression/regularization.py` | 完成数据切分、标准化、训练、预测、残差图输出 |
-| 残差可视化 | `result_visualization/residual_plot.py` | 为每个模型绘制预测-真实图与残差分布图 |
+| `trainRegularizationModels(...)` | 函数 | 一次性训练 Lasso、Ridge、ElasticNet 三个模型，返回 dict |
+| `StandardScaler` | 预处理 | 对 21 维特征做 Z-score 标准化——正则化回归强制要求 |
+| `Lasso(alpha=0.15)` | 类 | L1 正则化——将不相关特征的系数驱动到精确零 |
+| `Ridge(alpha=2.0)` | 类 | L2 正则化——将系数向零收缩但不精确为零 |
+| `ElasticNet(alpha=0.2, l1_ratio=0.5)` | 类 | L1 + L2 混合——兼具稀疏性和收缩能力 |
+| 近零系数计数 | 诊断 | `np.sum(np.abs(coef) < 1e-3)`——衡量 Lasso/ElasticNet 的稀疏效果 |
 
-## 默认配置速览（来自源码）
+## 正则化回归与本仓库其他回归模型的定位对比
 
-| 项目 | 当前实现 |
-|---|---|
-| 训练模型 | `Lasso(alpha=0.15)`、`Ridge(alpha=2.0)`、`ElasticNet(alpha=0.2, l1_ratio=0.5)` |
-| 数据切分 | `train_test_split(..., test_size=0.2, random_state=42)` |
-| 特征预处理 | `StandardScaler` 仅在训练集 `fit`，测试集 `transform` |
-| 数据来源 | `load_diabetes(as_frame=True)` 后追加相关特征与纯噪声特征 |
-| 评估方式 | 残差图 + 控制台系数日志 |
+| 维度 | 线性回归 | 正则化回归 | 决策树回归 | SVR |
+|---|---|---|---|---|
+| 核心能力 | 无偏线性拟合 | **带约束的线性拟合——控制系数大小** | 非线性分段常数 | 核化非线性 |
+| 特征选择 | 无 | **Lasso 可精确清零** | 隐式（分裂选择） | 无 |
+| 共线性处理 | 系数不稳定 | **显式——L2 收缩 + L1 稀疏** | 鲁棒 | 核隐式处理 |
+| 模型复杂度控制 | 固定（特征数） | **惩罚力度 α + l1_ratio** | max_depth / min_samples_split | C + ε + γ |
+| 需要标准化 | 否（当前） | **是——惩罚项对尺度敏感** | 否 | **是** |
+| 训练方式 | SVD 闭式解 | **坐标下降 / 闭式解** | CART 贪心递归 | SMO 类凸优化 |
+| 输出模型数 | 1 | **3（Lasso + Ridge + ElasticNet）** | 1 | 1 |
+| 教学定位 | 回归起点 | **线性回归的升级——约束与选择的艺术** | 非线性对比 | 核方法对比 |
 
-## 阅读路线
+## 文件导航
 
-1. [数学原理](/regression/regularization/01-mathematics)
-2. [数据构成](/regression/regularization/02-data)
-3. [思路与直觉](/regression/regularization/03-intuition)
-4. [模型构建](/regression/regularization/04-model)
-5. [训练与预测](/regression/regularization/05-training-and-prediction)
-6. [评估与诊断](/regression/regularization/06-evaluation)
-7. [工程实现](/regression/regularization/07-implementation)
-8. [练习与参考文献](/regression/regularization/08-exercises-and-references)
+| 文件 | 内容 | 核心问题 |
+|---|---|---|
+| [01-mathematics](01-mathematics.md) | L1/L2 罚项的数学形式、坐标下降、近端梯度 | L1 惩罚为什么产生稀疏解？ |
+| [02-data](02-data.md) | 糖尿病数据 + 共线列 + 噪声列——三层特征结构 | 为什么正则化回归数据需要共线和噪声特征？ |
+| [03-intuition](03-intuition.md) | 收缩直觉、稀疏性直觉、L1 vs L2 几何直觉 | 为什么 L1 收缩到零而 L2 只收缩不归零？ |
+| [04-model](04-model.md) | `trainRegularizationModels` 三模型字典构建 | Lasso/Ridge/ElasticNet 的超参数各控制什么？ |
+| [05-training-and-prediction](05-training-and-prediction.md) | 标准化 → 训练三个模型 → 分别预测 | 为什么正则化必须先标准化？ |
+| [06-evaluation](06-evaluation.md) | 系数打印 + 近零计数 + 多模型对比 | 三个模型的系数稀疏性如何对比？ |
+| [07-implementation](07-implementation.md) | PipelineSpec 多模型配置 + 运行器多模型分支 | 运行器如何处理 `multiModel=True`？ |
+| [08-exercises-and-references](08-exercises-and-references.md) | 自检问题 + 动手练习 + 参考文献 | 调 α 观察系数归零过程 |
 
-## 如何运行
+## 学习路线
 
-### 示例代码
-
-```bash
-python -m pipelines.regression.regularization
-```
-
-### 理解重点
-
-- 这个命令会串起当前分册里最核心的工程流程。
-- 运行后会依次训练三种正则化模型，并为每个模型生成一张残差分析图。
-- 控制台还会打印 `alpha`、`l1_ratio`、截距、接近 0 的系数数量与各特征系数。
-
-## 先修
-
-- [库生态总览](/foundations/overview)
-- [NumPy 基础与数组概念](/foundations/numpy/01-basics)
-- [预处理](/foundations/sklearn/02-preprocessing)
-- [术语表](/appendix/glossary)
-
-## 小结
-
-- 本分册对应的是当前仓库里一套对比式的正则化回归实现，而不是单一模型教程。
-- 阅读时建议始终把文档与 `pipelines/regression/regularization.py` 和 `model_training/regression/regularization.py` 对照起来看。
-- 如果已经熟悉整体入口，可以直接从“模型构建”或“训练与预测”章节开始阅读。
+1. **先看线性回归**：正则化回归是线性回归的约束版本——理解 OLS 后再看约束才有意义。
+2. **理解标准化必要性**：正则化回归是本仓库回归分册中第一个**强制标准化**的模型——这是它与线性回归和决策树回归最关键的工程差异。
+3. **三模型并列对比**：Lasso（L1）→ 稀疏、Ridge（L2）→ 收缩、ElasticNet→ 混合——始终以对比视角理解三者。
+4. **关注近零系数**：`np.sum(np.abs(coef) < 1e-3)` 是正则化回归独有的诊断指标——其他回归模型没有"系数清零"这个概念。
