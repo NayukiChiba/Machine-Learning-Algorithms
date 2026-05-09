@@ -5,110 +5,114 @@ outline: deep
 
 # 练习与参考文献
 
-> 对应代码：`data_generation/probabilistic.py`、`model_training/probabilistic/hmm.py`、`pipelines/probabilistic/hmm.py`
->  
-> 相关对象：`ProbabilisticData.hmm()`、`train_model(...)`
-
 ## 本章目标
 
-1. 用练习把前面章节里的数据、模型、训练和评估方法串起来。
-2. 引导读者直接修改当前源码中的关键参数，观察 HMM 行为变化。
-3. 给出与当前分册强相关的参考资料，便于继续深入。
+1. 通过自检问题确认对 HMM 核心概念的理解程度。
+2. 通过动手练习在代码层面验证和探索 HMM 的行为。
+3. 提供扩展阅读的参考文献入口。
 
-## 自检题
+## 重点方法与概念速览
 
-1. 当前仓库为什么要用手工参数化的离散序列数据来讲 HMM？
-2. 在本项目里，`obs`、`state_true`、`lengths` 分别起什么作用？
-3. `n_components`、`n_iter`、`tol` 分别在控制什么？
-4. 当前流水线为什么能计算隐状态预测准确率，但这并不代表所有真实应用都能直接这样评估？
-5. 转移矩阵 `transmat_` 和逐时间步准确率分别更适合回答什么问题？
+| 名称 | 类型 | 作用 |
+|---|---|---|
+| 自检问题 | 诊断 | 确认对 Forward/Viterbi/Baum-Welch、马尔可夫性、HMM vs GMM 等核心概念的理解 |
+| 动手练习 | 实践 | 修改参数和模型配置观察 HMM 行为——建立序列模型直觉 |
+| 参考文献 | 入口 | 提供 HMM 经典教材和 Rabiner 教程 |
 
-## 动手练习
+## 1. 自检问题
 
-### 1. 修改 `n_components`
+1. HMM 的三个基本问题是什么？Forward、Viterbi、Baum-Welch 分别解决哪个问题？
 
-修改 `model_training/probabilistic/hmm.py` 中的默认参数：
+2. Forward 算法和 Viterbi 算法都是动态规划——两者的递推公式有何本质区别？一个求和，一个取最大，这反映了什么不同的目标？
 
-```python
-n_components: int = 3
-```
+3. 为什么 Viterbi 解码优于逐步 $\arg\max_i P(s_t = i \mid O, \lambda)$？给出一个简单例子说明后者可能产生非法状态转移。
 
-观察重点：
+4. Baum-Welch 与 GMM 的 EM 在 E 步上的本质区别是什么？为什么 HMM 的 E 步需要 Forward-Backward 而非逐点后验？
 
-- 当隐状态数改成 `2` 或 `4` 后，准确率是否变化。
-- 学到的转移矩阵结构是否明显变化。
-- 预测隐状态路径是否更容易混淆或被过分细分。
+5. 马尔可夫性假设 $P(s_t \mid s_1, \dots, s_{t-1}) = P(s_t \mid s_{t-1})$ 在什么实际场景下会被违反？一阶 HMM 如何被扩展来处理更高阶的依赖？
 
-### 2. 修改 `n_iter` 或 `tol`
+6. 转移矩阵 $A$ 的行和为 1，对角元素通常较大——这反映了隐状态的什么特性？如果对角元素都接近 0.33（3 状态），说明什么？
 
-修改以下默认参数：
+7. HMM 和 GMM 都是概率生成模型——它们在数据结构、独立性假设、隐变量含义上有哪些根本差异？HMM 可以视为什么结构的概率模型？
 
-```python
-n_iter: int = 100
-tol: float = 1e-3
-```
+## 2. 动手练习
 
-观察重点：
+### 练习 1：改变隐状态数 `n_components`
 
-- 更严格或更宽松的收敛设置是否影响训练结果。
-- 控制台训练耗时是否变化。
-- 预测隐状态准确率和转移矩阵是否明显变化。
-
-### 3. 修改数据生成的转移矩阵或发射矩阵
-
-修改 `data_generation/probabilistic.py` 中以下参数之一：
+将 `n_components` 分别设为 `2`、`3`、`4`、`5`，观察准确率和转移矩阵的变化。
 
 ```python
-hmm_A
-hmm_B
+model = train_model(X_obs, lengths, n_components=2)
 ```
 
-观察重点：
+回答：`n_components=2` 时 HMM 如何将 3 个真实状态"合并"为 2 个？准确率是否显著下降？`n_components=5` 时是否出现了"多余"的状态？
 
-- 状态更稳定或更容易切换时，学习到的 `transmat_` 会怎样变化。
-- 发射矩阵区分度降低时，隐状态解码是否更困难。
-- 当前准确率是否会明显下降。
+### 练习 2：改变序列长度
 
-### 4. 修改序列长度 `hmm_n_steps`
-
-修改以下默认参数：
+修改 `data_generation/probabilistic.py` 中的 `hmm_n_steps`（分别设为 `50`、`100`、`300`、`1000`），观察准确率的变化。
 
 ```python
-hmm_n_steps: int = 300
+# 在 ProbabilisticData 中
+hmm_n_steps: int = 50  # 试试 50, 100, 300, 1000
 ```
 
-观察重点：
+回答：序列越短，Baum-Welch 估计的转移矩阵越不稳定——具体多短时准确率开始显著下降？
 
-- 序列更短时，训练得到的转移矩阵是否更不稳定。
-- 序列更长时，预测隐状态准确率是否更稳定。
-- 由此理解当前实现为什么把整条序列长度单独建模成参数。
+### 练习 3：改变转移矩阵的惯性
 
-### 5. 补一个更多结构输出
+修改 `hmm_A` 的对角线值（如将 `0.8` 分别改为 `0.5` 和 `0.95`），观察转移矩阵的学习精度。
 
-在 `pipelines/probabilistic/hmm.py` 中增加发射矩阵或模型得分打印。
+```python
+# 低惯性
+hmm_A: list = [[0.50, 0.30, 0.20], [0.30, 0.40, 0.30], [0.20, 0.30, 0.50]]
+# 高惯性
+hmm_A: list = [[0.95, 0.03, 0.02], [0.03, 0.94, 0.03], [0.03, 0.03, 0.94]]
+```
 
-观察重点：
+回答：高惯性（状态几乎不跳变）的转移矩阵是否更容易被 HMM 恢复？为什么？
 
-- 发射矩阵是否和数据生成时的观测模式大致一致。
-- 结构性输出是否比单个准确率更有解释价值。
-- 由此区分“路径对得上”和“模型内部参数学得合理”这两件事。
+### 练习 4：对比 `predict`（Viterbi）与逐点 argmax
 
-## 阅读建议
+手动实现逐点 argmax 解码（不使用 Viterbi），对比两者的准确率。
 
-1. 先运行一次默认源码，记录准确率和转移矩阵。
-2. 每次只改一个参数，例如只改 `n_components` 或只改 `hmm_A`，避免多个变量同时变化。
-3. 观察时优先对比三条线索：数据生成参数变化、预测隐状态准确率变化、转移矩阵变化。
+```python
+# 计算后验概率（需要自己实现 Forward-Backward 或使用 model.score_samples）
+# 逐点 argmax: ŝ_t = argmax_i γ_t(i)
+```
 
-## 参考文献
+回答：有没有发现逐点 argmax 产生了"不可能的转移"（状态 0 → 2 等）？哪种方法的准确率更高？
 
-- hmmlearn 文档：`https://hmmlearn.readthedocs.io/`
-- Rabiner, *A Tutorial on Hidden Markov Models and Selected Applications in Speech Recognition*.
-- Bishop, *Pattern Recognition and Machine Learning*, Hidden Markov Models.
-- Murphy, *Machine Learning: A Probabilistic Perspective*, Hidden Markov Models.
-- Jurafsky, Martin, *Speech and Language Processing*, HMM 相关章节。
+### 练习 5：使用 Forward 得分评估模型质量
+
+比较不同 `n_components` 下训练模型的 `score`（Forward 对数概率）。
+
+```python
+for k in [2, 3, 4, 5]:
+    model = train_model(X_obs, lengths, n_components=k)
+    log_prob = model.score(X_obs, lengths)
+    print(f"K={k}: log P(O|λ) = {log_prob:.2f}")
+```
+
+回答：对数概率随 $K$ 增大是否单调递增（总是偏好更多参数）？是否可以用 BIC 来平衡拟合和复杂度？
+
+## 3. 参考文献
+
+| 序号 | 文献 | 说明 |
+|---|---|---|
+| 1 | Rabiner, L. R. (1989). *A Tutorial on Hidden Markov Models and Selected Applications in Speech Recognition*. Proceedings of the IEEE, 77(2), 257-286. | HMM 最经典的入门教程——Forward/Viterbi/Baum-Welch 的完整推导和语音识别应用 |
+| 2 | Bishop, C. M. (2006). *Pattern Recognition and Machine Learning*. Springer. Chapter 13. | 教材——HMM 的概率图模型视角和变分推断推广 |
+| 3 | hmmlearn 官方文档 — [CategoricalHMM](https://hmmlearn.readthedocs.io/en/latest/api.html#categoricalhmm) | hmmlearn 的 API 参考——参数、方法和使用示例 |
+| 4 | Murphy, K. P. (2012). *Machine Learning: A Probabilistic Perspective*. MIT Press. Chapter 17. | 教材——HMM 的马尔可夫链理论、卡尔曼滤波推广和状态空间模型 |
+
+## 常见坑
+
+1. 在真实数据（非合成）上期待完美的隐状态准确率——真实数据的 HMM 假设（马尔可夫 + 离散观测）常被违反。
+2. 把 HMM 的 `score` 当成"准确率"——`score` 返回对数概率（负值绝对值越小越好），不是匹配比例。
+3. 以为 `n_components` 越大越好——过度设定状态数会导致每个状态下观测极少，转移矩阵估计不稳定。
+4. 忘记 hmmlearn 的列向量要求——`reshape(-1, 1)` 是必需的数据整形步骤。
 
 ## 小结
 
-- 这部分练习最重要的目标，不是死记前向、后向和 Viterbi 公式，而是亲手观察状态数、转移结构和序列长度如何影响解码结果。
-- 当前源码已经提供了非常透明的离散序列生成过程和直接的控制台结构输出，因此很适合做基础 HMM 实验。
-- 把这些练习做完，再回头看数学原理、模型构建和评估章节，理解通常会更扎实。
+- 7 个自检问题覆盖 HMM 的核心概念：三个基本问题、Forward vs Viterbi、Viterbi vs 逐点 argmax、Baum-Welch vs EM、马尔可夫性、转移矩阵解读、HMM vs GMM。
+- 5 个动手练习从不同角度探索 HMM 的行为——改变状态数、序列长度、转移惯性、对比解码方式、使用 Forward 得分做模型选择。
+- 4 篇参考文献覆盖经典入门（Rabiner 1989）、教材和官方文档——构成完整的 HMM 学习路线。

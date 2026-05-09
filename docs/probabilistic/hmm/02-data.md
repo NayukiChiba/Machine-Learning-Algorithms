@@ -5,160 +5,144 @@ outline: deep
 
 # 数据构成
 
-> 对应代码：`data_generation/probabilistic.py`、`data_generation/__init__.py`、`pipelines/probabilistic/hmm.py`
->  
-> 相关对象：`ProbabilisticData.hmm()`、`hmm_data`
-
 ## 本章目标
 
-1. 明确本仓库 HMM 数据来自 `ProbabilisticData.hmm()` 的离散序列构造逻辑。
-2. 明确观测序列 `obs`、真实隐状态 `state_true` 和时间步 `time` 的边界。
-3. 明确当前实现如何整理序列输入，以及当前流程没有 train/test split 这一事实。
+1. 明确本仓库 HMM 数据来自 `ProbabilisticData.hmm()` 手动参数化生成的离散序列。
+2. 理解三列数据（`time`、`obs`、`state_true`）各自的角色与边界——训练只依赖 `obs`。
+3. 理解序列数据特有的整形步骤（`reshape(-1, 1)` + `lengths`）及其与表格型数据的根本差异。
 
 ## 重点方法与概念速览
 
 | 名称 | 类型 | 作用 |
 |---|---|---|
-| `ProbabilisticData.hmm()` | 方法 | 生成 HMM 使用的离散观测序列数据 |
-| `hmm_data` | 变量 | 在 `data_generation/__init__.py` 中导出的数据对象 |
-| `obs` | 列名 | 训练 HMM 的离散观测符号序列 |
-| `state_true` | 列名 | 数据生成时记录的真实隐状态，仅用于训练后对比 |
-| `time` | 列名 | 时间步索引 |
+| `ProbabilisticData.hmm()` | 方法 | 手动参数化生成 HMM 离散观测序列——含真实隐状态 |
+| `hmm_data` | 全局变量 | 在 `data_generation/__init__.py` 中导出的 DataFrame（300 行 × 3 列） |
+| `obs` | 列 | 离散观测符号序列 $\{0, 1, 2\}$——训练 HMM 的唯一输入 |
+| `state_true` | 列 | 数据生成时记录的真实隐状态——仅用于训练后评估对比 |
+| `reshape(-1, 1)` | 操作 | 将一维序列整形为 hmmlearn 要求的列向量 `(300, 1)` |
+| `lengths` | 参数 | 序列长度列表 `[300]`——告诉模型当前由几条序列拼接而成 |
 
-## 1. 本仓库数据入口
+## 1. 数据生成：`ProbabilisticData.hmm()`
 
-- 数据变量：`data_generation/__init__.py` 中导出的 `hmm_data`
-- 生成来源：`data_generation/probabilistic.py` 中的 `ProbabilisticData.hmm()`
-- 流水线使用：`pipelines/probabilistic/hmm.py` 中的 `data = hmm_data.copy()`
+### 参数速览
 
-### 理解重点
-
-- `hmm_data` 在导入时就已经生成完成，因此流水线里直接 `.copy()` 使用即可。
-- 使用 `.copy()` 的目的，是避免后续整理观测序列或调试过程意外修改原始数据对象。
-
-## 2. 数据生成函数 `ProbabilisticData.hmm()`
-
-### 参数速览（本节）
-
-适用参数（本节）：
-
-1. `hmm_n_steps`
-2. `hmm_pi`
-3. `hmm_A`
-4. `hmm_B`
-
-| 参数名 | 本例取值 | 说明 |
-|---|---|---|
-| `hmm_n_steps` | `300` | 序列长度 |
-| `random_state` | `42` | 随机种子，保证可复现 |
-| `hmm_pi` | `[0.6, 0.3, 0.1]` | 初始状态分布 |
-| `hmm_A` | `3 x 3` 矩阵 | 状态转移矩阵 |
-| `hmm_B` | `3 x 3` 矩阵 | 发射矩阵，控制观测符号生成 |
-| 返回值 | `DataFrame` | 含 `time`、`obs`、`state_true` 的数据表 |
+| 参数名 | 类型 | 说明 | 示例取值 |
+|---|---|---|---|
+| `hmm_n_steps` | `int` | 序列长度。`300`——足够 Baum-Welch 稳定估计 $3 \times 3$ 转移矩阵 | `50`、`100`、`300`、`1000` |
+| `hmm_pi` | `list[float]` | 初始状态分布，和为 1。$\pi_1=0.6$ 意味着序列大概率从状态 0 开始 | `[0.6, 0.3, 0.1]` |
+| `hmm_A` | `list[list[float]]` | 状态转移矩阵，行和为 1。对角线 $[0.80, 0.60, 0.70]$ 表示状态 0 最稳定 | `[[0.80,0.15,0.05], [0.20,0.60,0.20], [0.10,0.20,0.70]]` |
+| `hmm_B` | `list[list[float]]` | 发射矩阵，行和为 1。状态 0 偏好发射符号 0（概率 0.60） | `[[0.60,0.30,0.10], [0.20,0.50,0.30], [0.10,0.20,0.70]]` |
+| `random_state` | `int` | 随机种子。`42`——保证序列可复现 | `42` |
+| 返回值 | `DataFrame` | 含 `time`、`obs`、`state_true` 三列 | — |
 
 ### 示例代码
 
 ```python
-states[0] = rng.choice(n_states, p=pi)
-obs[0] = rng.choice(B.shape[1], p=B[states[0]])
+from data_generation.probabilistic import ProbabilisticData
 
+data = ProbabilisticData().hmm()
+# data.columns = ["time", "obs", "state_true"]
+# data.shape = (300, 3)
+```
+
+### 生成流程
+
+```python
+states = np.zeros(n_steps, dtype=int)
+obs_arr = np.zeros(n_steps, dtype=int)
+
+# t=0: 从初始分布采样
+states[0] = rng.choice(n_states, p=pi)
+obs_arr[0] = rng.choice(n_symbols, p=B[states[0]])
+
+# t=1..T-1: 按转移矩阵推进隐状态，按发射矩阵生成观测
 for t in range(1, n_steps):
     states[t] = rng.choice(n_states, p=A[states[t - 1]])
-    obs[t] = rng.choice(B.shape[1], p=B[states[t]])
+    obs_arr[t] = rng.choice(n_symbols, p=B[states[t]])
 ```
 
 ### 理解重点
 
-- 当前数据不是独立样本集合，而是一条按时间顺序生成的离散序列。
-- 每个时间步先按转移矩阵产生新的隐状态，再按发射矩阵产生观测符号。
-- 这正是 HMM 和普通聚类/回归数据最大的区别。
+- 这是**完全手动参数化**的生成过程——转移矩阵 $A$ 和发射矩阵 $B$ 是预先写死的，而非从数据中学习。
+- 每个时间步先按转移矩阵产生新的隐状态，再按发射矩阵产生观测符号——两层随机采样层层嵌套。
+- 正是因为 $A$ 和 $B$ 已知，后续可以定量评估 Baum-Welch 恢复参数的精度——这是合成数据的核心教学价值。
+- 序列的本质是**时间有序**——$o_t$ 与 $o_{t-1}$ 不独立，它们通过隐状态链 $q_{t-1} \to q_t$ 关联。
 
-## 3. 三列数据各自代表什么
+## 2. 三列数据的角色
 
-当前数据表结构如下：
+### 参数速览
 
-- `time`：时间步编号
-- `obs`：观测符号序列
-- `state_true`：真实隐状态序列
+| 参数名 | 类型 | 说明 | 示例取值 |
+|---|---|---|---|
+| `time` | `Series`，形状 `(300,)` | 时间步索引 $\{0, 1, \dots, 299\}$——标记序列中的位置 | `0, 1, 2, ..., 299` |
+| `obs` | `Series`，形状 `(300,)` | 离散观测符号 $\{0, 1, 2\}$——**训练 HMM 的唯一输入** | `data["obs"].values.astype(int)` |
+| `state_true` | `Series`，形状 `(300,)` | 真实隐状态 $\{0, 1, 2\}$——**仅用于评估对比**，不参与训练 | `data["state_true"].values.astype(int)` |
 
-### 参数速览（本节）
+### 理解重点
 
-适用列组（本节）：
+- `obs` 是流水线中真正送入 `model.fit()` 的数据——Baum-Welch 只看到观测序列，对真实隐状态一无所知。
+- `state_true` 是生成时记录的"答案"——仅在训练后与 Viterbi 解码的 `states_pred` 做逐步对比，计算准确率。
+- `time` 不直接送入模型——但它提醒我们这是一个有序序列，而非可以随意打乱的 i.i.d. 样本表。
+- `astype(int)` 是必需的——确保 hmmlearn 将观测识别为离散符号而非连续浮点数。
 
-1. 时间列
-2. 观测列
-3. 隐状态列
+## 3. 序列数据整形：`reshape(-1, 1)` 与 `lengths`
 
-| 列名 | 当前作用 |
-|---|---|
-| `time` | 标记序列中的位置 |
-| `obs` | 真正参与训练的离散观测输入 |
-| `state_true` | 仅用于训练后对比预测隐状态 |
+### 参数速览
+
+| 参数名 | 类型 | 说明 | 示例取值 |
+|---|---|---|---|
+| `X_obs` | `ndarray`，形状 `(300, 1)` | 整形后的观测列向量——hmmlearn 的 `fit()` 要求二维输入 | `obs.reshape(-1, 1)` |
+| `lengths` | `list[int]` | 序列长度列表。`[300]`——单条 300 步序列 | `[300]`、`[100, 200, 150]` |
 
 ### 示例代码
 
 ```python
-obs = data["obs"].values.astype(int)
-X_obs = obs.reshape(-1, 1)
-lengths = [len(obs)]
-y_true = data["state_true"].values.astype(int)
+obs = data["obs"].values.astype(int)       # (300,) 一维
+X_obs = obs.reshape(-1, 1)                  # (300, 1) 列向量
+lengths = [len(obs)]                        # [300]
+
+model.fit(X_obs, lengths)                   # HMM 训练
+states_pred = model.predict(X_obs, lengths)  # Viterbi 解码
 ```
 
 ### 理解重点
 
-- `obs` 是当前流水线真正用于训练 HMM 的输入。
-- `state_true` 不是训练标签，而是数据生成时记录下来的参考隐状态，当前实现只在训练后用来算准确率。
-- `time` 在当前流水线里没有直接送进模型，但它帮助我们理解这是一个有序序列而不是普通样本表。
+- `reshape(-1, 1)` 是将一维序列转为列向量的**必需步骤**——hmmlearn 的 `fit` 要求观测形状为 `(n_steps, n_features)`。
+- `lengths` 告诉模型"这条长序列由几条子序列拼接而成"——当前是单条 300 步，所以 `[300]`；多序列场景下可以是 `[100, 200, 150]`。
+- 这是 HMM 与所有其他模型（分类/聚类/回归）在数据准备上的**根本差异**——其他模型只需传 `(n_samples, n_features)`，HMM 还需传序列边界。
 
-## 4. 为什么需要 `reshape(-1, 1)` 和 `lengths`
+## 4. 当前流程边界
 
-### 参数速览（本节）
-
-适用代码（分项）：
-
-1. `obs.reshape(-1, 1)`
-2. `lengths = [len(obs)]`
-
-| 参数名 | 本例取值 | 说明 |
+| 项目 | 当前状态 | 说明 |
 |---|---|---|
-| `X_obs` | `(T, 1)` 形状数组 | 符合 hmmlearn 离散观测输入要求 |
-| `lengths` | `[300]` | 表示当前只有一条长度为 300 的序列 |
-
-### 示例代码
-
-```python
-obs = data["obs"].values.astype(int)
-X_obs = obs.reshape(-1, 1)
-lengths = [len(obs)]
-```
+| train/test split | 未使用 | HMM 在单条序列上训练和评估——序列不可随意切分 |
+| 标准化 | 未使用 | 离散观测符号 $\{0, 1, 2\}$ 无需缩放 |
+| 多条序列拼接 | 当前未展示 | 框架支持——`lengths=[100, 200]` 即可，但教学用单条更清晰 |
 
 ### 理解重点
 
-- 当前 HMM 训练接口接收的是二维观测数组，因此一维离散观测序列需要 reshape 成 `(T, 1)`。
-- `lengths` 用来告诉模型当前输入由几条序列拼接而成；当前实现里只有一条完整序列，所以它是 `[len(obs)]`。
-- 这是一类序列模型特有的数据整理步骤，和前面几个分册的表格型输入完全不同。
+- 当前 HMM 分册没有 train/test split——因为序列数据的时间依赖使得随机切分不合理，且当前目标是展示"参数恢复"而非泛化性能。
+- 离散观测符号不需要标准化——这是 HMM 与所有连续特征模型（EM/KMeans/回归）的关键区别。
+- 文档必须如实描述当前实现——不能把监督学习的 train/test split 或连续特征的标准化习惯误套到 HMM。
 
-## 5. 当前流程边界
+## 5. 数据设计意图：与 EM (GMM) 的对比
 
-### 参数速览（本节）
-
-当前实现的关键边界：
-
-1. 无 train/test split
-2. 无标准化
-3. 单条离散序列
-
-| 项目 | 当前状态 |
-|---|---|
-| train/test split | 未使用 |
-| 标准化 | 未使用 |
-| 多条序列拼接训练 | 当前未展示 |
+| 数据维度 | EM (GMM) | HMM |
+|---|---|---|
+| 生成方式 | 手动合成——3 分量各向异性高斯 | **手动参数化——Markov chain + categorical emission** |
+| 数据形态 | 独立样本矩阵 `(500, 2)` | **有序序列 `(300, 1)`** |
+| 特征类型 | 连续 $\mathbb{R}^2$ | **离散 $\{0, 1, 2\}$** |
+| 样本独立性 | i.i.d. | **时间依赖——$o_t$ 通过 $q_t$ 与 $o_{t-1}$ 关联** |
+| 标签列 | `true_label`——仅用于评估 | **`state_true`——仅用于评估** |
+| 标准化 | 有（`StandardScaler`） | **无** |
+| 数据拆分 | 无（全量聚类） | 无（全量序列） |
+| 训练输入 | `fit(X)` | **`fit(X, lengths)`** |
 
 ### 理解重点
 
-- 当前 HMM 分册没有 train/test split，而是直接在整条观测序列上训练和预测。
-- 当前数据是离散观测符号，不像连续特征那样需要标准化。
-- 文档必须如实描述当前实现，不能把监督学习或连续特征处理习惯误套到这里。
+- HMM 数据**刻意使用离散观测**——这是为了展示 HMM 处理符号序列（如词性标注、基因序列）的经典场景，而非连续值回归。
+- 序列长度为 300 是有意设计——足够 Baum-Welch 稳定估计 $3 \times 3$ 转移矩阵，又不至于太长使演示耗时。
+- 与 EM 数据的核心差异：HMM 数据点之间**不独立**——$o_{100}$ 的分布受 $q_{99}$ 影响，而 EM 中 $\mathbf{x}_{100}$ 与其他样本完全独立。
 
 ## 数据可视化
 
@@ -168,12 +152,13 @@ lengths = [len(obs)]
 
 ## 常见坑
 
-1. 把 `state_true` 当成训练标签，误以为当前 HMM 是监督学习。
-2. 忽略 `reshape(-1, 1)` 和 `lengths`，把一维序列直接传给训练函数。
-3. 把表格型样本思维带进来，忘记当前数据本质上是一条时间序列。
+1. 把 `state_true` 当成训练标签——HMM 的 Baum-Welch 是无监督学习，只依赖观测序列。
+2. 忘记 `reshape(-1, 1)`——直接将一维 `obs` 传给 `fit()`，hmmlearn 会报错或产生错误结果。
+3. 忘记 `astype(int)`——浮点观测可能被 hmmlearn 误认为连续值，触发错误行为。
+4. 在极短序列（<50 步）上期待稳定的转移矩阵估计——转移次数不足，参数方差大。
 
 ## 小结
 
-- 当前 HMM 数据来自 `ProbabilisticData.hmm()`，底层是手工参数化生成的单条离散观测序列。
-- 数据表结构清晰：`obs` 是训练输入，`state_true` 只用于训练后对比，`time` 用于表示顺序。
-- 读懂数据来源、序列整理方式和标签边界，是理解后续 HMM 训练与隐状态预测的前提。
+- 当前 HMM 数据来自 `ProbabilisticData.hmm()`——手动参数化（$A$、$B$、$\pi$）生成 300 步离散观测序列，三层结构清晰。
+- 三列数据角色明确：`obs` 是唯一训练输入，`state_true` 仅用于评估，`time` 标记序列顺序。
+- 序列数据的两个特殊整形步骤（`reshape(-1, 1)` + `lengths`）是 HMM 与所有表格型模型在数据准备上的根本分界线。

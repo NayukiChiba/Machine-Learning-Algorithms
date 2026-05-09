@@ -5,173 +5,160 @@ outline: deep
 
 # 模型构建
 
-> 对应代码：`model_training/probabilistic/hmm.py`
->  
-> 运行方式：`python -m model_training.probabilistic.hmm`
-
 ## 本章目标
 
-1. 明确 `train_model(...)` 如何构建并训练当前仓库中的 HMM 模型。
-2. 理解默认 `n_components`、`n_iter`、`tol`、`random_state` 在当前源码中的作用。
-3. 看清训练函数除了 `fit(...)` 之外还做了哪些兼容处理和日志输出。
+1. 明确 `train_model(...)` 如何构建并训练 HMM 模型——离散观测、序列数据、可选依赖。
+2. 理解 `CategoricalHMM` 的核心构造器参数（`n_components`、`n_iter`、`tol`）及其序列含义。
+3. 看清训练完成后最重要的模型属性——`transmat_`（转移矩阵）、`startprob_`（初始概率）、`emissionprob_`（发射矩阵）。
 
 ## 重点方法与概念速览
 
 | 名称 | 类型 | 作用 |
 |---|---|---|
-| `train_model(...)` | 函数 | 构建并训练一个离散 HMM 模型 |
-| `CategoricalHMM` | 类 | hmmlearn 提供的离散观测 HMM 实现 |
-| `MultinomialHMM` | 类 | 当前环境下的回退实现 |
-| `model.fit(X_obs, lengths)` | 方法 | 在离散观测序列上学习 HMM 参数 |
-| `model.transmat_` | 属性 | 训练后得到的状态转移矩阵 |
+| `train_model(...)` | 函数 | 构建并训练一个 HMM 模型——含可选依赖检查（`CategoricalHMM` / `MultinomialHMM` 双备份） |
+| `CategoricalHMM(...)` | 类 | hmmlearn 提供的离散 HMM——用 Baum-Welch（EM）估计参数 |
+| `model.fit(X_obs, lengths)` | 方法 | Baum-Welch 训练——迭代 Forward-Backward + 参数重估 |
+| `model.transmat_` | 属性 | 学习到的状态转移矩阵 $A$（3×3） |
+| `model.startprob_` | 属性 | 学习到的初始状态分布 $\pi$（3,） |
+| `model.emissionprob_` | 属性 | 学习到的观测发射矩阵 $B$（3×3） |
+| `model.predict(X_obs, lengths)` | 方法 | Viterbi 解码——全局最优隐状态路径 |
 
 ## 1. `train_model(...)` 的函数签名
 
-### 参数速览（本节）
+### 参数速览
 
 适用函数：`train_model(X_obs, lengths, n_components=3, n_iter=100, tol=1e-3, random_state=42)`
 
-| 参数名 | 本例取值 | 说明 |
-|---|---|---|
-| `X_obs` | `(T, 1)` 观测数组 | 输入给 HMM 的离散观测序列 |
-| `lengths` | `[len(obs)]` | 序列长度列表 |
-| `n_components` | `3` | 隐状态数 |
-| `n_iter` | `100` | 最大迭代次数 |
-| `tol` | `1e-3` | 收敛阈值 |
-| `random_state` | `42` | 随机种子，保证可复现 |
-| 返回值 | HMM 模型对象 | 已训练完成的隐马尔可夫模型 |
+| 参数名 | 类型 | 说明 | 示例取值 |
+|---|---|---|---|
+| `X_obs` | `ndarray`，形状 `(300, 1)` | 观测序列列向量——离散符号 $\{0, 1, 2\}$，每行为一个时间步 | `obs.reshape(-1, 1)` |
+| `lengths` | `list[int]` | 序列长度列表。`[300]`——单条 300 步的序列 | `[300]`、`[100, 200]` |
+| `n_components` | `int` | 隐状态数。`3`——与真实隐状态数一致 | `2`、`3`、`5` |
+| `n_iter` | `int` | Baum-Welch 最大迭代次数。`100`——比 GMM 的 EM 迭代少（序列计算更贵） | `50`、`100`、`200` |
+| `tol` | `float` | 对数似然收敛阈值。`1e-3` | `1e-3`、`1e-4` |
+| `random_state` | `int` | 随机种子。`42` | `42` |
+| 返回值 | `CategoricalHMM` 或 `MultinomialHMM` | 已完成 `fit()` 的 HMM 模型 | — |
 
 ### 示例代码
 
 ```python
 from model_training.probabilistic.hmm import train_model
 
+obs = hmm_data["obs"].values.astype(int)
+X_obs = obs.reshape(-1, 1)
+lengths = [len(obs)]
 model = train_model(X_obs, lengths)
 ```
 
 ### 理解重点
 
-- 当前训练入口返回的是单个 HMM 模型对象。
-- 与 EM 分册一样，这里训练时不需要真实标签，只需要观测序列和长度信息。
-- 默认参数直接来自源码，是后续理解状态数和训练迭代控制的基线。
+- `train_model(...)` 的参数签名与 GMM 完全不同——输入为序列数据（`X_obs` + `lengths`），而非独立样本矩阵。
+- `lengths` 支持多条不等长序列——当前使用单条 300 步序列，但框架天然支持批量序列训练。
+- 内部有双备份可选依赖处理——优先 `CategoricalHMM`，回退 `MultinomialHMM`。
 
-## 2. `CategoricalHMM` 与 `MultinomialHMM` 的兼容逻辑
+## 2. `CategoricalHMM` 构造器参数
 
-### 参数速览（本节）
+### 参数速览
 
-适用逻辑（分项）：
+适用 API：`CategoricalHMM(n_components=3, n_iter=100, tol=1e-3, random_state=42)`
 
-1. 优先使用 `CategoricalHMM`
-2. 回退使用 `MultinomialHMM`
-
-| 分支 | 当前行为 | 说明 |
-|---|---|---|
-| `CategoricalHMM` 可用 | 优先构建它 | 更直接对应离散符号观测 |
-| 否则 `MultinomialHMM` 可用 | 使用回退实现 | 保证在不同 hmmlearn 版本下仍可运行 |
-| 都不可用 | 抛出 `ImportError` | 提示未安装 `hmmlearn` |
-
-### 示例代码
-
-```python
-if CategoricalHMM is not None:
-    model = CategoricalHMM(...)
-else:
-    model = MultinomialHMM(...)
-```
-
-### 理解重点
-
-- 当前源码不是只写死一种 HMM 类，而是做了 hmmlearn 版本兼容处理。
-- 这说明文档必须以“当前实现会优先用 `CategoricalHMM`，否则回退到 `MultinomialHMM`”来描述。
-- 这是工程层的重要细节，不属于纯数学层内容。
-
-## 3. 四个核心超参数分别控制什么
-
-### 参数速览（本节）
-
-适用超参数（分项）：
-
-1. `n_components`
-2. `n_iter`
-3. `tol`
-4. `random_state`
-
-| 超参数 | 当前作用 | 调整时的常见影响 |
-|---|---|---|
-| `n_components` | 假设隐状态数量 | 设少了会混状态，设多了会拆得过细 |
-| `n_iter` | 限制训练迭代上限 | 太小可能提前停止 |
-| `tol` | 控制收敛阈值 | 更小通常要求更严格收敛 |
-| `random_state` | 控制初始化随机性 | 影响可复现性与局部解路径 |
-
-### 理解重点
-
-- `n_components` 是当前 HMM 分册里最重要的建模假设之一。
-- `n_iter` 和 `tol` 共同控制 Baum-Welch 训练何时停止。
-- `random_state` 则保证当前实验结果更容易复现和对比。
-
-## 4. 训练阶段的工程封装
-
-除了 `model.fit(X_obs, lengths)` 之外，`train_model(...)` 还做了多层工程包装。
-
-### 参数速览（本节）
-
-适用装饰与上下文（分项）：
-
-1. `@print_func_info`
-2. `@timeit`
-3. `with timer(name='模型训练耗时')`
-
-| 包装项 | 作用 |
-|---|---|
-| `@print_func_info` | 打印函数调用入口 |
-| `@timeit` | 打印整个函数耗时 |
-| `timer(...)` | 打印模型 `fit(...)` 阶段耗时 |
+| 参数名 | 类型 | 说明 | 示例取值 |
+|---|---|---|---|
+| `n_components` | `int` | 隐状态数。`3`——HMM 的核心超参数，需预先设定 | `2`、`3`、`5` |
+| `n_iter` | `int` | Baum-Welch 最大迭代次数。`100`——序列数据的 EM 通常收敛更慢 | `50`、`100`、`200` |
+| `tol` | `float` | 对数似然收敛阈值。`1e-3` | `1e-3`、`1e-4` |
+| `random_state` | `int` | 随机种子。`42`——保证参数初始化和结果可复现 | `42` |
+| `init_params` | `str` | 参数初始化方法。默认 `"st"`（转移和发射矩阵随机初始化） | `"st"`、`""` |
+| `params` | `str` | 哪些参数在训练中更新。默认 `"ste"`（startprob/transmat/emissionprob） | `"ste"`、`"st"` |
+| `verbose` | `bool` | 是否打印详细日志。默认 `False` | `True`、`False` |
 
 ### 示例代码
 
 ```python
-@print_func_info
-@timeit
-def train_model(...):
-    ...
-    with timer(name="模型训练耗时"):
-        model.fit(X_obs, lengths)
+try:
+    from hmmlearn.hmm import CategoricalHMM
+    ModelClass = CategoricalHMM
+except ImportError:
+    from hmmlearn.hmm import MultinomialHMM
+    ModelClass = MultinomialHMM
+
+model = ModelClass(
+    n_components=3,
+    n_iter=100,
+    tol=1e-3,
+    random_state=42,
+)
+model.fit(X_obs, lengths)
 ```
 
 ### 理解重点
 
-- 当前训练函数会同时打印“模型训练耗时”和整个函数耗时，因此终端里会看到两层计时信息。
-- 这些包装不改变 HMM 训练行为，但有助于观察训练入口和耗时表现。
-- 与回归分册不同，这里更强调序列建模训练是否顺利完成，而不是系数或残差输出。
+- `CategoricalHMM` 是 hmmlearn 0.3+ 的新 API——`MultinomialHMM` 是旧版本兼容（当前源码双备份）。
+- `n_iter=100` 比 GMM 的 `max_iter=200` 少——因为序列计算中每次 Forward-Backward 的复杂度是 $O(T \times K^2)$，远贵于逐点的 E 步。
+- 没有 `covariance_type` 参数——HMM 处理离散观测，不涉及协方差矩阵。
 
-## 5. 训练完成后最直接可用的结构信息
+## 3. 训练完成后的关键属性
 
-### 参数速览（本节）
+### 参数速览
 
-适用属性/方法（分项）：
+| 属性名 | 类型 | 数学含义 | 说明 |
+|---|---|---|---|
+| `transmat_` | `ndarray`，形状 `(3, 3)` | 转移矩阵 $A$ | $A_{ij} = P(s_{t+1}=j \mid s_t=i)$，行和为 1 |
+| `startprob_` | `ndarray`，形状 `(3,)` | 初始分布 $\pi$ | $\pi_i = P(s_1=i)$，和为 1 |
+| `emissionprob_` | `ndarray`，形状 `(3, 3)` | 发射矩阵 $B$ | $B_{ij} = P(o_t=j \mid s_t=i)$，行和为 1 |
+| `monitor_` | `dict` | 训练历史 | 逐次迭代的对数似然值列表——诊断收敛 |
 
-1. `model.predict(X_obs, lengths)`
-2. `model.transmat_`
+### 示例代码
 
-| 输出项 | 含义 |
-|---|---|
-| `predict(...)` | 解码得到的隐状态序列 |
-| `transmat_` | 学到的状态转移矩阵 |
+```python
+print(f"n_components: {n_components}")
+print(f"n_iter: {n_iter}")
+print(f"tol: {tol}")
+print(f"转移矩阵:\n{model.transmat_.round(3)}")
+print(f"发射矩阵:\n{model.emissionprob_.round(3)}")
+print(f"初始分布: {model.startprob_.round(3)}")
+```
 
 ### 理解重点
 
-- 对当前 HMM 分册来说，训练后最重要的结果不是一个分数，而是状态路径和转移结构。
-- `transmat_` 能帮助你观察模型学到了怎样的状态演化规律。
-- `predict(...)` 则直接连接到流水线中的隐状态准确率计算。
+- `transmat_`（$3 \times 3$）描述隐状态的迁移行为——对角线越大（如 0.8），状态越稳定。
+- `emissionprob_`（$3 \times 3$）描述每个状态的观测偏好——例如"状态 0 大概率发射符号 0"。
+- `startprob_` 描述序列起始时刻的状态分布——与 GMM 的 `weights_` 概念相似，但用于序列初始而非整个序列。
+- 通过对比学习到的 `transmat_` / `emissionprob_` 与真实参数，可以定量评估 HMM 的恢复能力。
+
+## 4. `predict()` — Viterbi 解码
+
+### 参数速览
+
+| 方法 | 输入 | 输出 | 算法 | 说明 |
+|---|---|---|---|---|
+| `predict(X, lengths)` | `(n_steps, 1)` + `lengths` | `ndarray`，`(n_steps,)` | **Viterbi** | 全局最优隐状态路径——保证路径合法（不存在概率为 0 的转移） |
+
+### 理解重点
+
+- Viterbi 解码**不是**逐步 argmax——它全局寻找概率最大的单条路径，保证相邻状态的转移是合法的。
+- 逐步 argmax（$\arg\max_i P(s_t = i \mid O, \lambda)$）可能产生"非法"的状态跳跃——Viterbi 避免了这一点。
+- 在 HMM 中，`predict` 返回的是隐状态序列——用于与 `state_true` 对比计算准确率。
+
+## 5. HMM vs GMM vs 集成模型 参数对比
+
+| 参数/属性 | GMM | HMM | 备注 |
+|---|---|---|---|
+| 核心参数 | `n_components`、`covariance_type`、`max_iter` | `n_components`、`n_iter`、`tol` | 相似但 HMM 更关注迭代收敛 |
+| 训练输入 | `fit(X)`——独立样本 | **`fit(X, lengths)`——序列数据** | 根本差异 |
+| 模型属性 | `means_`、`covariances_`、`weights_` | **`transmat_`、`emissionprob_`、`startprob_`** | HMM 描述动态，GMM 描述分布 |
+| 预测输出 | `predict(X)`、`predict_proba(X)` | **`predict(X, lengths)`（Viterbi）** | 无 `predict_proba`——但有 `score`（Forward） |
+| 依赖 | sklearn 内置 | **`pip install hmmlearn`** | 可选依赖 |
 
 ## 常见坑
 
-1. 误以为当前实现只支持 `CategoricalHMM`，忽略了回退到 `MultinomialHMM` 的兼容逻辑。
-2. 只关注 `n_components`，忽略 `n_iter` 和 `tol` 对训练停止条件的影响。
-3. 把训练后的重点仍放在“分数”上，而忽略 `transmat_` 和隐状态路径才是当前分册最关键的结果对象。
+1. 忘记传 `lengths` 参数——`fit(X)` 会报错，HMM 必须知道每条序列的边界。
+2. 混淆 `transmat_` 的行和列方向——行 $i$ 列 $j$ 表示 $P(s_{t+1}=j \mid s_t=i)$，行和为 1。
+3. 在极短序列（<50 步）上训练——Baum-Welch 需要足够多的状态转移来稳定估计 $A$ 矩阵。
+4. 混淆 `CategoricalHMM` 和 `MultinomialHMM`——前者是 hmmlearn 0.3+ 的新 API，语义更清晰。
 
 ## 小结
 
-- `train_model(...)` 是本仓库 HMM 的核心训练入口。
-- 它本质上是对 hmmlearn 中离散 HMM 实现的薄封装，重点在于超参数传递、兼容处理和训练日志输出。
-- 读懂这一层之后，再看流水线中的训练、预测和隐状态评估过程会更清晰。
+- `train_model(...)` 是本仓库 HMM 的核心训练入口——含双备份可选依赖检查，输入为序列数据而非独立样本。
+- `CategoricalHMM` 的核心参数是 `n_components`（隐状态数）、`n_iter`（Baum-Welch 上限）、`tol`（收敛阈值）——结构化参数比 GMM 少但序列计算量更大。
+- 训练完成后的核心属性：`transmat_` / `emissionprob_` / `startprob_`——三件套完全描述离散 HMM 的动态和观测行为。

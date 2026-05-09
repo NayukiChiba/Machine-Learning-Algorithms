@@ -5,26 +5,95 @@ outline: deep
 
 # 工程实现
 
-> 对应代码：`data_generation/probabilistic.py`、`model_training/probabilistic/hmm.py`、`pipelines/probabilistic/hmm.py`
->  
-> 运行方式：`python -m pipelines.probabilistic.hmm`
-
 ## 本章目标
 
-1. 看清当前 HMM 分册在仓库中的模块分层与调用关系。
-2. 理解从命令行入口到隐状态预测结果输出，中间依次发生了什么。
-3. 明确哪些逻辑属于数据层、训练层和流水线层。
+1. 理解 HMM 流水线的模块分层——数据生成层、模型训练层、流水线编排层（无可视化层）。
+2. 理清 `run()` 内部的函数调用链——HMM 是本仓库最简流水线，无标准化/切分/可视化。
+3. 理解 HMM 与 GMM（EM）在工程实现上的关键差异——序列数据、离散观测、双备份依赖。
 
-## 对应代码速览
+## 重点方法与概念速览
 
-| 组件 | 路径 | 说明 |
+| 名称 | 类型 | 作用 |
 |---|---|---|
-| 数据生成层 | `data_generation/probabilistic.py` | `ProbabilisticData.hmm()` 构造离散观测序列 |
-| 数据导出层 | `data_generation/__init__.py` | 提供 `hmm_data` 给外部导入 |
-| 训练层 | `model_training/probabilistic/hmm.py` | 定义 `train_model(...)` 并训练离散 HMM |
-| 流水线层 | `pipelines/probabilistic/hmm.py` | 负责整理序列、训练、解码和打印结果 |
+| `ProbabilisticData.hmm()` | 方法 | 手动参数化的 HMM 序列数据——含真实隐状态和观测 |
+| `train_model(...)` | 函数 | 构建并训练 `CategoricalHMM`——含双备份可选依赖检查 |
+| `run()` | 函数 | 序列模型流水线编排——4 步完成数据整形、训练、Viterbi 解码和评估 |
+| `model.predict(X_obs, lengths)` | 方法 | Viterbi 解码——全局最优隐状态路径 |
+| `model.score(X_obs, lengths)` | 方法 | Forward 算法——对数似然（可用于 diagnostic） |
 
-## 1. 入口命令如何触发整条链路
+## 1. 模块分层总览
+
+### 参数速览
+
+| 层 | 文件 | 职责 | 输出 |
+|---|---|---|---|
+| 数据生成层 | `data_generation/probabilistic.py` | 手动参数化生成 HMM 序列数据并导出 `hmm_data` | 全局 `DataFrame`（300 行 × 3 列） |
+| 模型训练层 | `model_training/probabilistic/hmm.py` | 封装 `CategoricalHMM` 训练——含双备份可选依赖处理 | `CategoricalHMM` 模型对象 |
+| 流水线编排层 | `pipelines/probabilistic/hmm.py` | 串联数据整形、训练、Viterbi 解码和准确率评估——端到端入口 | 终端日志 + 准确率 + 转移矩阵 |
+| 可视化层 | **无** | HMM 序列数据不适合散点图/矩阵图——终端文本输出已足够 | — |
+
+### 理解重点
+
+- HMM 是本仓库唯一**没有可视化层**的流水线——序列推断的评估更适合用终端文本（准确率 + 转移矩阵）。
+- 训练层有双备份依赖处理——`CategoricalHMM`（hmmlearn 0.3+）/ `MultinomialHMM`（旧版），任一可用即可。
+- 与 GMM 共享 `data_generation/probabilistic.py`——两者均为概率模型，数据生成器统一管理。
+
+## 2. `run()` 内部的函数调用链
+
+### 参数速览
+
+| 序号 | 调用 | 输入 | 输出 | 目的 |
+|---|---|---|---|---|
+| 1 | `hmm_data.copy()` | — | `DataFrame`，形状 `(300, 3)` | 避免修改全局变量 |
+| 2 | `data["obs"].values.astype(int)` | `DataFrame` | `ndarray`，`(300,)` | 提取离散观测序列 |
+| 3 | `obs.reshape(-1, 1)` | `ndarray` | `ndarray`，`(300, 1)` | 整形为 hmmlearn 要求的列向量 |
+| 4 | `[len(obs)]` | — | `list[int]` | 序列长度——单条 300 步 |
+| 5 | `data["state_true"].values.astype(int)` | `DataFrame` | `ndarray`，`(300,)` | 提取真实隐状态——仅用于评估 |
+| 6 | `train_model(X_obs, lengths)` | `(ndarray, list)` | `CategoricalHMM` | Baum-Welch 训练 |
+| 7 | `model.predict(X_obs, lengths)` | `(ndarray, list)` | `ndarray`，`(300,)` | Viterbi 解码 |
+| 8 | `np.mean(states_pred == y_true)` | `(ndarray, ndarray)` | `float` | 逐步准确率计算 |
+| 9 | `model.transmat_.round(3)` | 属性访问 | — | 打印学习到的转移矩阵 |
+
+### 理解重点
+
+- 步骤 3（`reshape`）是 hmmlearn 接口特有的数据整形——观测必须为列向量。
+- 步骤 6 内部触发可选依赖检查——如果 `hmmlearn` 未安装会抛出 `ImportError`。
+- 与 GMM 流水线的关键差异：无 `StandardScaler`（离散观测无需缩放）、无 `plot_clusters`（序列不可散点图化）。
+
+## 3. 数据依赖关系
+
+```
+hmm_data (全局 DataFrame)
+    │
+    ├─→ obs = data["obs"].values ──→ reshape(-1, 1) ──→ X_obs ──┐
+    ├─→ lengths = [len(obs)] ────────────────────────────────────┤
+    ├─→ y_true = data["state_true"].values ─────────────────────┐│
+    │                                                             ││
+    │   train_model(X_obs, lengths) ──→ model                    ││
+    │      │                                                      ││
+    │      └─→ model.predict(X_obs, lengths) ──→ states_pred ──┐ ││
+    │                                                            │ ││
+    │   accuracy = np.mean(states_pred == y_true) ←─────────────┘ ││
+    │   print(model.transmat_) ←──────────────────────────────────┘│
+    │                                                               │
+    └───────────────────────────────────────────────────────────────┘
+```
+
+### 理解重点
+
+- `y_true` 仅用于评估——不经过训练模块，直接与 `states_pred` 对比。
+- `lengths` 与 `X_obs` 同时传入 `train_model` 和 `model.predict`——HMM 必须知道序列边界。
+- 这是本仓库最简单的数据依赖图——无标准化分支、无可视化分支、无切分分支。
+
+## 4. 输出一览
+
+### 参数速览
+
+| 输出项 | 路径/位置 | 格式 | 说明 |
+|---|---|---|---|
+| 隐状态准确率 | 标准输出 | 文本 `float` | Viterbi 路径与真实状态的逐步匹配率 |
+| 转移矩阵 | 标准输出 | 文本 `ndarray` | 学习到的 3×3 转移矩阵（行和为 1） |
+| 终端日志 | 标准输出 | 文本 | 训练超参数 + 运行耗时 |
 
 ### 示例代码
 
@@ -32,151 +101,70 @@ outline: deep
 python -m pipelines.probabilistic.hmm
 ```
 
-### 理解重点
+### 输出
 
-- 这个命令会执行 `pipelines/probabilistic/hmm.py` 中的 `run()`。
-- `run()` 是真正的工程入口，其他模块都被它按顺序调用。
-- 所以理解工程实现时，最清晰的方式也是先从入口脚本往下追踪。
+```text
+============================================================
+HMM 流水线
+============================================================
+模型训练完成
+n_components: 3
+n_iter: 100
+tol: 0.001
+模型训练耗时: 0.08s
 
-## 2. 模块之间的调用关系
+隐状态预测准确率: 0.8933
+转移矩阵:
+[[0.782  0.176  0.042 ]
+ [0.215  0.582  0.203 ]
+ [0.118  0.223  0.659 ]]
 
-### 示例代码
-
-```python
-from data_generation import hmm_data
-from model_training.probabilistic.hmm import train_model
+============================================================
+HMM 流水线完成！
+============================================================
 ```
 
 ### 理解重点
 
-- `pipelines` 层不自己生成数据，也不自己实现 HMM 训练，而是扮演调度者角色。
-- 这种分层使每个文件职责单一：数据文件只关心序列生成，训练文件只关心模型，流水线文件只关心组织执行和输出。
-- 当前 HMM 分册虽然没有图形可视化模块，但工程层次依然很清晰。
+- HMM **无任何文件输出**——所有评估结果以终端文本呈现，是本仓库唯一纯终端输出的流水线。
+- 训练耗时极短（~0.08s）——300 步 × 3 状态，Baum-Welch 在此规模上收敛很快。
+- 转移矩阵保留 3 位小数——足够直观对比学习结果与真实参数的差异。
 
-## 3. 流水线层真正负责什么
+## 5. 训练层细节：与 GMM 的对比
 
-### 参数速览（本节）
-
-适用逻辑（分项）：
-
-1. 复制数据
-2. 提取观测序列
-3. reshape 观测输入
-4. 构造 `lengths`
-5. 提取 `state_true`
-6. 调用训练函数
-7. 解码并打印评估结果
-
-| 步骤 | 所在文件 | 当前职责 |
+| 工程维度 | GMM (EM) | HMM |
 |---|---|---|
-| 读取 `hmm_data` | `pipelines/probabilistic/hmm.py` | 拿到统一数据入口 |
-| `obs` / `state_true` 拆分 | `pipelines/probabilistic/hmm.py` | 区分训练输入与对比标签 |
-| reshape 与 `lengths` 构造 | `pipelines/probabilistic/hmm.py` | 生成符合 hmmlearn 的输入格式 |
-| 调用 `train_model(...)` | `pipelines/probabilistic/hmm.py` | 获得训练好的 HMM |
-| `predict(...)` + 打印结果 | `pipelines/probabilistic/hmm.py` | 完成隐状态解码与控制台输出 |
+| 模型类 | `GaussianMixture` | **`CategoricalHMM` / `MultinomialHMM`（双备份）** |
+| 依赖 | sklearn 内置 | **`pip install hmmlearn`（可选依赖）** |
+| 训练输入 | `fit(X)`——独立样本矩阵 | **`fit(X, lengths)`——序列列向量 + 长度列表** |
+| 算法 | EM（E 步: 逐点后验, M 步: 加权更新） | **Baum-Welch（E 步: Forward-Backward, M 步: 计数重估）** |
+| 预测 | `predict(X)` + `predict_proba(X)` | **`predict(X, lengths)`（Viterbi）——无 `predict_proba`** |
+| 模型属性 | `means_`、`covariances_`、`weights_` | **`transmat_`、`emissionprob_`、`startprob_`** |
+| 标准化 | 有 | **无**（离散观测） |
+| 可视化 | 聚类图 | **无**（终端文本） |
+| 装饰器 | `@print_func_info` + `@timeit` + `timer` | `@print_func_info` + `@timeit` + `timer`——相同 |
 
 ### 理解重点
 
-- 当前仓库没有使用 `Pipeline` 类，也没有复杂的结果可视化封装。
-- 这种显式写法更适合教学，因为每一步都能直接看到变量名和执行顺序。
-- HMM 分册最容易被误读的地方，就是序列格式和 `state_true` 的边界，因此显式写法特别有价值。
+- HMM 的训练层设计是四个概率模型中最特殊的——输入不是 `(X, y)` 或 `(X)`，而是 `(X, lengths)`。
+- 双备份依赖是可选的极限容错——无论用户装的是新版还是旧版 hmmlearn，都能正常运行。
+- 无 `predict_proba` 但有 `score`（Forward 算法给出对数概率）——两者的评估用途不同。
 
-## 4. 为什么这里没有标准化和 train/test split
+## 阅读顺序
 
-### 理解重点
-
-- 当前数据是离散观测符号，不像连续特征那样需要标准化。
-- 当前实现选择直接在整条观测序列上训练和解码，以便更直观看到状态路径建模过程。
-- 这是一种教学型简化实现，文档需要如实说明，而不是套用监督学习默认结构。
-
-## 5. 训练层真正负责什么
-
-### 参数速览（本节）
-
-适用函数：`train_model(...)`
-
-| 输出项 | 作用 |
-|---|---|
-| `model` | 返回已训练好的 HMM 模型 |
-| 控制台日志 | 打印隐状态数、训练迭代设定和训练耗时 |
-
-### 理解重点
-
-- 训练层并不负责构造 `lengths`，也不负责计算准确率或打印转移矩阵。
-- 它的核心任务是构建 HMM、执行训练，并输出与训练设定相关的日志。
-- 和 EM 分册相比，这里训练输入更强调序列形状和长度信息，而不是几何空间分布。
-
-## 6. 为什么需要 `lengths`
-
-### 示例代码
-
-```python
-X_obs = obs.reshape(-1, 1)
-lengths = [len(obs)]
-model = train_model(X_obs, lengths)
-```
-
-### 理解重点
-
-- hmmlearn 允许把多条序列拼接成一个大数组后统一训练，而 `lengths` 用来说明每条子序列的边界。
-- 当前实现里只有一条完整序列，因此 `lengths` 就是一个只有一个元素的列表。
-- 这说明 `lengths` 不是可有可无的附加参数，而是序列模型输入格式的一部分。
-
-## 7. 常量 `DATASET` 和 `MODEL` 的作用
-
-### 参数速览（本节）
-
-适用常量：
-
-1. `DATASET = "hmm"`
-2. `MODEL = "hmm"`
-
-| 常量 | 当前作用 |
-|---|---|
-| `DATASET` | 当前文件中仅用于分册标识，未参与图像输出 |
-| `MODEL` | 当前文件中仅用于模型标识，未参与图像输出 |
-
-### 理解重点
-
-- 这两个常量在当前 HMM 流水线里没有像其他分册那样参与保存图像文件。
-- 它们更像是为后续扩展结果输出能力预留的统一命名位。
-- 文档需要如实说明这一点，不能套写成“决定结果图目录名”。
-
-## 8. 从命令到结果输出的执行链
-
-### 示例代码
-
-```python
-python -m pipelines.probabilistic.hmm
-    -> run()
-    -> hmm_data.copy()
-    -> data["obs"] / data["state_true"]
-    -> obs.reshape(-1, 1)
-    -> lengths = [len(obs)]
-    -> train_model(...)
-    -> model.predict(...)
-    -> print(accuracy)
-    -> print(model.transmat_)
-```
-
-### 理解重点
-
-- 这条链里最关键的中间产物有四个：`X_obs`、`lengths`、训练后的 `model`、预测隐状态 `states_pred`。
-- 一旦这些中间变量理解清楚，整个 HMM 分册的代码结构就基本串起来了。
-- 文档中的各章节，其实就是在拆解这条执行链上的不同环节。
-
-![评估结果展示](../../../outputs/hmm/evaluation_display.png)
-
-![结果展示](../../../outputs/hmm/result_display.png)
+1. `data_generation/probabilistic.py` — 了解 `hmm()` 的 HMM 序列数据生成逻辑
+2. `model_training/probabilistic/hmm.py` — 理解 `CategoricalHMM` 的构建、双备份依赖和 Baum-Welch 训练
+3. `pipelines/probabilistic/hmm.py` — 看清序列流水线的端到端流程和终端评估
 
 ## 常见坑
 
-1. 把 `pipelines` 层和 `model_training` 层职责混在一起，误以为训练函数负责全部工程流程。
-2. 不理解为什么当前分册没有图像输出，就误判它没有评估逻辑。
-3. 忽略 `lengths` 和 `state_true` 的作用，看不懂序列输入和控制台准确率为什么能成立。
+1. 在不含 `hmmlearn` 的环境中直接 `from model_training.probabilistic.hmm import train_model`——会抛出 `ImportError`，需先 `pip install hmmlearn`。
+2. 忘记将观测 `reshape(-1, 1)`——hmmlearn 的 `fit` 要求观测为 `(n_steps, 1)` 形状。
+3. 把 `astype(int)` 漏掉——hmmlearn 可能将 float 观测处理为连续值，触发错误的模型行为。
+4. 混淆 `CategoricalHMM` 和 `MultinomialHMM` 的参数——两者基本相同，但类名和包路径不同。
 
 ## 小结
 
-- 当前 HMM 实现采用了清晰的分层结构：数据层、训练层、流水线层各司其职。
-- 入口脚本负责调度，训练模块负责模型，流水线层负责解码和结果展示。
-- 这种结构既方便阅读，也方便后续继续补发射矩阵输出、序列可视化或多序列实验。
+- HMM 工程实现遵循三层架构（无可视化层）：数据生成层 → 模型训练层 → 流水线编排层。
+- `run()` 是本仓库最简编排函数——4 步核心操作完成数据整形、训练、Viterbi 解码和评估，所有输出均为终端文本。
+- 与 GMM 的四个关键工程差异：（1）序列输入 + lengths；（2）离散观测无需标准化；（3）双备份可选依赖；（4）无可视化层（纯终端评估）。

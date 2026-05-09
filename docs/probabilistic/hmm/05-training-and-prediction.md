@@ -5,202 +5,138 @@ outline: deep
 
 # 训练与预测
 
-> 对应代码：`pipelines/probabilistic/hmm.py`、`model_training/probabilistic/hmm.py`
->  
-> 运行方式：`python -m pipelines.probabilistic.hmm`
-
 ## 本章目标
 
-1. 明确当前流水线从取数到输出隐状态预测结果的完整执行顺序。
-2. 理解训练阶段、解码阶段和控制台评估分别由哪个函数负责。
-3. 明确当前 HMM 实现没有 train/test split，而是直接在整条序列上训练和预测。
+1. 理解 `pipelines/probabilistic/hmm.py` 的 `run()` 流水线——序列模型的端到端流程（无标准化、无切分、无可视化）。
+2. 理解 Baum-Welch 训练过程——序列数据的 EM 算法（Forward-Backward + 参数重估）。
+3. 理解 Viterbi 解码的预测输出——全局最优隐状态路径及其与真实状态的对比。
 
 ## 重点方法与概念速览
 
 | 名称 | 类型 | 作用 |
 |---|---|---|
-| `run()` | 函数 | HMM 端到端流水线入口 |
-| `train_model(...)` | 函数 | 训练离散 HMM 模型 |
-| `model.predict(X_obs, lengths)` | 方法 | 解码得到隐状态序列 |
-| `model.transmat_` | 属性 | 输出学习到的状态转移矩阵 |
-| `accuracy = np.mean(states_pred == y_true)` | 派生量 | 当前流水线的对比评估方式 |
+| `run()` | 函数 | 序列模型流水线编排——4 步完成数据整形、训练、Viterbi 解码和评估 |
+| `model.fit(X_obs, lengths)` | 方法 | Baum-Welch 训练——迭代 E 步（Forward-Backward）+ M 步（参数重估） |
+| `model.predict(X_obs, lengths)` | 方法 | Viterbi 解码——全局最优隐状态路径 |
+| `model.score(X_obs, lengths)` | 方法 | Forward 算法——计算观测序列的对数概率 |
+| 隐状态准确率 | 评估 | `np.mean(states_pred == y_true)`——Viterbi 路径与真实状态的逐步比较 |
 
-## 1. 端到端入口 `run()`
+## 1. 完整流水线流程
 
-### 参数速览（本节）
+### 流程概述
 
-适用函数：`run()`
-
-| 项目 | 当前实现 |
-|---|---|
-| 数据源 | `hmm_data.copy()` |
-| 观测列 | `obs` |
-| 对比隐状态列 | `state_true` |
-| 训练入口 | `train_model(X_obs, lengths)` |
-| 解码入口 | `model.predict(X_obs, lengths)` |
-| 评估输出 | 控制台准确率 + 转移矩阵 |
-
-### 示例代码
-
-```python
-def run():
-    data = hmm_data.copy()
-    obs = data["obs"].values.astype(int)
-    X_obs = obs.reshape(-1, 1)
-    lengths = [len(obs)]
-    y_true = data["state_true"].values.astype(int)
 ```
+hmm_data.copy()
+    │
+    ├─ ① obs = data["obs"].values.astype(int)  → reshape(-1, 1)
+    ├─ ② lengths = [len(obs)]
+    ├─ ③ y_true = data["state_true"].values.astype(int)
+    ├─ ④ model = train_model(X_obs, lengths)
+    └─ ⑤ states_pred = model.predict(X_obs, lengths) → 准确率 + 转移矩阵
+```
+
+### 参数速览
+
+| 步骤 | 操作 | 输入 | 输出 | 说明 |
+|---|---|---|---|---|
+| 复制数据 | `hmm_data.copy()` | 全局 `DataFrame` | 本地 `DataFrame`，`(300, 3)` | 避免修改全局变量 |
+| 整形观测 | `obs.reshape(-1, 1)` | `Series`，`(300,)` | `ndarray`，`(300, 1)` | hmmlearn 要求列向量输入 |
+| 序列长度 | `[len(obs)]` | — | `list[int]` | 单条 300 步序列 |
+| 提取真实状态 | `data["state_true"].values` | `DataFrame` | `ndarray`，`(300,)` | 仅用于评估对比 |
+| 训练 | `train_model(X_obs, lengths)` | `(ndarray, list)` | `CategoricalHMM` | Baum-Welch 迭代 |
+| Viterbi 解码 | `model.predict(X_obs, lengths)` | `(ndarray, list)` | `ndarray`，`(300,)` | 全局最优隐状态路径 |
+| 评估 | `np.mean(states_pred == y_true)` | `(ndarray, ndarray)` | `float` | 逐步准确率 |
 
 ### 理解重点
 
-- 整个分册的运行入口就是 `pipelines/probabilistic/hmm.py` 里的 `run()`。
-- 这个函数不负责实现前向、后向或 Baum-Welch 细节，而是把序列整理、训练、解码和输出串成一条完整链路。
-- 当前实现重点是“整条序列上的隐状态建模”，而不是单点分类流程。
+- 这是本仓库所有流水线中最简洁的——仅 4 步核心操作，**无标准化**（离散观测不需要）、**无切分**（单条序列）、**无可视化**（序列数据不适合散点图）。
+- 每个步骤都是类型敏感的——`astype(int)` 确保 hmmlearn 识别为离散符号。
+- `lengths = [len(obs)]` 虽然此处是单元素列表，但框架设计允许 `[100, 200, 150]` 等多序列批量训练。
 
-## 2. 训练前的数据准备顺序
+## 2. 训练细节：Baum-Welch 算法
 
-### 参数速览（本节）
+### 算法流程
 
-适用流程（分项）：
+```
+初始化参数（随机或等值）
+    ↓
+E 步：Forward-Backward 算法
+    Forward:  α_t(i) = P(o_1,...,o_t, s_t=i | λ)
+    Backward: β_t(i) = P(o_{t+1},...,o_T | s_t=i, λ)
+    计算后验: γ_t(i) = P(s_t=i | O, λ) = α_t(i)β_t(i) / P(O|λ)
+              ξ_t(i,j) = P(s_t=i, s_{t+1}=j | O, λ)
+    ↓
+M 步：参数重估
+    π̂_i = γ_1(i)
+    Â_ij = Σ_{t=1}^{T-1} ξ_t(i,j) / Σ_{t=1}^{T-1} γ_t(i)
+    B̂_ij = Σ_{t: o_t=j} γ_t(i) / Σ_{t=1}^{T} γ_t(i)
+    ↓
+检查收敛：|log P(O|λ_new) - log P(O|λ_old)| < tol ?
+    是 → 停止
+    否 → 回到 E 步
+    ↓
+达到 n_iter=100 → 终止
+```
 
-1. 取出观测序列
-2. reshape 成二维数组
-3. 构造 `lengths`
-4. 取出真实隐状态作为对比列
+### 参数速览
 
-| 参数名 | 本例取值 | 说明 |
+| 参数名 | 当前取值 | 训练中的作用 |
 |---|---|---|
-| `obs` | 一维整数数组 | 原始观测符号序列 |
-| `X_obs` | `obs.reshape(-1, 1)` | 符合 hmmlearn 输入格式 |
-| `lengths` | `[len(obs)]` | 当前只有一条完整序列 |
-| `y_true` | `state_true` 数组 | 仅用于训练后对比 |
-
-### 示例代码
-
-```python
-obs = data["obs"].values.astype(int)
-X_obs = obs.reshape(-1, 1)
-lengths = [len(obs)]
-y_true = data["state_true"].values.astype(int)
-```
+| `n_components` | `3` | 隐状态数——决定了 $A$（3×3）、$B$（3×3）、$\pi$（3,）的维度 |
+| `n_iter` | `100` | Baum-Welch 最大迭代次数 |
+| `tol` | `1e-3` | 对数似然收敛阈值——连续两次变化小于此值则停止 |
 
 ### 理解重点
 
-- 当前 HMM 输入不是普通二维特征矩阵，而是经过 reshape 后的离散观测序列。
-- `lengths` 在这里非常关键，因为它告诉模型输入由几条序列拼接而成。
-- 当前实现没有标准化，也没有 train/test split，这些都和离散序列建模特点有关。
+- Baum-Welch 在概念上是**EM 的序列版**——E 步用 Forward-Backward（而非逐点后验），M 步用计数重估（而非加权平均）。
+- Forward 和 Backward 是两个互补的"消息传递"——Forward 从过去积累信息，Backward 从未来回传信息，交汇点给出每个时间步的状态后验。
+- 对于 300 步 3 状态的序列，Baum-Welch 每轮 E 步的复杂度是 $O(300 \times 3^2) = O(2700)$——远比独立样本的 EM 贵。
 
-## 3. 训练阶段：调用 `train_model(...)`
+## 3. 预测细节：Viterbi 解码
 
-### 参数速览（本节）
+### 算法流程
 
-适用函数：`train_model(X_obs, lengths)`
+```
+初始化: δ_1(i) = π_i * B_{i,o_1}
+递推:   δ_t(j) = max_i [δ_{t-1}(i) * A_{ij}] * B_{j,o_t}
+        ψ_t(j) = argmax_i [δ_{t-1}(i) * A_{ij}]
+终止:   ŝ_T = argmax_i δ_T(i)
+回溯:   ŝ_t = ψ_{t+1}(ŝ_{t+1})   (t = T-1, ..., 1)
+```
 
-| 参数名 | 本例取值 | 说明 |
+### 参数速览
+
+| 方法 | 输入形状 | 输出形状 | 算法 | 输出含义 |
+|---|---|---|---|---|
+| `predict(X, lengths)` | `(300, 1)` + `lengths` | `(300,)` | **Viterbi** | 全局最优隐状态路径 |
+
+### 理解重点
+
+- Viterbi 保证路径的**全局一致性**——每一步的状态转移都是合法的（$A_{ij} > 0$），不会出现"不可能跳转"。
+- 逐步 argmax（$\arg\max_i \gamma_t(i)$）可能产生 $A_{ij}=0$ 的非法转移——Viterbi 通过回溯机制避免。
+- 当前流水线将 Viterbi 的预测与 `state_true` 逐步对比——准确率越高，模型越成功恢复隐状态序列。
+
+## 4. 与 GMM（EM）训练流程的对比
+
+| 步骤 | GMM (EM) | HMM (Baum-Welch) |
 |---|---|---|
-| `X_obs` | `(T, 1)` 观测数组 | 当前直接传入 HMM 训练函数 |
-| `lengths` | `[T]` | 当前序列长度列表 |
-| 返回值 | `model` | 已训练好的 HMM 模型 |
-
-### 示例代码
-
-```python
-model = train_model(X_obs, lengths)
-```
-
-### 理解重点
-
-- 当前实现没有手写 Baum-Welch 迭代，而是把训练交给 hmmlearn 内部 `fit(...)` 完成。
-- 训练阶段最重要的副产物，不只是 `model` 对象，还有控制台中的 `n_components`、`n_iter`、`tol` 和耗时信息。
-- 这些日志更接近“训练设定与收敛过程”，而不是最终序列预测质量本身。
-
-## 4. 预测阶段：解码隐状态序列
-
-### 参数速览（本节）
-
-适用流程（分项）：
-
-1. `states_pred = model.predict(X_obs, lengths)`
-
-| 参数名 | 本例取值 | 说明 |
-|---|---|---|
-| `model` | 已训练完成 HMM 模型 | 来自 `train_model(...)` 返回值 |
-| `X_obs` | 离散观测序列 | 与训练时相同的输入结构 |
-| `lengths` | `[len(obs)]` | 保持与训练时一致的序列描述 |
-| `states_pred` | 预测隐状态数组 | 用于与 `state_true` 做对比 |
-
-### 示例代码
-
-```python
-states_pred = model.predict(X_obs, lengths)
-```
-
-### 理解重点
-
-- 当前流水线的预测阶段，本质上是在做解码：给定观测序列，推断最可能的隐状态路径。
-- 这一步与普通分类器的 `predict(...)` 表面上相似，但背后其实更接近 HMM 的 Viterbi 解码逻辑。
-- 因此这里的“预测”应理解为“隐状态路径推断”，而不是普通标签分类。
-
-## 5. 预测后的控制台评估输出
-
-### 参数速览（本节）
-
-适用输出项（分项）：
-
-1. `accuracy = np.mean(states_pred == y_true)`
-2. `model.transmat_`
-
-| 输出项 | 当前作用 |
-|---|---|
-| `accuracy` | 粗略比较预测隐状态和真实隐状态是否一致 |
-| `transmat_` | 查看学习到的状态转移结构 |
-
-### 示例代码
-
-```python
-accuracy = np.mean(states_pred == y_true)
-print(f"\n隐状态预测准确率: {accuracy:.4f}")
-print(f"转移矩阵:\n{model.transmat_.round(3)}")
-```
-
-### 理解重点
-
-- 当前实现最直接的评估方式，是比较解码得到的隐状态路径和数据生成时的 `state_true`。
-- 同时还会打印学习得到的转移矩阵，帮助观察状态演化结构是否合理。
-- 这两项输出构成了当前 HMM 分册最核心的工程结果。
-
-## 6. 用伪代码看完整流程
-
-### 示例代码
-
-```python
-data = hmm_data.copy()
-obs = data["obs"].values.astype(int)
-X_obs = obs.reshape(-1, 1)
-lengths = [len(obs)]
-y_true = data["state_true"].values.astype(int)
-
-model = train_model(X_obs, lengths)
-states_pred = model.predict(X_obs, lengths)
-
-accuracy = np.mean(states_pred == y_true)
-print(model.transmat_)
-```
-
-### 理解重点
-
-- 当前 HMM 流水线的主线非常清楚：取数、整理序列、训练、解码、打印准确率和转移矩阵。
-- 这条链路里最关键的中间变量是 `X_obs`、`lengths`、训练后的 `model` 和预测隐状态 `states_pred`。
-- 只要把这条流程走清楚，整个 HMM 分册的工程部分就基本串起来了。
+| 数据 | 独立样本矩阵 | **序列列向量 + lengths** |
+| 标准化 | 有（`StandardScaler`） | **无**（离散符号不需要） |
+| E 步 | 逐点后验 $\gamma(z_{ik})$ | **Forward-Backward → $\gamma_t(i)$ + $\xi_t(i,j)$** |
+| M 步 | 加权更新 $\mu$、$\Sigma$、$\pi$ | **计数重估 $A$、$B$、$\pi$** |
+| 复杂度 | $O(N \times K \times d^2)$ | **$O(T \times K^2)$** |
+| 收敛诊断 | `lower_bound_`（对数似然） | **`monitor_`（逐次对数似然列表）** |
+| 预测 | `predict`（逐点 argmax） | **`predict`（Viterbi 全局解码）** |
 
 ## 常见坑
 
-1. 把监督学习里的 train/test split 惯性套进当前 HMM 流程，和源码不一致。
-2. 忘记把一维观测序列 reshape 成 `(T, 1)`，导致输入格式不匹配。
-3. 把 `predict(...)` 当成普通分类预测，而不是隐状态解码过程。
+1. 不传 `lengths` 参数——`fit(X)` 的错误调用，hmmlearn 必须知道每条序列的边界。
+2. 忘记将观测 `reshape(-1, 1)`——hmmlearn 要求观测为列向量 `(n_steps, 1)`。
+3. 把 `astype(int)` 漏掉——字符串或浮点观测符号可能导致 hmmlearn 无法识别。
+4. 在极短序列上比较准确率——300 步中稳定迁移的比例有限，准确率波动大。
 
 ## 小结
 
-- 当前流水线把序列整理、HMM 训练、隐状态解码和控制台结果输出串成了一条完整路径。
-- 训练函数负责“得到 HMM 模型”，流水线函数负责“组织执行和展示结果”。
-- 把这一层执行顺序读清楚，后续看评估与工程实现章节就会更顺。
+- HMM 流水线是最简的 4 步序列流程——数据整形、Baum-Welch 训练、Viterbi 解码、准确率评估，无标准化/切分/可视化。
+- `fit()` 的核心流程：Forward-Backward（E 步计算时序后验）→ 计数重估 $A$/$B$/$\pi$（M 步最大化）→ 对数似然收敛检查 → 循环。
+- `predict()` 使用 Viterbi 全局解码——保证路径的转移合法性，与逐点 argmax 有本质区别。
