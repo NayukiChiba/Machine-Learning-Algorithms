@@ -5,251 +5,130 @@ outline: deep
 
 # 训练与预测
 
-> 对应代码：`pipelines/regression/decision_tree.py`、`model_training/regression/decision_tree.py`
->  
-> 运行方式：`python -m pipelines.regression.decision_tree`
-
 ## 本章目标
 
-1. 明确当前流水线从取数到生成三类图像的完整执行顺序。
-2. 理解训练阶段、预测阶段、特征重要性图和学习曲线分别由哪个函数负责。
-3. 明确当前决策树实现没有标准化步骤，并且训练/预测阶段显式使用 `.values`。
+1. 理解决策树回归流水线的完整执行顺序——从数据加载到四类可视化输出。
+2. 理解决策树的训练过程——递归寻找最优 $(j, s)$ 分裂直到满足停止条件。
+3. 理解 `predict` 的预测方式——输入沿树从根走到叶，输出该叶子的局部常数。
 
 ## 重点方法与概念速览
 
 | 名称 | 类型 | 作用 |
 |---|---|---|
-| `run()` | 函数 | 决策树回归端到端流水线入口 |
-| `train_test_split(...)` | 函数 | 拆分训练集与测试集 |
-| `train_model(...)` | 函数 | 训练决策树回归模型 |
-| `model.predict(X_test.values)` | 方法 | 对测试集做回归预测 |
-| `plot_residuals(...)` | 函数 | 绘制残差分析图 |
-| `plot_feature_importance(...)` | 函数 | 绘制特征重要性图 |
-| `plot_learning_curve(...)` | 函数 | 绘制学习曲线 |
+| `trainDecisionTreeRegressionModel(...)` | 函数 | 构建并训练决策树回归模型——递归二分特征空间 |
+| `model.fit(X_train, y_train)` | 方法 | CART 算法——每次遍历所有特征的候选分裂点，选平方误差最小的 $(j, s)$ |
+| `model.predict(X_test)` | 方法 | 对新样本沿树从根走到叶——返回叶子节点训练集目标均值 |
+| `plot_residuals(...)` | 函数 | 绘制预测-真实散点图 + 残差分布图 |
+| `plot_feature_importance(...)` | 函数 | 绘制特征重要性柱状图 |
+| `plot_learning_curve(...)` | 函数 | 绘制训练/验证 R² 随样本量变化的曲线 |
+| `plot_tree_structure(...)` | 函数 | 绘制决策树的可视化结构图 |
 
-## 1. 端到端入口 `run()`
+## 1. 完整流水线流程
 
-### 参数速览（本节）
+### 流程概述
 
-适用函数：`run()`
+```
+fetch_california_housing(as_frame=True)
+    │
+    ├─ ① X = data.drop(columns=["price"]), y = data["price"]
+    ├─ ② X_train, X_test, y_train, y_test = train_test_split(test_size=0.2)
+    ├─ ③ model = trainDecisionTreeRegressionModel(X_train, y_train)
+    ├─ ④ y_pred = model.predict(X_test)
+    ├─ ⑤ plot_residuals(y_test, y_pred)
+    ├─ ⑥ plot_feature_importance(model, feature_names)
+    ├─ ⑦ plot_learning_curve(DecisionTreeRegressor(...), X_train, y_train, scoring="r2")
+    └─ ⑧ plot_tree_structure(model, feature_names)
+```
 
-| 项目 | 当前实现 |
-|---|---|
-| 数据源 | `decision_tree_regression_data.copy()` |
-| 标签列 | `price` |
-| 切分方式 | `test_size=0.2, random_state=42` |
-| 训练入口 | `train_model(X_train.values, y_train.values)` |
-| 预测入口 | `model.predict(X_test.values)` |
-| 可视化入口 | `plot_residuals(...)`、`plot_feature_importance(...)`、`plot_learning_curve(...)` |
+### 参数速览
 
-### 示例代码
+| 步骤 | 操作 | 输入 | 输出 | 说明 |
+|---|---|---|---|---|
+| 加载数据 | `fetch_california_housing` | — | `DataFrame`，`(20640, 9)` | 真实加州房价数据 |
+| 特征标签拆分 | `drop` + 列选择 | `DataFrame` | `X` `(20640, 8)`、`y` `(20640,)` | 标签列 `price` |
+| 数据切分 | `train_test_split` | `X`、`y` | `X_train`、`X_test`、`y_train`、`y_test` | `test_size=0.2`，无标准化 |
+| 训练 | `trainDecisionTreeRegressionModel` | `X_train`、`y_train` | `DecisionTreeRegressor` | CART 递归分裂 |
+| 预测 | `model.predict` | `X_test` | `y_pred` `(4128,)` | 叶子局部常数 |
+| 残差图 | `plot_residuals` | `y_test`、`y_pred` | PNG 图像 | 误差分布诊断 |
+| 特征重要性 | `plot_feature_importance` | `model`、`feature_names` | PNG 图像 | 特征贡献排名 |
+| 学习曲线 | `plot_learning_curve` | 新 `DecisionTreeRegressor`、`X_train`、`y_train` | PNG 图像 | 样本量-得分趋势 |
+| 树结构图 | `plot_tree_structure` | `model`、`feature_names` | PNG 图像 | 树的分裂结构可视化 |
 
-```python
-def run():
-    data = decision_tree_regression_data.copy()
-    X = data.drop(columns=["price"])
-    y = data["price"]
-    feature_names = list(X.columns)
+### 理解重点
+
+- 当前流水线**无标准化步骤**——决策树基于特征阈值的相对排序分裂，特征尺度不影响分裂选择。
+- 学习曲线传入的是**新的** `DecisionTreeRegressor(...)` 实例，而非已训练的 `model`——因为学习曲线内部需要在不同训练子集上重新拟合。
+- 树结构图是本流水线特有的可视化——大多数回归模型（线性回归、SVR）没有结构图。
+
+## 2. 训练细节：CART 递归分裂
+
+### 算法流程
+
+```
+从根节点开始（包含全部训练样本）
+    ↓
+对当前节点：
+    ① 检查停止条件（深度 ≥ max_depth？样本数 < min_samples_split？）
+       是 → 创建叶子节点，预测值 = 区域内样本 y 的均值
+       否 → 继续
+    ② 对每个特征 j：
+        排序所有样本的 x_j 取值
+        遍历候选分割点 s
+        计算分裂后的平方误差降低：Δ = MSE(parent) - (n₁/N)·MSE(child₁) - (n₂/N)·MSE(child₂)
+    ③ 选 Δ 最大的 (j*, s*)
+    ④ 按 (j*, s*) 将样本分为左子节点和右子节点
+    ⑤ 对左右子节点递归执行 ①-④
+    ↓
+达到停止条件 → 树生长完成
 ```
 
 ### 理解重点
 
-- 整个分册的运行入口就是 `pipelines/regression/decision_tree.py` 里的 `run()`。
-- 这个函数不负责实现树的分裂搜索本身，而是把取数、训练、预测和可视化串成一条完整链路。
-- `feature_names` 会在这里提前保存下来，后续供特征重要性图使用。
+- CART（Classification and Regression Tree）是二叉分裂——每个节点恰好产生两个子节点，不会同时分裂出多路。
+- 平方误差降低 $\Delta$ 等价于"分裂后方差减少量"——CART 贪婪地选择每步方差降低最大的分裂。
+- 停止条件是**预剪枝**（pre-pruning）——在生长过程中提前阻止，而非长成后再剪（post-pruning）。
 
-## 2. 训练前的数据准备顺序
+## 3. 预测细节：从根走到叶
 
-### 参数速览（本节）
+对测试样本 $\mathbf{x}$：
 
-适用 API（分项）：
+```
+从根节点开始
+    ↓
+while 当前节点不是叶子:
+    if xⱼ ≤ s:  去左子节点
+    else:        去右子节点
+    ↓
+到达叶子 → 返回该叶子的预测值（训练时该区域样本 y 的均值）
+```
 
-1. `train_test_split(X, y, test_size=0.2, random_state=42)`
+### 理解重点
 
-| 参数名 | 本例取值 | 说明 |
+- 预测只需沿树走一条路径——复杂度为 $O(\text{depth})$，极快。
+- 同一叶子内的所有测试样本得到完全相同的预测值——这就是"分段常数"在预测端的体现。
+- 树模型天然支持缺失值处理（寻找替代分裂），但当前 California Housing 数据无缺失值，此能力未展示。
+
+## 4. 与线性回归训练流程的对比
+
+| 步骤 | 线性回归 | 决策树回归 |
 |---|---|---|
-| `test_size` | `0.2` | 测试集占比 |
-| `random_state` | `42` | 保证可复现划分 |
-| 返回值 | `X_train`、`X_test`、`y_train`、`y_test` | 训练/测试集拆分结果 |
-
-### 示例代码
-
-```python
-X_train, X_test, y_train, y_test = train_test_split(
-    X, y, test_size=0.2, random_state=42
-)
-```
-
-### 理解重点
-
-- 当前流水线在数据切分后直接进入训练，没有额外的标准化步骤。
-- 这一点和 `svr`、`regularization` 分册不同，文档里必须明确区分。
-- 决策树当前实现更关注分裂结构，而不是量纲统一后的距离或系数惩罚。
-
-## 3. 训练阶段：调用 `train_model(...)`
-
-### 参数速览（本节）
-
-适用函数：`train_model(X_train.values, y_train.values)`
-
-| 参数名 | 本例取值 | 说明 |
-|---|---|---|
-| `X_train.values` | 训练特征数组 | 当前显式转为 NumPy 数组后传入 |
-| `y_train.values` | 训练标签数组 | 当前显式转为 NumPy 数组后传入 |
-| 返回值 | `model` | 已训练好的 `DecisionTreeRegressor` 模型 |
-
-### 示例代码
-
-```python
-model = train_model(X_train.values, y_train.values)
-```
-
-### 理解重点
-
-- 当前训练阶段最重要的结果，不只是 `model` 对象，还有训练日志中的树深度、叶子节点数和耗时信息。
-- `values` 的使用是当前实现选择的一种输入形式，并不影响后续继续用保存好的 `feature_names` 画图。
-- 这种写法也让训练层更明确地接收数值矩阵而不是带标签表结构。
-
-## 4. 预测阶段：直接调用 `predict(...)`
-
-### 参数速览（本节）
-
-适用流程（分项）：
-
-1. `y_pred = model.predict(X_test.values)`
-
-| 参数名 | 本例取值 | 说明 |
-|---|---|---|
-| `model` | 已训练完成模型 | 来自 `train_model(...)` 返回值 |
-| `X_test.values` | 测试特征数组 | 当前显式转为 NumPy 数组后传入 |
-| `y_pred` | 预测值数组 | 用于残差图分析 |
-
-### 示例代码
-
-```python
-y_pred = model.predict(X_test.values)
-```
-
-### 理解重点
-
-- 当前仓库没有额外封装 `predict_model(...)`，而是直接使用 scikit-learn 统一的 `predict(...)` 接口。
-- 由于当前分册没有标准化步骤，所以预测阶段也直接使用原始测试特征的数组形式。
-- 训练和预测两边都使用 `.values`，是为了保持输入形式一致。
-
-## 5. 预测后的残差图与特征重要性图输出
-
-### 参数速览（本节）
-
-适用函数（分项）：
-
-1. `plot_residuals(...)`
-2. `plot_feature_importance(...)`
-
-| 参数名 | 本例取值 | 说明 |
-|---|---|---|
-| `title`（残差图） | `"决策树回归 残差分析"` | 图标题 |
-| `title`（重要性图） | `"决策树回归 特征重要性"` | 图标题 |
-| `dataset_name` | `"decision_tree_reg"` | 输出目录名 |
-| `model_name` | `"decision_tree"` | 输出文件名前缀 |
-| `feature_names` | `list(X.columns)` | 给特征重要性图提供真实列名 |
-
-### 示例代码
-
-```python
-plot_residuals(
-    y_test,
-    y_pred,
-    title="决策树回归 残差分析",
-    dataset_name=DATASET,
-    model_name=MODEL,
-)
-
-plot_feature_importance(
-    model,
-    feature_names=feature_names,
-    title="决策树回归 特征重要性",
-    dataset_name=DATASET,
-    model_name=MODEL,
-)
-```
-
-### 理解重点
-
-- 残差图负责观察预测误差分布。
-- 特征重要性图负责观察树模型在分裂过程中更依赖哪些特征。
-- 当前分册之所以提前保存 `feature_names`，就是为了把 `feature_importances_` 和真实列名对应起来。
-
-## 6. 学习曲线是如何接入流水线的
-
-### 参数速览（本节）
-
-适用函数：`plot_learning_curve(DecisionTreeRegressor(max_depth=6, random_state=42), X_train.values, y_train.values, scoring='r2', ...)`
-
-| 参数名 | 本例取值 | 说明 |
-|---|---|---|
-| `model` | `DecisionTreeRegressor(max_depth=6, random_state=42)` | 一个新的未训练模型实例 |
-| `X` | `X_train.values` | 使用训练集特征 |
-| `y` | `y_train.values` | 使用训练集标签 |
-| `scoring` | `"r2"` | 当前分册使用的评分指标 |
-
-### 示例代码
-
-```python
-plot_learning_curve(
-    DecisionTreeRegressor(max_depth=6, random_state=42),
-    X_train.values,
-    y_train.values,
-    scoring="r2",
-    title="决策树回归 学习曲线",
-    dataset_name=DATASET,
-    model_name=MODEL,
-)
-```
-
-### 理解重点
-
-- 学习曲线不是直接基于训练好的 `model` 绘制，而是由 `plot_learning_curve(...)` 内部重新做不同训练规模下的交叉验证。
-- 这里传入的新模型实例只保留了当前对比最关键的 `max_depth=6` 和 `random_state=42`。
-- 这一步关注的是样本量变化下的训练/验证走势，而不是某一次测试集预测结果。
-
-## 7. 用伪代码看完整流程
-
-### 示例代码
-
-```python
-data = decision_tree_regression_data.copy()
-X = data.drop(columns=["price"])
-y = data["price"]
-feature_names = list(X.columns)
-
-X_train, X_test, y_train, y_test = train_test_split(...)
-
-model = train_model(X_train.values, y_train.values)
-y_pred = model.predict(X_test.values)
-
-plot_residuals(...)
-plot_feature_importance(model, feature_names=feature_names, ...)
-plot_learning_curve(DecisionTreeRegressor(max_depth=6, random_state=42), ...)
-```
-
-### 理解重点
-
-- 当前决策树流水线的主线非常清楚：取数、切分、训练、预测、画残差图、画特征重要性图、画学习曲线。
-- 这条链路里最关键的中间变量是 `feature_names`、训练后的 `model` 和预测结果 `y_pred`。
-- 只要把这条流程走清楚，整个 decision_tree 分册的工程部分就基本读懂了。
-
-## 训练诊断可视化
-
-![学习曲线](../../../outputs/decision_tree_regression/learning_curve.png)
+| 数据 | 手动合成 $(200, 3)$ | **真实数据 $(20640, 8)$** |
+| 标准化 | 有（`StandardScaler`） | **无** |
+| 训练算法 | 闭式解（正规方程）或梯度下降 | **CART 贪心递归分裂** |
+| 训练复杂度 | $O(d^3 + Nd^2)$（闭式解） | **$O(d \cdot N \log N)$** |
+| 模型结构 | 系数向量 $\boldsymbol{\beta}$ | **二叉树——节点 + 阈值 + 叶子值** |
+| 预测 | $\hat{y} = \mathbf{x}^T \boldsymbol{\beta}$ | **沿树走到叶子 → 返回叶子均值** |
+| 预测复杂度 | $O(d)$ | **$O(\text{depth})$** |
+| 评估可视化 | 残差图 + 学习曲线 | **残差图 + 特征重要性 + 学习曲线 + 树结构图** |
 
 ## 常见坑
 
-1. 把其他分册里的标准化流程误套到当前决策树实现上。
-2. 误以为特征重要性图可以在不保留 `feature_names` 的情况下自动解释特征含义。
-3. 只看到模型训练成功，没有继续看残差图、特征重要性图和学习曲线这三类输出。
+1. 在决策树流水线中引入标准化——树模型不需要，且标准化不会改变树结构（只会改变阈值的数值表示）。
+2. 忘记额外保存 `feature_names`——`feature_importances_` 只返回数值数组，没有特征名。
+3. 把已训练的 `model` 直接传给学习曲线——学习曲线需要在不同子集上重新训练，必须传未训练的模型实例。
 
 ## 小结
 
-- 当前流水线把数据准备、单模型训练、测试集预测和三种可视化输出串成了一条完整路径。
-- 训练函数负责“得到树模型”，流水线函数负责“组织执行和产出结果”。
-- 把这一层执行顺序读清楚，后续看评估与工程实现章节就会更顺。
+- 决策树回归流水线为 8 步：加载 → 拆分 → 切分 → 训练 → 预测 → 残差图 → 特征重要性 → 学习曲线 → 树结构图——无标准化。
+- `fit()` 的核心流程：检查停止条件 → 遍历特征和阈值 → 选平方误差降低最大的 $(j, s)$ → 递归分裂左右子节点 → 直到触达约束。
+- `predict()` 极为高效——沿树走一条路径（$O(\text{depth})$），到达叶子后输出该区域的训练均值。

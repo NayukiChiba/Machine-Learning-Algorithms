@@ -5,183 +5,139 @@ outline: deep
 
 # 模型构建
 
-> 对应代码：`model_training/regression/decision_tree.py`
->  
-> 运行方式：`python -m model_training.regression.decision_tree`
-
 ## 本章目标
 
-1. 明确 `train_model(...)` 如何构建并训练 `DecisionTreeRegressor`。
-2. 理解各个超参数在当前源码中的默认值与作用。
-3. 看清训练函数除了 `fit(...)` 之外还做了哪些工程封装和日志输出。
+1. 明确 `trainDecisionTreeRegressionModel(...)` 如何构建并训练 `DecisionTreeRegressor`。
+2. 理解三个复杂度超参数（`max_depth`、`min_samples_split`、`min_samples_leaf`）的默认值与作用。
+3. 看清训练完成后最重要的模型属性——`feature_importances_`、`get_depth()`、`get_n_leaves()`。
 
 ## 重点方法与概念速览
 
 | 名称 | 类型 | 作用 |
 |---|---|---|
-| `train_model(...)` | 函数 | 构建并训练一个 `sklearn.tree.DecisionTreeRegressor` 模型 |
-| `DecisionTreeRegressor(...)` | 类 | scikit-learn 提供的决策树回归器 |
-| `model.fit(X_train, y_train)` | 方法 | 在训练数据上生长决策树 |
-| `model.get_depth()` | 方法 | 返回当前树的最大深度 |
-| `model.get_n_leaves()` | 方法 | 返回当前树的叶子节点数量 |
-| `@print_func_info` / `@timeit` / `timer(...)` | 工程包装 | 打印入口信息与训练耗时 |
+| `trainDecisionTreeRegressionModel(...)` | 函数 | 构建并训练一个 `sklearn.tree.DecisionTreeRegressor` 模型 |
+| `DecisionTreeRegressor(...)` | 类 | scikit-learn 提供的决策树回归器——CART 算法 |
+| `model.fit(X_train, y_train)` | 方法 | 在训练数据上递归生长决策树——每次选最优 $(j, s)$ 分裂 |
+| `model.get_depth()` | 方法 | 返回当前树的最大深度——复杂度诊断 |
+| `model.get_n_leaves()` | 方法 | 返回当前树的叶子节点总数——分段数量诊断 |
+| `model.feature_importances_` | 属性 | 各特征在分裂中对误差降低的累积贡献 |
 
-## 1. `train_model(...)` 的函数签名
+## 1. `trainDecisionTreeRegressionModel(...)` 的函数签名
 
-### 参数速览（本节）
+### 参数速览
 
-适用函数：`train_model(X_train, y_train, max_depth=6, min_samples_split=6, min_samples_leaf=3, random_state=42)`
+适用函数：`trainDecisionTreeRegressionModel(XTrain, yTrain, randomState=42)`
 
-| 参数名 | 本例取值 | 说明 |
-|---|---|---|
-| `X_train` | 训练特征数组 | 输入给 `DecisionTreeRegressor.fit(...)` 的训练特征 |
-| `y_train` | 训练标签数组 | 每个样本对应的连续值目标 |
-| `max_depth` | `6` | 限制树的最大深度 |
-| `min_samples_split` | `6` | 一个节点继续划分所需的最小样本数 |
-| `min_samples_leaf` | `3` | 叶子节点最少样本数 |
-| `random_state` | `42` | 随机种子，保证可复现 |
-| 返回值 | `DecisionTreeRegressor` | 已训练完成的模型对象 |
+| 参数名 | 类型 | 说明 | 示例取值 |
+|---|---|---|---|
+| `XTrain` | `ndarray`，形状 `(16512, 8)` | 训练特征矩阵——California Housing 的 8 个特征 | `X_train` |
+| `yTrain` | `ndarray`，形状 `(16512,)` | 训练目标值——房价中位数 | `y_train` |
+| `randomState` | `int` | 随机种子。`42`——保证分裂过程中的随机性可复现 | `42` |
+| 返回值 | `DecisionTreeRegressor` | 已完成 `fit()` 的回归树模型 | — |
 
 ### 示例代码
 
 ```python
-from model_training.regression.decision_tree import train_model
+from src.mlAlgorithms.training.regression.regressionModels import (
+    trainDecisionTreeRegressionModel,
+)
 
-model = train_model(X_train.values, y_train.values)
+model = trainDecisionTreeRegressionModel(X_train, y_train)
 ```
 
 ### 理解重点
 
-- 当前训练入口返回的是单个决策树模型，而不是多模型集合。
-- `X_train` 和 `y_train` 在当前流水线里被显式转成了 NumPy 数组，这是实现细节，不是算法本身的硬性要求。
-- 默认参数直接来自源码，是后续理解模型复杂度控制的基线。
+- 当前训练入口返回的是**单个**决策树模型——不是集成（如随机森林、GBDT），更强调单棵树的结构可解释性。
+- 函数内部不切分数据——训练/测试切分在流水线层完成，训练层只负责接收训练数据并拟合。
+- `randomState=42` 保证分裂过程中的随机性可复现——虽然 CART 的 $(j, s)$ 搜索是确定性的，但某些内部实现细节涉及随机性。
 
-## 2. `DecisionTreeRegressor(...)` 的实际构建方式
+## 2. `DecisionTreeRegressor` 的构造器参数
 
-### 参数速览（本节）
+### 参数速览
 
-适用 API（分项）：
+适用 API：`DecisionTreeRegressor(max_depth=6, min_samples_split=6, min_samples_leaf=3, random_state=42)`
 
-1. `DecisionTreeRegressor(...)`
-2. `model.fit(X_train, y_train)`
-
-| 参数名 | 本例取值 | 说明 |
-|---|---|---|
-| `max_depth` | `6` | 控制树最多向下分裂多少层 |
-| `min_samples_split` | `6` | 控制节点何时还能继续分裂 |
-| `min_samples_leaf` | `3` | 避免叶子节点样本过少 |
-| `random_state` | `42` | 保证分裂过程可复现 |
+| 参数名 | 类型 | 说明 | 示例取值 |
+|---|---|---|---|
+| `max_depth` | `int` | 树的最大深度。`6`——限制从根到叶子的最长路径为 6 层 | `3`、`6`、`10`、`None` |
+| `min_samples_split` | `int` | 节点继续分裂所需的最小样本数。`6`——节点样本数 < 6 时停止分裂 | `2`、`6`、`20` |
+| `min_samples_leaf` | `int` | 叶子节点最少样本数。`3`——分裂后任一子节点样本数 < 3 则拒绝该分裂 | `1`、`3`、`10` |
+| `random_state` | `int` | 随机种子。`42` | `42` |
+| `criterion` | `str` | 分裂准则。默认 `"squared_error"`——当前源码未显式写出，使用默认值 | `"squared_error"`、`"friedman_mse"`、`"absolute_error"` |
 
 ### 示例代码
 
 ```python
+from sklearn.tree import DecisionTreeRegressor
+
 model = DecisionTreeRegressor(
-    max_depth=max_depth,
-    min_samples_split=min_samples_split,
-    min_samples_leaf=min_samples_leaf,
-    random_state=random_state,
+    max_depth=6,
+    min_samples_split=6,
+    min_samples_leaf=3,
+    random_state=42,
 )
 model.fit(X_train, y_train)
 ```
 
 ### 理解重点
 
-- 仓库没有自己实现树的分裂搜索，而是直接调用 scikit-learn 的现成实现。
-- 当前文档的重点，不是重新推导内部算法，而是理解这些超参数如何限制树的复杂度。
-- 这些参数一起决定树是偏浅、偏稳，还是更深、更灵活。
+- 当前源码没有显式设置 `criterion`——使用 scikit-learn 默认的 `"squared_error"`（平方误差）。这是回归树最经典的分裂准则。
+- `max_depth=6` 是中等深度——在 8 维特征空间中最深可产生 $2^6 = 64$ 个叶子（实际通常远少于此，因为 `min_samples_split` 和 `min_samples_leaf` 会提前停止）。
+- 与分类树的关键区别：回归树没有 `class_weight`、`criterion="gini"` 等分类特有参数。
 
-## 3. 三个复杂度超参数分别控制什么
-
-### 参数速览（本节）
-
-适用超参数（分项）：
-
-1. `max_depth`
-2. `min_samples_split`
-3. `min_samples_leaf`
-
-| 超参数 | 当前作用 | 调大/调小的常见影响 |
-|---|---|---|
-| `max_depth` | 限制树的层数 | 更大更灵活，也更易过拟合 |
-| `min_samples_split` | 限制是否继续分裂 | 更大更保守，树通常更浅 |
-| `min_samples_leaf` | 限制叶子最少样本数 | 更大更平滑，叶子更少 |
+## 3. 三个复杂度超参数的联合作用
 
 ### 理解重点
 
-- `max_depth` 最直观，直接控制树能长多深。
-- `min_samples_split` 和 `min_samples_leaf` 则更像局部约束，用来防止某些节点切得过细。
-- 当前默认配置的目标，是在真实数据上给出一个相对容易观察、又不过分复杂的基础树模型。
+- `max_depth` 是最直观的上限约束——无论样本多充足，根到叶子的路径不超过 6 层。
+- `min_samples_split` 是"是否继续切"的门槛——节点样本数太小说明已经切得够细，继续切意义不大。
+- `min_samples_leaf` 是"切了之后叶子是否可靠"的门槛——如果切完后某边只剩 1-2 个样本，这个分裂的统计意义存疑。
+- 三者联合作用：即使 `max_depth` 还有余量，如果样本数不满足 `min_samples_split` 或 `min_samples_leaf`，树也会提前停止。
 
-## 4. 训练阶段的工程封装
+## 4. 训练完成后的关键属性
 
-除了 `DecisionTreeRegressor(...).fit(...)` 之外，`train_model(...)` 还做了多层工程包装。
+### 参数速览
 
-### 参数速览（本节）
-
-适用装饰与上下文（分项）：
-
-1. `@print_func_info`
-2. `@timeit`
-3. `with timer(name="模型训练耗时")`
-
-| 包装项 | 作用 |
-|---|---|
-| `@print_func_info` | 打印函数调用入口 |
-| `@timeit` | 打印整个函数耗时 |
-| `timer(...)` | 打印模型 `fit(...)` 阶段耗时 |
-
-### 示例代码
-
-```python
-@print_func_info
-@timeit
-def train_model(...):
-    ...
-    with timer(name="模型训练耗时"):
-        model.fit(X_train, y_train)
-```
-
-### 理解重点
-
-- 当前训练函数会同时打印“模型训练耗时”和“函数 train_model 耗时”，所以终端里会看到两层计时信息。
-- 这类包装不改变模型行为，但有助于观察训练入口和耗时表现。
-- 与线性回归分册相比，这里更强调结构复杂度和训练耗时，而不是系数解释。
-
-## 5. 训练完成后最直接可用的结构信息
-
-### 参数速览（本节）
-
-适用属性/方法（分项）：
-
-1. `model.get_depth()`
-2. `model.get_n_leaves()`
-
-| 返回值 | 含义 |
-|---|---|
-| `get_depth()` | 当前树的最大深度 |
-| `get_n_leaves()` | 当前树的叶子节点总数 |
+| 属性/方法 | 类型 | 含义 | 示例取值 |
+|---|---|---|---|
+| `get_depth()` | `int` | 实际树深度——≤ `max_depth` | `6` |
+| `get_n_leaves()` | `int` | 叶子节点总数——即分段预测函数的常数段数 | `20`~`50` |
+| `feature_importances_` | `ndarray`，形状 `(8,)` | 各特征在分裂中对平方误差降低的累积贡献，和为 1 | `[0.45, 0.05, 0.03, ...]` |
+| `tree_` | 内部对象 | Cython 实现的树结构——含节点信息、阈值、左右子节点索引等 | — |
 
 ### 示例代码
 
 ```python
 print(f"树深度: {model.get_depth()}")
 print(f"叶子节点数: {model.get_n_leaves()}")
+print(f"特征重要性: {model.feature_importances_}")
 ```
 
 ### 理解重点
 
-- 这两个量是当前决策树分册里训练后最先被观察的结构性指标。
-- 深度和叶子节点数越大，通常说明模型越复杂。
-- 后续评估章节里对过拟合和欠拟合的讨论，也会和这两个量联系起来看。
+- `get_depth()` 和 `get_n_leaves()` 是训练后最先关注的结构性指标——深度表示模型复杂度，叶子数表示分段数。
+- `feature_importances_` 反映特征在分裂中的相对贡献——值越大，该特征在树中被用于分裂的次数越多、每次分裂的误差降低越大。
+- 与线性回归的 `coef_` 有本质区别：`feature_importances_` 衡量的是"分裂贡献"而非"线性效应大小和方向"。
+
+## 5. 决策树回归 vs 线性回归 vs SVR 模型参数对比
+
+| 参数/属性 | 线性回归 | SVR | 决策树回归 |
+|---|---|---|---|
+| 核心超参数 | 无（仅 `fit_intercept`） | `C`、`epsilon`、`kernel`、`gamma` | **`max_depth`、`min_samples_split`、`min_samples_leaf`** |
+| 训练输入 | `fit(X, y)` | `fit(X, y)` | `fit(X, y)` |
+| 模型属性 | `coef_`、`intercept_` | `support_vectors_`、`dual_coef_` | **`feature_importances_`、`get_depth()`、`get_n_leaves()`** |
+| 预测输出 | 连续值 | 连续值 | 连续值（分段常数） |
+| 标准化 | 有 | 有 | **无** |
+| 依赖 | sklearn 内置 | sklearn 内置 | sklearn 内置 |
 
 ## 常见坑
 
-1. 只记住 `max_depth`，忽略 `min_samples_split` 和 `min_samples_leaf` 也在共同控制复杂度。
-2. 把训练日志里的“树深度”和“叶子节点数”当成无关紧要的附加信息。
-3. 误以为装饰器和计时上下文改变了模型训练逻辑，实际上它们只负责日志输出。
+1. 只看 `max_depth` 不看 `min_samples_split` 和 `min_samples_leaf`——实际树结构是由三者联合决定的。
+2. 把 `feature_importances_` 解读为"特征对目标的正负影响"——重要性只衡量分裂贡献，不表示影响方向。
+3. 在极深树（`max_depth=None`）上期待稳定的特征重要性——树过深时重要性可能分散到多个相关特征。
 
 ## 小结
 
-- `train_model(...)` 是本仓库决策树回归的核心训练入口。
-- 它本质上是对 `sklearn.tree.DecisionTreeRegressor` 的薄封装，重点在于超参数传递、耗时统计和结构信息打印。
-- 读懂这一层之后，再看流水线中的训练、预测和评估过程会更清晰。
+- `trainDecisionTreeRegressionModel(...)` 是本仓库决策树回归的核心训练入口——对 `DecisionTreeRegressor` 的薄封装，传递三个复杂度超参数。
+- `DecisionTreeRegressor(max_depth=6, min_samples_split=6, min_samples_leaf=3)` 是当前默认配置——中等保守，在 California Housing 上平衡了灵活性与稳定性。
+- 训练完成后的核心属性：`get_depth()`（复杂度）、`get_n_leaves()`（分段数）、`feature_importances_`（特征贡献）——三者构成回归树的结构诊断三件套。

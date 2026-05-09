@@ -5,108 +5,142 @@ outline: deep
 
 # 练习与参考文献
 
-> 对应代码：`data_generation/regression.py`、`model_training/regression/decision_tree.py`、`pipelines/regression/decision_tree.py`
->  
-> 相关对象：`RegressionData.decision_tree()`、`train_model(...)`
-
 ## 本章目标
 
-1. 用练习把前面章节里的数据、模型、训练和评估方法串起来。
-2. 引导读者直接修改当前源码中的关键参数，观察决策树行为变化。
-3. 给出与当前分册强相关的参考资料，便于继续深入。
+1. 通过自检问题确认对决策树回归核心概念的理解程度。
+2. 通过动手练习在代码层面验证和探索回归树的行为。
+3. 提供扩展阅读的参考文献入口。
 
-## 自检题
+## 重点方法与概念速览
 
-1. 当前仓库为什么要用 California Housing 真实数据集来讲决策树回归？
-2. 在本项目里，`max_depth`、`min_samples_split`、`min_samples_leaf` 分别在控制什么？
-3. 为什么当前训练日志里更值得关注“树深度”和“叶子节点数”，而不是像线性回归那样关注系数？
-4. 特征重要性图和残差图分别更适合回答哪类问题？
-5. 为什么学习曲线要传入一个新的 `DecisionTreeRegressor(...)`，而不是复用已经训练好的 `model`？
+| 名称 | 类型 | 作用 |
+|---|---|---|
+| 自检问题 | 诊断 | 确认对平方误差分裂、局部常数预测、复杂度约束、树 vs 线性回归等核心概念的理解 |
+| 动手练习 | 实践 | 修改超参数和对比模型配置观察回归树行为——建立树模型直觉 |
+| 参考文献 | 入口 | 提供决策树回归经典教材和 scikit-learn 官方文档 |
 
-## 动手练习
+## 1. 自检问题
 
-### 1. 调小或调大 `max_depth`
+1. 决策树回归的分裂准则是什么？为什么用平方误差而非基尼系数或信息增益？
 
-修改 `model_training/regression/decision_tree.py` 中的默认参数：
+2. 叶子节点的预测值为什么取区域内目标值的均值？从平方损失最小化的角度解释。
 
-```python
-max_depth: int = 6
-```
+3. `max_depth`、`min_samples_split`、`min_samples_leaf` 分别从什么角度限制树的生长？如果三者同时设得很宽松（如 `max_depth=None, min_samples_split=2, min_samples_leaf=1`），会发生什么？
 
-观察重点：
+4. 决策树回归的预测函数为什么是分段常数形态？这种形态在处理房价这种连续值目标时有什么优缺点？
 
-- `max_depth` 变小时，树深度和叶子节点数是否明显减少。
-- 残差图是否更容易出现欠拟合迹象。
-- 学习曲线中训练得分和验证得分的差距是否变化。
+5. 为什么决策树回归不需要标准化？从分裂准则的数学形式给出解释。
 
-### 2. 修改 `min_samples_split` 或 `min_samples_leaf`
+6. `feature_importances_` 衡量的是什么？与线性回归的 `coef_` 在含义上有何根本区别？
 
-修改以下默认参数：
+7. 决策树回归和线性回归在处理非线性和特征交互方面各有什么优势和劣势？什么场景下应优先选树模型？
 
-```python
-min_samples_split: int = 6
-min_samples_leaf: int = 3
-```
+## 2. 动手练习
 
-观察重点：
+### 练习 1：改变 `max_depth`
 
-- 树结构是否变得更保守或更复杂。
-- 叶子节点数是否明显变化。
-- 残差图和学习曲线是否表现出不同的过拟合/欠拟合趋势。
-
-### 3. 对比特征重要性图变化
-
-分别在不同 `max_depth` 设置下运行流水线。
-
-观察重点：
-
-- 哪些特征在不同树深度下始终重要。
-- 重要性是否集中在少数特征上。
-- 模型复杂度变化是否会影响特征重要性的分布。
-
-### 4. 尝试去掉 `.values`
-
-把 `pipelines/regression/decision_tree.py` 中的训练和预测输入从数组改为原始 `DataFrame` / `Series` 形式，重新运行。
-
-示意位置：
+将 `max_depth` 分别设为 `2`、`4`、`6`、`10`、`None`，观察树结构、残差图和学习曲线的变化。
 
 ```python
-model = train_model(X_train.values, y_train.values)
-y_pred = model.predict(X_test.values)
+# 在 trainDecisionTreeRegressionModel 中修改
+model = DecisionTreeRegressor(
+    max_depth=2,  # 试试 2, 4, 6, 10, None
+    min_samples_split=6,
+    min_samples_leaf=3,
+    random_state=42,
+)
 ```
 
-观察重点：
+回答：`max_depth=2` 时树是否欠拟合（训练和验证 R² 都低）？`max_depth=None` 时是否明显过拟合（训练 R² 远高于验证 R²）？叶子节点数随深度如何变化？
 
-- 结果是否保持一致。
-- 日志和图像输出是否仍然正常。
-- 由此理解 `.values` 是当前实现细节，而不是算法硬性要求。
+### 练习 2：改变 `min_samples_leaf`
 
-### 5. 补一个数值指标
+将 `min_samples_leaf` 分别设为 `1`、`3`、`10`、`50`，保持其他参数不变。
 
-在 `pipelines/regression/decision_tree.py` 中为模型增加 `R^2` 或 `MSE` 打印。
+```python
+model = DecisionTreeRegressor(
+    max_depth=6,
+    min_samples_split=6,
+    min_samples_leaf=1,  # 试试 1, 3, 10, 50
+    random_state=42,
+)
+```
 
-观察重点：
+回答：`min_samples_leaf=1` 时叶子节点数是否大幅增加？残差图中是否出现了更多极端预测？`min_samples_leaf=50` 时树是否变得过于保守？
 
-- 数值指标和残差图是否给出一致结论。
-- 学习曲线上的走势是否和单次测试指标相匹配。
-- 特征重要性高的模型是否一定得到更好的数值指标。
+### 练习 3：对比特征重要性在不同深度下的变化
 
-## 阅读建议
+分别记录 `max_depth=3` 和 `max_depth=10` 时的特征重要性排名。
 
-1. 先运行一次默认源码，记录树深度、叶子节点数、残差图、特征重要性图和学习曲线。
-2. 每次只改一个超参数，例如只改 `max_depth` 或只改 `min_samples_leaf`，避免多个变量同时变化。
-3. 观察时优先对比四条线索：树结构日志、残差图、特征重要性图、学习曲线。
+```python
+importances = model.feature_importances_
+for name, imp in zip(feature_names, importances):
+    print(f"{name}: {imp:.4f}")
+```
 
-## 参考文献
+回答：哪些特征在两个深度下都排在最前面？`max_depth` 增大后是否出现了新的重要特征？为什么深度会影响特征重要性的分布？
 
-- scikit-learn `DecisionTreeRegressor` API 文档：`https://scikit-learn.org/stable/modules/generated/sklearn.tree.DecisionTreeRegressor.html`
-- scikit-learn Tree 用户指南：`https://scikit-learn.org/stable/modules/tree.html`
-- Hastie, Tibshirani, Friedman, *The Elements of Statistical Learning*, Tree-Based Methods.
-- James, Witten, Hastie, Tibshirani, *An Introduction to Statistical Learning*, Tree-Based Methods.
-- Breiman, Friedman, Olshen, Stone, *Classification and Regression Trees*.
+### 练习 4：对比决策树回归与线性回归在 California Housing 上的表现
+
+在同一数据上分别训练线性回归和决策树回归，对比残差图。
+
+```python
+from sklearn.linear_model import LinearRegression
+
+# 注意：线性回归需要标准化
+from sklearn.preprocessing import StandardScaler
+scaler = StandardScaler()
+X_train_scaled = scaler.fit_transform(X_train)
+X_test_scaled = scaler.transform(X_test)
+
+lr = LinearRegression()
+lr.fit(X_train_scaled, y_train)
+y_pred_lr = lr.predict(X_test_scaled)
+
+# 对比决策树
+dt = DecisionTreeRegressor(max_depth=6, random_state=42)
+dt.fit(X_train, y_train)
+y_pred_dt = dt.predict(X_test)
+```
+
+回答：残差图的表现有何不同？线性回归的预测值 vs 真实值图是否呈现更连续的分布？决策树的预测值是否呈现离散的分段特征？哪种模型的 R² 更高？
+
+### 练习 5：手动计算一个叶子的预测值
+
+用 `model.tree_` 的底层属性找到任意一个叶子节点，提取该叶子内的训练样本索引，验证该叶子的预测值是否等于这些样本目标值的均值。
+
+```python
+tree = model.tree_
+# 找到叶子节点（children_left[i] == children_right[i] == -1）
+leaf_indices = [i for i in range(tree.node_count) 
+                if tree.children_left[i] == -1]
+# 选择一个叶子
+leaf_id = leaf_indices[0]
+# 获取该叶子的预测值
+leaf_value = tree.value[leaf_id].flatten()[0]
+print(f"叶子 {leaf_id} 的预测值: {leaf_value:.4f}")
+```
+
+回答：叶子的预测值是否确实等于落到该叶子的训练样本的 `y` 均值？如果偏差较大，可能是什么原因？
+
+## 3. 参考文献
+
+| 序号 | 文献 | 说明 |
+|---|---|---|
+| 1 | Breiman, L., Friedman, J., Olshen, R., & Stone, C. (1984). *Classification and Regression Trees*. Wadsworth. | CART 算法的原始专著——分类树与回归树的完整理论体系和算法推导 |
+| 2 | Hastie, T., Tibshirani, R., & Friedman, J. (2009). *The Elements of Statistical Learning*. Springer. Chapter 9. | 教材——树模型的偏差-方差分析、剪枝策略和与集成方法的衔接 |
+| 3 | scikit-learn 官方文档 — [DecisionTreeRegressor](https://scikit-learn.org/stable/modules/generated/sklearn.tree.DecisionTreeRegressor.html) | scikit-learn 的 API 参考——所有构造器参数、属性和方法的详细说明 |
+| 4 | James, G., Witten, D., Hastie, T., & Tibshirani, R. (2013). *An Introduction to Statistical Learning*. Springer. Chapter 8. | 入门教材——树模型的基础直觉、R/Python 实现和与线性模型的对比 |
+
+## 常见坑
+
+1. 把回归树的分裂准则与分类树混淆——回归用平方误差（MSE），分类用基尼系数或熵。
+2. 在未设 `random_state` 的情况下对比不同实验——树的分裂可能因随机性而不同，实验结果不可复现。
+3. 只用 R² 评估模型——树模型的残差图和结构图能揭示数值指标无法反映的局部拟合问题。
+4. 把 `feature_importances_` 解读为"特征对目标的正负影响方向和大小"——重要性只看分裂贡献，不表示方向也不等效于线性系数。
 
 ## 小结
 
-- 这部分练习最重要的目标，不是死记分裂公式，而是亲手观察树深度、叶子节点数、特征重要性和误差图如何一起变化。
-- 当前源码已经提供了真实数据、结构日志和三类图像输出，因此很适合做基础树模型实验。
-- 把这些练习做完，再回头看数学原理、模型构建和评估章节，理解通常会更扎实。
+- 7 个自检问题覆盖决策树回归的核心概念：平方误差分裂、局部常数预测、三重复杂度约束、无标准化原因、特征重要性含义、与线性回归对比。
+- 5 个动手练习从不同角度探索回归树的行为——改变深度和叶子约束、对比特征重要性、与线性回归横向对比、验证叶子预测值的数学本质。
+- 4 篇参考文献覆盖 CART 原始专著（Breiman 1984）、两本经典教材和 scikit-learn 官方文档——构成完整的回归树学习路线。
