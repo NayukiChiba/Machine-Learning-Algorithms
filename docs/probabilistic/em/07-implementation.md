@@ -91,7 +91,7 @@ em_data (全局 DataFrame)
 
 | 输出项 | 路径 | 格式 | 说明 |
 |---|---|---|---|
-| 聚类分布图 | `outputs/em/cluster_distribution.png` | PNG | 双面板对比——左：EM 预测标签 / 右：真实分量标签 |
+| 聚类分布图 | `outputs/gmm/data_cluster_distribution.png` | PNG | 双面板对比——左：EM 预测标签 / 右：真实分量标签 |
 | 终端日志 | 标准输出 | 文本 | 训练超参数 + 对数似然下界 + 运行耗时 |
 
 ### 示例代码

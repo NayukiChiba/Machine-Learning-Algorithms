@@ -51,7 +51,7 @@ plot_clusters(
 
 ### 输出
 
-![聚类分布图](../../../outputs/em/cluster_distribution.png)
+![聚类分布图](../../../outputs/gmm/data_cluster_distribution.png)
 
 ### 理解重点
 

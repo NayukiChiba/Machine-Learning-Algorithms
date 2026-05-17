@@ -171,7 +171,7 @@ def run():
 
 ## 运行结果
 
-![运行结果展示](../../../outputs/pca/result_display.png)
+![运行结果展示](../../../outputs/pca/dimensionality_2d.png)
 
 ## 常见坑
 

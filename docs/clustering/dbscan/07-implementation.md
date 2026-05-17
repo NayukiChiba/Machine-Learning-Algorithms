@@ -160,7 +160,7 @@ def run():
 
 ## 运行结果
 
-![运行结果展示](../../../outputs/dbscan/result_display.png)
+![运行结果展示](../../../outputs/dbscan/cluster_plot.png)
 
 ## 常见坑
 

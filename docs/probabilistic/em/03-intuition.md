@@ -106,7 +106,7 @@ EM 的解决思路：先猜参数 → 凭参数猜归属 → 凭归属更新参�
 
 ## 可视化
 
-![聚类分布图](../../../outputs/em/cluster_distribution.png)
+![聚类分布图](../../../outputs/gmm/data_cluster_distribution.png)
 
 ## 常见坑
 

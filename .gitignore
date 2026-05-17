@@ -221,3 +221,5 @@ node_modules/
 docs/.vitepress/dist/
 docs/.vitepress/cache/
 docs/node_modules/
+
+uv.lock

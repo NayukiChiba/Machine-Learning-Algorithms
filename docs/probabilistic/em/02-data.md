@@ -129,7 +129,7 @@ X_scaled = scaler.fit_transform(X)
 
 ## 数据可视化
 
-![聚类分布图](../../../outputs/em/cluster_distribution.png)
+![聚类分布图](../../../outputs/gmm/data_cluster_distribution.png)
 
 ## 常见坑
 

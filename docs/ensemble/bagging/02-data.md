@@ -111,7 +111,7 @@ X_test_s = scaler.transform(X_test)
 
 ![类别分布图](../../../outputs/bagging/data_class_distribution.png)
 
-![标注散点图](../../../outputs/bagging/data_labeled_scatter_2d.png)
+![标注散点图](../../../outputs/bagging/data_scatter.png)
 
 ![特征相关性热力图](../../../outputs/bagging/data_correlation.png)
 
