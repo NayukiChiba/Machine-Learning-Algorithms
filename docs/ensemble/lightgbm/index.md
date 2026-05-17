@@ -81,9 +81,9 @@ python -m pipelines.ensemble.lightgbm
 - [库生态总览](/foundations/overview)
 - [NumPy 基础与数组概念](/foundations/numpy/01-basics)
 - [预处理](/foundations/sklearn/02-preprocessing)
-- [决策树分类](/classification/decision_tree)
-- [GBDT 梯度提升树](/ensemble/gbdt)（重要——LightGBM 是 GBDT 的高效工程实现）
-- [术语表](/appendix/glossary)
+- [决策树分类](/classification/decision_tree/)
+- [GBDT 梯度提升树](/ensemble/gbdt/)（重要——LightGBM 是 GBDT 的高效工程实现）
+- [项目架构](/appendix/)
 
 ## 小结
 

@@ -65,7 +65,7 @@ python -m pipelines.classification.knn
 - [库生态总览](/foundations/overview)
 - [NumPy 基础与数组概念](/foundations/numpy/01-basics)
 - [预处理](/foundations/sklearn/02-preprocessing)
-- [术语表](/appendix/glossary)
+- [项目架构](/appendix/)
 
 ## 小结
 

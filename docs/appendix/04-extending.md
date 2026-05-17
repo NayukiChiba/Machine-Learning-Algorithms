@@ -32,7 +32,7 @@ def loadNewAlgorithmDataset(self) -> DataFrame:
 
 ### 步骤 2：数据注册
 
-在 [`datasetCatalog.py`](../src/mlAlgorithms/datasets/datasetCatalog.py) 的 `buildDatasetSpecs()` 中添加 `DatasetSpec`：
+在 [`datasetCatalog.py`](https://github.com/NayukiChiba/Machine-Learning-Algorithms/blob/main/src/mlAlgorithms/datasets/datasetCatalog.py) 的 `buildDatasetSpecs()` 中添加 `DatasetSpec`：
 
 ```python
 DatasetSpec(
@@ -60,7 +60,7 @@ def trainNewAlgorithmModel(XTrain, yTrain, randomState: int = 42):
 
 ### 步骤 4：流水线注册
 
-在 [`pipelines.py`](../src/mlAlgorithms/catalog/pipelines.py) 的 `PIPELINE_REGISTRY` 注册循环中添加 `PipelineSpec`：
+在 [`pipelines.py`](https://github.com/NayukiChiba/Machine-Learning-Algorithms/blob/main/src/mlAlgorithms/catalog/pipelines.py) 的 `PIPELINE_REGISTRY` 注册循环中添加 `PipelineSpec`：
 
 ```python
 PipelineSpec(

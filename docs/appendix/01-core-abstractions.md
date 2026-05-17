@@ -17,7 +17,7 @@ outline: deep
 
 `PipelineSpec` 是本项目最核心的数据类。一个实例完整描述一条可执行算法流水线——数据来源、训练函数、预处理、评估和可视化全部在此声明。
 
-**定义**：[`src/mlAlgorithms/core/pipelineSpec.py`](../src/mlAlgorithms/core/pipelineSpec.py)
+**定义**：[`src/mlAlgorithms/core/pipelineSpec.py`](https://github.com/NayukiChiba/Machine-Learning-Algorithms/blob/main/src/mlAlgorithms/core/pipelineSpec.py)
 
 ### 1.1 字段速览
 
@@ -78,7 +78,7 @@ PipelineSpec(
 
 描述一个数据集的加载方式与元信息。
 
-**定义**：[`src/mlAlgorithms/core/datasetSpec.py`](../src/mlAlgorithms/core/datasetSpec.py)
+**定义**：[`src/mlAlgorithms/core/datasetSpec.py`](https://github.com/NayukiChiba/Machine-Learning-Algorithms/blob/main/src/mlAlgorithms/core/datasetSpec.py)
 
 | 字段 | 类型 | 说明 |
 |---|---|---|
@@ -109,7 +109,7 @@ PipelineSpec(
 
 基于字典的泛型注册表，是 `PIPELINE_REGISTRY` 和 `DATASET_REGISTRY` 的底层实现。
 
-**定义**：[`src/mlAlgorithms/core/registry.py`](../src/mlAlgorithms/core/registry.py)
+**定义**：[`src/mlAlgorithms/core/registry.py`](https://github.com/NayukiChiba/Machine-Learning-Algorithms/blob/main/src/mlAlgorithms/core/registry.py)
 
 | 方法 | 说明 |
 |---|---|
@@ -130,7 +130,7 @@ PipelineSpec(
 
 一次流水线运行的共享状态容器——贯穿 Runner 的整个执行周期。
 
-**定义**：[`src/mlAlgorithms/core/runContext.py`](../src/mlAlgorithms/core/runContext.py)
+**定义**：[`src/mlAlgorithms/core/runContext.py`](https://github.com/NayukiChiba/Machine-Learning-Algorithms/blob/main/src/mlAlgorithms/core/runContext.py)
 
 | 字段 | 类型 | 说明 |
 |---|---|---|
@@ -155,7 +155,7 @@ PipelineSpec(
 
 一次流水线执行的产物容器。
 
-**定义**：[`src/mlAlgorithms/core/runResult.py`](../src/mlAlgorithms/core/runResult.py)
+**定义**：[`src/mlAlgorithms/core/runResult.py`](https://github.com/NayukiChiba/Machine-Learning-Algorithms/blob/main/src/mlAlgorithms/core/runResult.py)
 
 | 字段 | 类型 | 说明 |
 |---|---|---|
@@ -175,7 +175,7 @@ PipelineSpec(
 
 ## 6. 枚举类型
 
-**定义**：[`src/mlAlgorithms/core/taskTypes.py`](../src/mlAlgorithms/core/taskTypes.py)
+**定义**：[`src/mlAlgorithms/core/taskTypes.py`](https://github.com/NayukiChiba/Machine-Learning-Algorithms/blob/main/src/mlAlgorithms/core/taskTypes.py)
 
 ### 6.1 TaskType（任务类型）
 

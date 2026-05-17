@@ -32,7 +32,7 @@ outline: deep
 
 ## 建议阅读顺序
 
-1. [符号与记号](/appendix/notation)、[术语表](/appendix/glossary)
+1. [项目架构](/appendix/)
 2. NumPy → Pandas →（按需 SciPy）→ sklearn 预处理与 Pipeline
 3. 各 [算法分册](/classification/knn/)（从总览进入）
 

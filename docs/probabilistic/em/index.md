@@ -74,9 +74,9 @@ python -m pipelines.probabilistic.em
 - [库生态总览](/foundations/overview)
 - [NumPy 基础与数组概念](/foundations/numpy/01-basics)
 - [预处理](/foundations/sklearn/02-preprocessing)
-- [KMeans 聚类](/clustering/kmeans)
-- [DBSCAN 聚类](/clustering/dbscan)
-- [术语表](/appendix/glossary)
+- [KMeans 聚类](/clustering/kmeans/)
+- [DBSCAN 聚类](/clustering/dbscan/)
+- [项目架构](/appendix/)
 
 ## 小结
 

@@ -119,8 +119,11 @@ const foundationsSidebar = [
   {
     text: '附录',
     items: [
-      { text: '符号与记号', link: '/appendix/notation' },
-      { text: '术语表', link: '/appendix/glossary' },
+      { text: '项目架构', link: '/appendix/' },
+      { text: '核心抽象', link: '/appendix/01-core-abstractions' },
+      { text: '模块分层', link: '/appendix/02-module-layers' },
+      { text: 'CLI 与流水线', link: '/appendix/03-cli-and-pipelines' },
+      { text: '扩展指南', link: '/appendix/04-extending' },
     ],
   },
 ]
@@ -129,9 +132,11 @@ const appendixSidebar = [
   {
     text: '附录',
     items: [
-      { text: '符号与记号', link: '/appendix/notation' },
-      { text: '术语表', link: '/appendix/glossary' },
-      { text: '基础库总览', link: '/foundations/overview' },
+      { text: '项目架构', link: '/appendix/' },
+      { text: '核心抽象', link: '/appendix/01-core-abstractions' },
+      { text: '模块分层', link: '/appendix/02-module-layers' },
+      { text: 'CLI 与流水线', link: '/appendix/03-cli-and-pipelines' },
+      { text: '扩展指南', link: '/appendix/04-extending' },
     ],
   },
 ]

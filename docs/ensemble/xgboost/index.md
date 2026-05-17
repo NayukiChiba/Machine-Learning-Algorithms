@@ -81,10 +81,10 @@ python -m pipelines.ensemble.xgboost
 
 - [库生态总览](/foundations/overview)
 - [NumPy 基础与数组概念](/foundations/numpy/01-basics)
-- [决策树分类](/classification/decision_tree)
-- [GBDT 梯度提升树](/ensemble/gbdt)
-- [LightGBM](/ensemble/lightgbm)
-- [术语表](/appendix/glossary)
+- [决策树分类](/classification/decision_tree/)
+- [GBDT 梯度提升树](/ensemble/gbdt/)
+- [LightGBM](/ensemble/lightgbm/)
+- [项目架构](/appendix/)
 
 ## 小结
 

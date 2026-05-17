@@ -14,7 +14,7 @@ outline: deep
 
 ## 1. CLI 入口
 
-**入口文件**：[`main.py`](../main.py)
+**入口文件**：[`main.py`](https://github.com/NayukiChiba/Machine-Learning-Algorithms/blob/main/main.py)
 
 ### 1.1 命令一览
 
